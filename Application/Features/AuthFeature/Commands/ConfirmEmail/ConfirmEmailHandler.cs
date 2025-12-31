@@ -90,9 +90,9 @@ public class ConfirmEmailCommandHandler
             // ========= 1. Validate Verification Token =========
             var token = _context.AuthToken;
 
-            var tokenValidation = await _authService.ValidateSessionToken(token!, enTokenType.VerificationToken);
+            var isValidToken = await _authService.ValidateSessionToken(token!, enTokenType.VerificationToken);
 
-            if (!tokenValidation.IsSuccess)
+            if (!isValidToken)
             {
                 await transaction.RollbackAsync(cancellationToken);
 
@@ -196,7 +196,7 @@ public class ConfirmEmailCommandHandler
             ]);
         }
 
-        if (otp.IsExpired)
+        if (otp.IsExpired())
         {
             return Result<Otp>.Failure([
                 _localizer[SharedResourcesKeys.InvalidExpiredCode]

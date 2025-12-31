@@ -44,7 +44,7 @@ public class AuthController : ApiController
         );
     }
 
-    [HttpPost(Router.AuthenticationRouter.EmailVerification)]
+    [HttpPost(Router.AuthenticationRouter.EmailConfirmation)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status422UnprocessableEntity)]
