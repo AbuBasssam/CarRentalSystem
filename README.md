@@ -287,65 +287,7 @@ dotnet run --project API
 
 The API will be available at `https://localhost:5001` (or the port specified in launchSettings.json)
 
-## 📚 API Documentation
 
-### Authentication Endpoints
-
-#### Sign Up
-```http
-POST /api/Auth/SignUp
-Content-Type: application/json
-
-{
-  "email": "user@example.com",
-  "password": "SecurePassword123!",
-  "confirmPassword": "SecurePassword123!"
-}
-```
-
-#### Confirm Email
-```http
-POST /api/Auth/ConfirmEmail
-Content-Type: application/json
-
-{
-  "email": "user@example.com",
-  "code": "123456"
-}
-```
-
-#### Sign In
-```http
-POST /api/Auth/SignIn
-Content-Type: application/json
-
-{
-  "email": "user@example.com",
-  "password": "SecurePassword123!"
-}
-```
-
-### Response Format
-
-All API responses follow this structure:
-
-**Success Response:**
-```json
-{
-  "succeeded": true,
-  "message": "Operation completed successfully",
-  "data": { }
-}
-```
-
-**Error Response:**
-```json
-{
-  "succeeded": false,
-  "message": "Error message",
-  "errors": ["Detailed error 1", "Detailed error 2"]
-}
-```
 
 ## 🔒 Security
 
