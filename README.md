@@ -1,91 +1,410 @@
-# Car Rental Platform
+# 🚗 Car Rental System
 
-Short description
-- Car Rental backend implemented with clean separation: Domain, Application, Infrastructure, Presentation and API layers plus a Worker service.
-- Purpose: manage vehicles, bookings, billing, employees and admins with role-based authorization and permission claims.
+A comprehensive car rental management system built with .NET and Clean Architecture principles, providing a robust and scalable solution for car rental businesses.
 
-Tech stack
-- .NET 8, C# 13
-- ASP.NET Core 8 (Web API)
-- EF Core (migrations & design-time factory)
-- Microsoft Identity (roles & claims)
-- JWT bearer authentication
-- MediatR, AutoMapper, FluentValidation
-- Serilog, MailKit
-- Project folders: `API`, `Application`, `Domain`, `Infrastructure`, `Presentation`, `Worker`
+## 📋 Table of Contents
 
-Architecture overview
-- `Domain` � entities, value objects, metadata (roles, permissions).
-- `Application` � business logic, services, MediatR handlers, validators.
-- `Presentation` � common controllers/helpers for presentation concerns.
-- `Infrastructure` � DbContext (`AppDbContext`), EF configurations, seeders, identity store.
-- `API` � ASP.NET Core Web API project (startup/Program).
-- `Worker` � background worker project (uses `BackgroundService` patterns when needed).
+- [Overview](#overview)
+- [Architecture](#architecture)
+- [Features](#features)
+- [Technologies](#technologies)
+- [Project Structure](#project-structure)
+- [Getting Started](#getting-started)
+- [API Documentation](#api-documentation)
+- [Security](#security)
+- [Contributing](#contributing)
+- [License](#license)
 
-Key implementation notes
-- Identity: `User` inherits `IdentityUser<int>` and the project treats `Email` as the canonical username. Normalized username values used by Identity are based on the email.
-- RBAC: Roles defined in `Domain.AppMetaData.Roles` (`Admin`, `Employee`, `Customer`). Permissions are implemented as role claims of type `"permission"` (see `Domain.AppMetaData.Permissions`).
-- Seeders: `Infrastructure.Seeder.Role` and `Infrastructure.Seeder.User` exist to seed roles and example users (Admin, Employee, Customer).
+## 🎯 Overview
 
-Prerequisites
-- Install .NET 8 SDK
-- SQL Server (or update provider in `DesignTimeDbContextFactory` / DI to your DB)
-- Set connection string named `DefaultConnection` in `appsettings.json` or environment variable `DEFAULT_CONNECTION`
+The Car Rental System is an enterprise-grade application designed to manage car rental operations efficiently. It implements Clean Architecture principles, ensuring maintainability, testability, and separation of concerns.
 
-Configuration
-- Connection string: `ConnectionStrings:DefaultConnection` in `appsettings.json` (or env var `DEFAULT_CONNECTION`).
-- Email settings are configured via `EmailSettings` and the `emailSettings` section in configuration.
-- JWT settings are expected to be configured in API startup (check `Application.DependencyInjection` wiring for auth).
+## 🏗️ Architecture
 
-Database: migrations and design-time
-- A design-time factory (`Infrastructure.DesignTimeDbContextFactory`) is available so EF tools can create `AppDbContext` when DI is not active.
-- Typical migration workflow:
-  - Create a migration:
-    - __dotnet ef migrations add <Name> --project Infrastructure --startup-project API__
-  - Apply migrations:
-    - __dotnet ef database update --project Infrastructure --startup-project API__
-  - (You can also run the CLI from the solution root and pass `--project`/`--startup-project` as needed.)
+This project follows **Clean Architecture** with clear separation between layers:
 
-Seeding roles & users
-- Role seeding: `Infrastructure.Seeder.Role.SeedAsync(RoleManager<Role>)` � seeds `Admin`, `Employee`, `Customer` and attaches permission claims.
-- User seeding: `Infrastructure.Seeder.User.SeedAsync(UserManager<User>)` � seeds example admin, employee and customer accounts with default passwords.
-- To run seeders at startup, call them from `Program.cs` after building the service provider, e.g.:
-  - Use a scoped block to resolve `RoleManager<Role>` and `UserManager<User>` and call the async `SeedAsync` methods (ensure you `Wait()` or `GetAwaiter().GetResult()` in Program if using top-level sync calls).
+- **Domain Layer**: Contains business entities, enums, and exceptions
+- **Application Layer**: Business logic, DTOs, commands, queries, and validation
+- **Infrastructure Layer**: Data access, external services, and implementations
+- **Presentation Layer**: API controllers and worker services
 
-Running the solution
-- From the solution root:
-  - Run the API: __dotnet run --project API__
-  - Run the Worker: __dotnet run --project Worker__
-- For development use Swagger (configured in `Application.DependencyInjection`) to explore endpoints and test auth flows.
+### Architecture Patterns Used
 
-Authorization & Permissions
-- Use ASP.NET Core authorization policies that validate the claim type `permission` (see `Domain.AppMetaData.Permissions`) to gate actions.
-- Role hierarchy (as implemented via claims):
-  - Admin: all Employee permissions + manage employees, vehicles (create/update/delete), prices/offers, system settings, analytics, audit logs.
-  - Employee: rental/return operations, vehicle inspection logging, invoicing and payment processing.
-  - Customer: browse cars, create/manage own bookings, view own invoices/payments, update profile.
+- **CQRS (Command Query Responsibility Segregation)**: Separate read and write operations
+- **Repository Pattern**: Abstract data access logic
+- **Unit of Work Pattern**: Manage database transactions
+- **Mediator Pattern**: Handle commands and queries
+- **Provider Pattern**: Flexible policy and permission management
 
-Useful files to inspect
-- `Infrastructure\AppDbContext.cs` � EF/Identity configuration
-- `Infrastructure\DesignTimeDbContextFactory.cs` � EF Core design-time factory
-- `Domain\AppMetaData\Roles.cs` and `Domain\AppMetaData\Permissions.cs` � role and permission constants
-- `Infrastructure\Seeder\Role.cs` and `Infrastructure\Seeder\User.cs` � seeding logic
-- `Application\DependencyInjection.cs` � DI wiring, swagger and auth setup
-- `API` project � startup / Program entry
+## ✨ Features
 
-Tips & troubleshooting
-- If you see: "Unable to create a 'DbContext' of type ... Unable to resolve service for type 'Microsoft.EntityFrameworkCore.DbContextOptions'..." ensure:
-  - `AppDbContext` constructor uses `DbContextOptions<AppDbContext>` and you're using a design-time factory or registering the `DbContext` in `Program.cs` with `services.AddDbContext<AppDbContext>(...)`.
-- For migrations targeting the correct startup project, always pass `--project` and `--startup-project` when running __dotnet ef__.
+### Authentication & Authorization
+- JWT-based authentication
+- Email confirmation system
+- Role-based access control (RBAC)
+- Permission-based authorization
+- Refresh token mechanism
+- Rate limiting for security
+- Reset password functionality
 
-Contributing
-- Follow the layered architecture (Domain -> Application -> Infrastructure -> API).
-- Register new services in `Application.DependencyInjection`.
-- When adding new permissions, add constants to `Domain.AppMetaData.Permissions` and include them in role claims via the seeder or an admin UI.
+### User Management
+- User registration and authentication
+- Role and permission management
+- User profile management
+- Session token management
 
-License
-- (Add your license information here)
+### Core Functionality
+- Car inventory management
+- Rental operations (OTP-based)
+- Pagination support with localized queries
+- Multi-language support (Arabic & English)
+- Email notifications
 
-If you want, I can:
-- Add an example `Program.cs` snippet that runs the seeders during startup.
-- Add authorization policy registration examples that check the `"permission"` claim.
+### Security Features
+- Password policies enforcement
+- Email verification requirements
+- Permission-based authorization handlers
+- Global rate limiting middleware
+- Sensitive data rate limiting
+
+## 🛠️ Technologies
+
+### Backend
+- **.NET 8** - Core framework
+- **Entity Framework Core** - ORM
+- **MediatR** - CQRS implementation
+- **FluentValidation** - Input validation
+- **AutoMapper** - Object mapping
+
+### Security
+- **JWT (JSON Web Tokens)** - Authentication
+- **ASP.NET Core Identity** - User management
+- **Custom Authorization Handlers** - Permission management
+
+### Database
+- **SQL Server** - Primary database
+- **Entity Framework Migrations** - Database versioning
+
+### Additional Tools
+- **Worker Services** - Background tasks
+- **Localization** - Multi-language support
+- **Resource Files** - Shared resources management
+
+## 📁 Project Structure
+
+```
+CarRentalSystem/
+├── API/                          # Web API Entry Point
+│   ├── Connected Services/
+│   ├── Dependencies/
+│   ├── Properties/
+│   ├── API.http
+│   ├── appsettings.json
+│   └── Program.cs
+│
+├── Application/                  # Application Layer (Business Logic)
+│   ├── Dependencies/
+│   ├── Abstracts/
+│   │   └── LocalizePaginationQuery.cs
+│   ├── Behaviors/
+│   │   └── ValidationBehaviors.cs
+│   ├── Features/
+│   │   ├── AuthFeature/
+│   │   │   ├── Commands/
+│   │   │   │   ├── ConfirmEmail/
+│   │   │   │   │   ├── ConfirmEmailCommand.cs
+│   │   │   │   │   ├── ConfirmEmailDTO.cs
+│   │   │   │   │   ├── ConfirmEmailHandler.cs
+│   │   │   │   │   └── ConfirmEmailValidator.cs
+│   │   │   │   ├── SignIn/
+│   │   │   │   │   ├── SignInCommand.cs
+│   │   │   │   │   ├── SignInCommandHandler.cs
+│   │   │   │   │   └── SignInCommandValidator.cs
+│   │   │   │   └── SignUp/
+│   │   │   │       ├── SignUpCommand.cs
+│   │   │   │       ├── SignUpCommandDTO.cs
+│   │   │   │       ├── SignUpCommandHandler.cs
+│   │   │   │       └── SignUpCommandValidator.cs
+│   │   │   └── Queries/
+│   │   ├── Home/
+│   │   │   ├── Dtos/
+│   │   │   └── Queries/
+│   │   └── ...
+│   ├── Validations/
+│   │   ├── LocalizePaginationValidator.cs
+│   │   └── ValidationRuleExtension.cs
+│   └── Resources/
+│       ├── SharedResources.cs
+│       ├── SharedResources.AR.resx
+│       └── SharedResources.EN.resx
+│
+├── Domain/                       # Domain Layer (Core Business Entities)
+│   ├── AppMetaData/
+│   │   ├── Permissions.cs
+│   │   ├── Policies.cs
+│   │   ├── Roles.cs
+│   │   └── Router.cs
+│   ├── Entities/
+│   │   ├── Identity/
+│   │   │   ├── Role.cs
+│   │   │   ├── User.cs
+│   │   │   ├── UserRole.cs
+│   │   │   └── UserToken.cs
+│   │   └── Otp.cs
+│   ├── Enums/
+│   │   ├── enOtpType.cs
+│   │   └── enTokenType.cs
+│   ├── Exceptions/
+│   │   ├── BadRequestException.cs
+│   │   └── DomainException.cs
+│   └── HelperClasses/
+│       ├── EmailSettings.cs
+│       ├── JwtAuthResult.cs
+│       ├── JwtSettings.cs
+│       └── RateLimitEntry.cs
+│
+├── Infrastructure/               # Infrastructure Layer (Data Access & External Services)
+│   ├── Dependencies/
+│   ├── Context/
+│   │   └── AppDbContext.cs
+│   ├── EntitiesConfigurations/
+│   │   └── Identity/
+│   │       ├── RoleConfig.cs
+│   │       ├── UserConfig.cs
+│   │       ├── UserRoleConfig.cs
+│   │       └── UserTokenConfig.cs
+│   ├── Implementations/
+│   │   └── Repositories/
+│   │       ├── GenericRepository.cs
+│   │       ├── OtpRepository.cs
+│   │       ├── RefreshTokenRepository.cs
+│   │       └── UnitOfWork.cs
+│   ├── Migrations/
+│   │   └── 20251230114856_Initial.cs
+│   ├── Security/
+│   │   ├── Claims/
+│   │   │   └── SessionTokenClaims.cs
+│   │   ├── Handlers/
+│   │   │   ├── PermissionAuthorizationHandler.cs
+│   │   │   ├── ResetPasswordOnlyHandler.cs
+│   │   │   └── VerificationOnlyHandler.cs
+│   │   ├── Models/
+│   │   │   └── UserClaimModel.cs
+│   │   ├── Providers/
+│   │   │   └── PermissionPolicyProvider.cs
+│   │   └── Requirements/
+│   │       ├── PermissionRequirement.cs
+│   │       ├── ResetPasswordOnlyRequirement.cs
+│   │       └── VerificationOnlyRequirement.cs
+│   └── Seeder/
+│       ├── Role.cs
+│       └── User.cs
+│
+├── Presentation/                 # Presentation Layer (API Controllers & Middleware)
+│   ├── Dependencies/
+│   ├── Controllers/
+│   │   ├── ApiController.cs
+│   │   └── AuthController.cs
+│   ├── Extensions/
+│   │   └── CommandExecutor.cs
+│   ├── Helpers/
+│   │   └── QueryExecutor.cs
+│   ├── Middleware/
+│   │   ├── ErrorHandlerMiddleware.cs
+│   │   ├── GlobalRateLimitingMiddleware.cs
+│   │   └── SensitiveRateLimitingMiddleware.cs
+│   └── Services/
+│       ├── HttpRequestContext.cs
+│       └── ServiceLifetime.cs
+│
+└── Worker/                       # Background Services
+    ├── Connected Services/
+    ├── Dependencies/
+    ├── Properties/
+    ├── appsettings.json
+    ├── CarRentalWorker.cs
+    └── Program.cs
+```
+
+## 🚀 Getting Started
+
+### Prerequisites
+
+- .NET SDK 8.0 or higher
+- SQL Server 2019 or higher
+- Visual Studio 2022 or VS Code
+
+### Installation
+
+1. Clone the repository
+```bash
+git clone https://github.com/AbuBasssam/CarRentalSystem.git
+cd CarRentalSystem
+```
+
+2. Update connection string in `appsettings.json`
+```json
+{
+  "ConnectionStrings": {
+    "DefaultConnection": "Server=YOUR_SERVER;Database=CarRentalDB;Trusted_Connection=True;"
+  }
+}
+```
+
+3. Configure JWT settings in `appsettings.json`
+```json
+{
+  "JWT": {
+    "Key": "YOUR_SECRET_KEY",
+    "Issuer": "CarRentalSystem",
+    "Audience": "CarRentalUsers",
+    "DurationInMinutes": 60
+  }
+}
+```
+
+4. Configure email settings
+```json
+{
+  "EmailSettings": {
+    "Email": "your-email@example.com",
+    "Password": "your-password",
+    "Host": "smtp.gmail.com",
+    "Port": 587
+  }
+}
+```
+
+5. Apply database migrations
+```bash
+dotnet ef database update --project Infrastructure --startup-project API
+```
+
+6. Run the application
+```bash
+dotnet run --project API
+```
+
+The API will be available at `https://localhost:5001` (or the port specified in launchSettings.json)
+
+## 📚 API Documentation
+
+### Authentication Endpoints
+
+#### Sign Up
+```http
+POST /api/Auth/SignUp
+Content-Type: application/json
+
+{
+  "email": "user@example.com",
+  "password": "SecurePassword123!",
+  "confirmPassword": "SecurePassword123!"
+}
+```
+
+#### Confirm Email
+```http
+POST /api/Auth/ConfirmEmail
+Content-Type: application/json
+
+{
+  "email": "user@example.com",
+  "code": "123456"
+}
+```
+
+#### Sign In
+```http
+POST /api/Auth/SignIn
+Content-Type: application/json
+
+{
+  "email": "user@example.com",
+  "password": "SecurePassword123!"
+}
+```
+
+### Response Format
+
+All API responses follow this structure:
+
+**Success Response:**
+```json
+{
+  "succeeded": true,
+  "message": "Operation completed successfully",
+  "data": { }
+}
+```
+
+**Error Response:**
+```json
+{
+  "succeeded": false,
+  "message": "Error message",
+  "errors": ["Detailed error 1", "Detailed error 2"]
+}
+```
+
+## 🔒 Security
+
+### Authentication
+The system uses JWT-based authentication with the following features:
+- Access tokens with configurable expiration
+- Refresh tokens for token renewal
+- Email confirmation required for account activation
+
+### Authorization
+Multi-level authorization system:
+- **Role-Based Access Control**: Predefined roles with specific permissions
+- **Permission-Based Authorization**: Granular control over resources
+- **Policy-Based Authorization**: Custom policies for complex scenarios
+
+### Rate Limiting
+Two-tier rate limiting system:
+- Global rate limiting for all endpoints
+- Sensitive rate limiting for authentication endpoints
+
+### Password Policy
+Configurable password requirements:
+- Minimum length
+- Required character types (uppercase, lowercase, digits, special characters)
+- Password history
+
+## 🧪 Testing
+
+```bash
+# Run all tests
+dotnet test
+
+# Run with coverage
+dotnet test /p:CollectCoverage=true
+```
+
+## 🤝 Contributing
+
+Contributions are welcome! Please follow these steps:
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
+
+### Coding Standards
+
+- Follow Clean Architecture principles
+- Follow C# coding conventions
+- Document public APIs
+- Use meaningful commit messages
+
+## 📝 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 👨‍💻 Author
+
+**Abu Bassam**
+- GitHub: [@AbuBasssam](https://github.com/AbuBasssam)
+
