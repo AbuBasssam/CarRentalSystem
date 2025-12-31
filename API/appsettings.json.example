@@ -1,0 +1,50 @@
+{
+  "Logging": {
+    "LogLevel": {
+      "Default": "Information",
+      "Microsoft.AspNetCore": "Warning"
+    }
+  },
+  "AllowedHosts": "*",
+  
+   "ConnectionStrings": {
+      "ConnectionString": "Server=your_server;Database=your_db;Integrated Security=True;TrustServerCertificate=True;Connection Timeout=30;",
+  },
+  "JwtSettings": {
+    "SecretKey": "your_secret_key_here",
+    "Issuer": "your_issuer",
+    "Audience": "your_audience"
+  },
+  "emailSettings": {
+    "port": "your-port",
+    "host": "your-host",
+    "FromEmail": "your_email",
+    "password": "your_password"
+
+  },
+  "Serilog": {
+    "Using": [ "Serilog.Sinks.MSSqlServer", "Serilog.Sinks.Console" ],
+    "MinimumLevel": {
+      "Default": "Information",
+      "override": {
+        "Microsoft": "Error"
+      }
+    },
+    "WriteTo": [
+      {
+        "Name": "Console"
+      },
+      {
+        "Name": "MSSqlServer",
+        "Args": {
+          "ConnectionString": "Server=your_server;Database=your_db;Integrated Security=True;TrustServerCertificate=True;Connection Timeout=30;",
+          "TableName": "SystemLogs",
+          "autoCreateSqlTable": true
+        }
+      }
+
+    ]
+
+  }
+
+}

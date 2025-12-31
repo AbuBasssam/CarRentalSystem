@@ -1,0 +1,373 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <!-- 
+    Microsoft ResX Schema 
+    
+    Version 2.0
+    
+    The primary goals of this format is to allow a simple XML format 
+    that is mostly human readable. The generation and parsing of the 
+    various data types are done through the TypeConverter classes 
+    associated with the data types.
+    
+    Example:
+    
+    ... ado.net/XML headers & schema ...
+    <resheader name="resmimetype">text/microsoft-resx</resheader>
+    <resheader name="version">2.0</resheader>
+    <resheader name="reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
+    <resheader name="writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
+    <data name="Name1"><value>this is my long string</value><comment>this is a comment</comment></data>
+    <data name="Color1" type="System.Drawing.Color, System.Drawing">Blue</data>
+    <data name="Bitmap1" mimetype="application/x-microsoft.net.object.binary.base64">
+        <value>[base64 mime encoded serialized .NET Framework object]</value>
+    </data>
+    <data name="Icon1" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
+        <value>[base64 mime encoded string representing a byte array form of the .NET Framework object]</value>
+        <comment>This is a comment</comment>
+    </data>
+                
+    There are any number of "resheader" rows that contain simple 
+    name/value pairs.
+    
+    Each data row contains a name, and value. The row also contains a 
+    type or mimetype. Type corresponds to a .NET class that support 
+    text/value conversion through the TypeConverter architecture. 
+    Classes that don't support this are serialized and stored with the 
+    mimetype set.
+    
+    The mimetype is used for serialized objects, and tells the 
+    ResXResourceReader how to depersist the object. This is currently not 
+    extensible. For a given mimetype the value must be set accordingly:
+    
+    Note - application/x-microsoft.net.object.binary.base64 is the format 
+    that the ResXResourceWriter will generate, however the reader can 
+    read any of the formats listed below.
+    
+    mimetype: application/x-microsoft.net.object.binary.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
+            : and then encoded with base64 encoding.
+    
+    mimetype: application/x-microsoft.net.object.soap.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Soap.SoapFormatter
+            : and then encoded with base64 encoding.
+
+    mimetype: application/x-microsoft.net.object.bytearray.base64
+    value   : The object must be serialized into a byte array 
+            : using a System.ComponentModel.TypeConverter
+            : and then encoded with base64 encoding.
+    -->
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+ <!-- General Response Status Keys -->
+  <data name="Success" xml:space="preserve">
+    <value>Success</value>
+  </data>
+  <data name="Created" xml:space="preserve">
+    <value>Created</value>
+  </data>
+  <data name="Deleted" xml:space="preserve">
+    <value>Deleted</value>
+  </data>
+  <data name="Failed" xml:space="preserve">
+    <value>Failed</value>
+  </data>
+  
+  <!-- HTTP Status Keys -->
+  <data name="BadRequest" xml:space="preserve">
+    <value>Bad Request</value>
+  </data>
+  <data name="Unauthorized" xml:space="preserve">
+    <value>Unauthorized</value>
+  </data>
+  <data name="NotFound" xml:space="preserve">
+    <value>Not Found</value>
+  </data>
+  <data name="UnprocessableEntity" xml:space="preserve">
+    <value>Unprocessable Entity</value>
+  </data>
+  <data name="InternalServerError" xml:space="preserve">
+    <value>Internal Server Error</value>
+  </data>
+  
+  <!-- General Validation Keys -->
+  <data name="Required" xml:space="preserve">
+    <value>Required</value>
+  </data>
+  <data name="NotEmpty" xml:space="preserve">
+    <value>Not Empty</value>
+  </data>
+  <data name="PropertyCannotBeNull" xml:space="preserve">
+    <value>Required! {PropertyName} cannot be null</value>
+  </data>
+  <data name="PropertyCannotBeEmpty" xml:space="preserve">
+    <value>Required! {PropertyName} cannot be empty</value>
+  </data>
+  <data name="NameNoSpacesAllowed" xml:space="preserve">
+    <value>Name cannot contain spaces</value>
+  </data>
+  <data name="NameInvalidCharacters" xml:space="preserve">
+    <value>Name can only contain letters and numbers</value>
+  </data>
+  <data name="MinLength" xml:space="preserve">
+    <value>{PropertyName} must be at least {0} characters</value>
+  </data>
+  <data name="MaxLength" xml:space="preserve">
+    <value>{PropertyName} must be less than or equal to {0} characters</value>
+  </data>
+  
+  <!-- User Input Validation Keys -->
+  <data name="EmailRequired" xml:space="preserve">
+    <value>Email is required field</value>
+  </data>
+  <data name="PasswordRequired" xml:space="preserve">
+    <value>Password is required field</value>
+  </data>
+  <data name="TokenRequired" xml:space="preserve">
+    <value>Session token is required</value>
+  </data>
+  <data name="CodeRequired" xml:space="preserve">
+    <value>Code is required</value>
+  </data>
+  <data name="PhoneNumberRequired" xml:space="preserve">
+    <value>Phone number is required field</value>
+  </data>
+  <data name="NameRequired" xml:space="preserve">
+    <value>Name is required field</value>
+  </data>
+  <data name="GoogleIdTokenRequired" xml:space="preserve">
+    <value>Google ID token is required for Google Sign-In</value>
+  </data>
+  <data name="RequestPayloadRequired" xml:space="preserve">
+    <value>Request payload is required</value>
+  </data>
+  
+  <!-- Format Validation Keys -->
+  <data name="InvalidEmail" xml:space="preserve">
+    <value>Invalid email format</value>
+  </data>
+  <data name="InvalidCode" xml:space="preserve">
+    <value>Invalid code format</value>
+  </data>
+  <data name="InvalidPhoneNumber" xml:space="preserve">
+    <value>Phone number must be in format: +966 5X XXX XXXX</value>
+  </data>
+  <data name="NameLengthRange" xml:space="preserve">
+    <value>Name should be between 8 and 16 characters</value>
+  </data>
+  
+  <!-- Authentication & Authorization Keys -->
+  <data name="InValidCredentials" xml:space="preserve">
+    <value>Invalid email and/or password</value>
+  </data>
+  <data name="InvalidAccessToken" xml:space="preserve">
+    <value>Invalid access token</value>
+  </data>
+  <data name="InvalidGoogleToken" xml:space="preserve">
+    <value>Invalid Google token</value>
+  </data>
+  <data name="ErrorConfirmingResetPasswordCode" xml:space="preserve">
+    <value>An error occurred while confirming the reset password code</value>
+  </data>
+  <data name="ErrorResettingPassword" xml:space="preserve">
+    <value>Error resetting password for token: {0}</value>
+  </data>
+  <data name="TwoFactorRequired" xml:space="preserve">
+    <value>Two-factor authentication is required to sign in</value>
+  </data>
+  
+  <!-- User Management Keys -->
+  <data name="EmailAlreadyExists" xml:space="preserve">
+    <value>Email already exists</value>
+  </data>
+  <data name="UserNotFound" xml:space="preserve">
+    <value>User not found</value>
+  </data>
+  <data name="UserCreationFailed" xml:space="preserve">
+    <value>Failed to create user</value>
+  </data>
+  <data name="EmailConfirmationFailed" xml:space="preserve">
+    <value>An error occurred while confirming the email</value>
+  </data>
+  <data name="AccountLockedOut" xml:space="preserve">
+    <value>Your account has been locked due to multiple failed login attempts. Please try again in {0} minutes</value>
+  </data>
+  
+  <!-- Token Validation Keys -->
+  <data name="ClaimsPrincipleIsNull" xml:space="preserve">
+    <value>Claims principle is null</value>
+  </data>
+  <data name="InvalidUserId" xml:space="preserve">
+    <value>Invalid user ID</value>
+  </data>
+  <data name="InvalidEmailClaim" xml:space="preserve">
+    <value>Invalid email claim</value>
+  </data>
+  <data name="InvalidPhoneNumberClaim" xml:space="preserve">
+    <value>Invalid phone number claim</value>
+  </data>
+  <data name="NullRefreshToken" xml:space="preserve">
+    <value>Refresh token entity is null</value>
+  </data>
+  <data name="RevokedRefreshToken" xml:space="preserve">
+    <value>Revoked refresh token</value>
+  </data>
+  
+  <!-- Token Extraction Keys -->
+  <data name="FailedExtractToken" xml:space="preserve">
+    <value>Failed to extract JWT token</value>
+  </data>
+  <data name="FailedExtractEmail" xml:space="preserve">
+    <value>Failed to extract email from token</value>
+  </data>
+  <data name="FailedExtractPhoneNumber" xml:space="preserve">
+    <value>Failed to extract phone number from token</value>
+  </data>
+  <data name="FailedToExtractCustomerId" xml:space="preserve">
+    <value>Failed to extract customer ID from token</value>
+  </data>
+  
+  <!-- Cooldown & Rate Limiting Keys -->
+  <data name="WaitCooldownPeriod" xml:space="preserve">
+    <value>Please wait for 2 minutes before requesting a new confirmation code</value>
+  </data>
+  <data name="CooldownPeriodActive" xml:space="preserve">
+    <value>Please wait until the cooldown period expires before requesting a new code</value>
+  </data>
+  <data name="InvalidExpiredCode" xml:space="preserve">
+    <value>Invalid/Expired Code</value>
+  </data>
+  <data name="ResendCooldown" xml:space="preserve">
+    <value>Please wait {0} seconds before requesting a new code</value>
+  </data>
+  
+  <!-- Order Processing Keys -->
+  <data name="MinimumOrderAmount" xml:space="preserve">
+    <value>Minimum order amount is</value>
+  </data>
+  <data name="InsufficientStock" xml:space="preserve">
+    <value>Insufficient stock for item {0}</value>
+  </data>
+  <data name="FailedToUpdateInventory" xml:space="preserve">
+    <value>Failed to update inventory for item {0}</value>
+  </data>
+  <data name="RecentRefundError" xml:space="preserve">
+    <value>You cannot place a new order due to a recent refund. Please contact support</value>
+  </data>
+  
+  <!-- Email Verification Keys -->
+  <data name="EmailNotVerified" xml:space="preserve">
+    <value>Please verify your email address before signing in. Check your inbox</value>
+  </data>
+  <data name="EmailAlreadyVerified" xml:space="preserve">
+    <value>Email address is already verified</value>
+  </data>
+  <data name="VerificationCodeResent" xml:space="preserve">
+    <value>A new verification code has been sent to your email</value>
+  </data>
+  <data name="PendingVerification" xml:space="preserve">
+    <value>A registration exists for this email. Please verify your email or wait {0} hours to register again</value>
+  </data>
+  
+  <!-- Token Management Keys -->
+  <data name="InvalidToken" xml:space="preserve">
+    <value>Invalid verification token</value>
+  </data>
+  <data name="TokenNotFound" xml:space="preserve">
+    <value>Token not found or already expired</value>
+  </data>
+  <data name="TokenExpired" xml:space="preserve">
+    <value>Verification token has expired</value>
+  </data>
+  <data name="TokenRevoked" xml:space="preserve">
+    <value>Verification token has been revoked</value>
+  </data>
+  
+  <!-- Session Management Keys -->
+  <data name="LogoutSuccessful" xml:space="preserve">
+    <value>You have been logged out successfully</value>
+  </data>
+  <data name="LogoutFailed" xml:space="preserve">
+    <value>An error occurred during logout. Please try again</value>
+  </data>
+  
+  <!-- Security Keys -->
+  <data name="SuspiciousActivity" xml:space="preserve">
+    <value>Suspicious activity detected</value>
+  </data>
+  <data name="AccountLocked" xml:space="preserve">
+    <value>Account is locked</value>
+  </data>
+  <data name="InvalidRefreshToken" xml:space="preserve">
+    <value>Invalid refresh token</value>
+  </data>
+  
+  <!-- Miscellaneous Keys -->
+  <data name="Currency" xml:space="preserve">
+    <value>SAR</value>
+  </data>
+  <data name="UnexpectedError" xml:space="preserve">
+    <value>Unexpected error</value>
+  </data>
+  <data name="ErrorOccurred" xml:space="preserve">
+    <value>An error occurred</value>
+  </data>
+</root>
