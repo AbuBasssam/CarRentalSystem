@@ -35,6 +35,6 @@ public interface IAuthService : IScopedService
     /// <param name="userId">User ID</param>
     /// <returns>Result indicating success or failure</returns>
     Task<Result<bool>> LogoutFromAllDevices(int userId);
-    Task<Result<string>> ValidateSessionToken(string sessionToken, enTokenType tokenType);
+    Task<bool> ValidateSessionToken(string sessionToken, enTokenType tokenType);
 
 }

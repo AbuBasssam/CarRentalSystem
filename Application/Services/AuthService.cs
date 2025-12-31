@@ -100,7 +100,7 @@ public class AuthService : IAuthService
         }
     }
 
-    public async Task<Result<string>> ValidateSessionToken(string sessionToken, enTokenType tokenType)
+    public async Task<bool> ValidateSessionToken(string sessionToken, enTokenType tokenType)
     {
 
 
@@ -108,7 +108,7 @@ public class AuthService : IAuthService
 
         if (jwtObj == null)
         {
-            return Result<string>.Failure([_Localizer[SharedResourcesKeys.InvalidToken]]);
+            return false;
         }
 
         // 2. Check in database
@@ -116,22 +116,13 @@ public class AuthService : IAuthService
             .GetTableNoTracking()
             .Where(x => x.JwtId == jwtObj.Id && x.Type == tokenType)
             .FirstOrDefaultAsync();
-        if (tokenEntity == null)
+
+        if (tokenEntity == null || !tokenEntity.IsValid())
         {
-            return Result<string>.Failure([_Localizer[SharedResourcesKeys.TokenNotFound]]);
+            return false;
         }
 
-        if (tokenEntity.IsRevoked)
-        {
-            return Result<string>.Failure([_Localizer[SharedResourcesKeys.TokenRevoked]]);
-        }
-
-        if (tokenEntity.ExpiryDate < DateTime.UtcNow)
-        {
-            return Result<string>.Failure([_Localizer[SharedResourcesKeys.TokenExpired]]);
-        }
-
-        return Result<string>.Success(string.Empty);
+        return true;
 
     }
 
