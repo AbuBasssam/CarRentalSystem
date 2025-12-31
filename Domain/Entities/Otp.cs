@@ -15,7 +15,6 @@ public class Otp : IEntity<int>
 
     public DateTime ExpirationTime { get; private set; }
 
-    public bool IsExpired => DateTime.UtcNow >= ExpirationTime;
     public bool IsUsed { get; private set; }
 
 
@@ -29,12 +28,23 @@ public class Otp : IEntity<int>
     {
         if (validFor <= TimeSpan.Zero)
             throw new Exception("OTP validity duration must be positive");
-        // throw new DomainException("OTP validity duration must be positive");
+
         Code = code;
         Type = type;
         UserID = userId;
         CreationTime = DateTime.UtcNow;
         ExpirationTime = CreationTime.Add(validFor);
+    }
+    public bool IsExpired() => DateTime.UtcNow >= ExpirationTime;
+
+    private TimeSpan _GetCooldownPeriod()
+    {
+        return Type switch
+        {
+            enOtpType.ConfirmEmail => TimeSpan.FromMinutes(2),
+            enOtpType.ResetPassword => TimeSpan.FromMinutes(1),
+            _ => TimeSpan.FromMinutes(2)
+        };
     }
 
     /// <summary>
@@ -42,7 +52,7 @@ public class Otp : IEntity<int>
     /// </summary>
     public void ForceExpire()
     {
-        if (IsExpired)
+        if (IsExpired())
             return;
 
         ExpirationTime = DateTime.UtcNow;
@@ -51,19 +61,22 @@ public class Otp : IEntity<int>
     /// <summary>
     /// Mark otp as used 
     /// </summary>
-    public void MarkAsUsed()
+    public void MarkAsUsed() => IsUsed = true;
+    public bool CanResend()
     {
-        if (IsExpired)
-            throw new Exception("Cannot use expired OTP");
-        //throw new DomainException("Cannot use expired OTP");
-
-        if (IsUsed)
-            throw new Exception("OTP already used");
-        //throw new DomainException("OTP already used");
-
-        IsUsed = true;
+        TimeSpan cooldown = _GetCooldownPeriod();
+        var timeSince = DateTime.UtcNow - CreationTime;
+        return timeSince >= cooldown;
     }
 
+    public TimeSpan? GetRemainingCooldown()
+    {
+        TimeSpan cooldownPeriod = _GetCooldownPeriod();
+        var elapsed = DateTime.UtcNow - CreationTime;
+        return elapsed < cooldownPeriod
+            ? cooldownPeriod - elapsed
+            : null;
+    }
 
 }
 

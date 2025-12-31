@@ -16,7 +16,6 @@ public class UserToken : IEntity<int>
     public DateTime? ExpiryDate { get; set; }
     public bool IsUsed { get; set; }
     public bool IsRevoked { get; set; }
-    public bool IsExpired => IsRevoked || DateTime.UtcNow >= ExpiryDate;
 
     private UserToken() { }
     private UserToken(int userId, string? refreshTokenHash, string jwtId, DateTime expiryDate)
@@ -56,40 +55,25 @@ public class UserToken : IEntity<int>
     /// <summary>
     /// Mark token as used (Refresh scenario)
     /// </summary>
-    public void MarkAsUsed()
-    {
-        if (IsExpired)
-            throw new Exception("Cannot use expired or revoked token");
-        // throw new DomainException("Cannot use expired or revoked token");
-
-        if (IsUsed)
-            throw new Exception("Token already used");
-        //throw new DomainException("Token already used");
-
-        IsUsed = true;
-    }
+    public void MarkAsUsed() => IsUsed = true;
 
     /// <summary>
     /// Revoke token explicitly (logout, security breach)
     /// </summary>
-    public void Revoke()
-    {
-        if (IsRevoked)
-            return;
-
-        IsRevoked = true;
-    }
+    public void Revoke() => IsRevoked = true;
 
     /// <summary>
     /// Force token to expire immediately
     /// </summary>
     public void ForceExpire()
     {
-        if (IsExpired)
+        if (IsExpired())
             return;
 
         ExpiryDate = DateTime.UtcNow;
     }
 
+    public bool IsValid() => !IsExpired() && !IsRevoked && !IsUsed;
+    public bool IsExpired() => DateTime.UtcNow >= ExpiryDate;
 
 }
