@@ -162,7 +162,7 @@ public static class DependencyInjection
         */
 
         // way 2: Using Bind method
-        var emailSetting = configuration.GetSection("emailSettings");
+        var emailSetting = configuration.GetSection("EmailSettings");
         services.Configure<EmailSettings>(emailSetting);
 
         var EmailSetting = new EmailSettings();
