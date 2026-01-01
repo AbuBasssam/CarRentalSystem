@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore.Migrations;
+﻿using System;
+using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
@@ -85,19 +86,18 @@ namespace Infrastructure.Migrations
                     CreationTime = table.Column<DateTime>(type: "datetime2", nullable: false),
                     ExpirationTime = table.Column<DateTime>(type: "datetime2", nullable: false),
                     IsUsed = table.Column<bool>(type: "bit", nullable: false),
-                    UserID = table.Column<int>(type: "int", nullable: false),
+                    UserId = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Otps", x => x.Id);
                     table.CheckConstraint("CK_Otp_Type", "Type > 0 AND Type < 3");
                     table.ForeignKey(
-                        name: "FK_Otps_Users_UserID",
-                        column: x => x.UserID,
+                        name: "FK_Otps_Users_UserId",
+                        column: x => x.UserId,
                         principalTable: "Users",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
-
                 });
 
             migrationBuilder.CreateTable(
@@ -193,14 +193,9 @@ namespace Infrastructure.Migrations
             migrationBuilder.CreateIndex(
                 name: "IX_Otps_ActiveOtp",
                 table: "Otps",
-                columns: new[] { "UserID", "Type" },
+                columns: new[] { "UserId", "Type" },
                 unique: true,
                 filter: "[IsUsed] = 0");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Otps_UserId",
-                table: "Otps",
-                column: "UserId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_RoleClaims_RoleId",

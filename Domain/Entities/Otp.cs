@@ -18,11 +18,11 @@ public class Otp : IEntity<int>
     public bool IsUsed { get; private set; }
 
 
-    public int UserID { get; private set; }
+    public int UserId { get; private set; }
 
     // Navigation property
     public virtual User User { get; set; } = null!;
-    private Otp() { }
+    protected Otp() { }
 
     public Otp(string code, enOtpType type, int userId, TimeSpan validFor)
     {
@@ -31,7 +31,7 @@ public class Otp : IEntity<int>
 
         Code = code;
         Type = type;
-        UserID = userId;
+        UserId = userId;
         CreationTime = DateTime.UtcNow;
         ExpirationTime = CreationTime.Add(validFor);
     }

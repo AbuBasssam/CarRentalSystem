@@ -21,7 +21,7 @@ namespace EntitiesConfigurations
 
 
             builder
-                .HasIndex(o => new { o.UserID, o.Type })
+                .HasIndex(o => new { o.UserId, o.Type })
                 .HasDatabaseName("IX_Otps_ActiveOtp")
                 .IsUnique()
                 .HasFilter("[IsUsed] = 0");
@@ -34,9 +34,10 @@ namespace EntitiesConfigurations
 
             // Configure the foreign key relationship
             builder.HasOne(o => o.User)
-            .WithMany()
-            .HasForeignKey(o => o.UserID)
-            .OnDelete(DeleteBehavior.Cascade);
+                .WithMany(u => u.Otps)
+                .HasForeignKey(o => o.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
 
             builder.ToTable(t => t.HasCheckConstraint("CK_Otp_Type", "Type > 0 AND Type < 3"));
 

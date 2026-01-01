@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20251230114856_Initial")]
+    [Migration("20260101111404_Initial")]
     partial class Initial
     {
         /// <inheritdoc />
@@ -53,17 +53,12 @@ namespace Infrastructure.Migrations
                     b.Property<int>("Type")
                         .HasColumnType("int");
 
-                    b.Property<int>("UserID")
-                        .HasColumnType("int");
-
-                    b.Property<int?>("UserId")
+                    b.Property<int>("UserId")
                         .HasColumnType("int");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("UserId");
-
-                    b.HasIndex("UserID", "Type")
+                    b.HasIndex("UserId", "Type")
                         .IsUnique()
                         .HasDatabaseName("IX_Otps_ActiveOtp")
                         .HasFilter("[IsUsed] = 0");
@@ -309,14 +304,10 @@ namespace Infrastructure.Migrations
             modelBuilder.Entity("Domain.Entities.Otp", b =>
                 {
                     b.HasOne("Domain.Entities.User", "User")
-                        .WithMany()
-                        .HasForeignKey("UserID")
+                        .WithMany("Otps")
+                        .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.HasOne("Domain.Entities.User", null)
-                        .WithMany("Otps")
-                        .HasForeignKey("UserId");
 
                     b.Navigation("User");
                 });

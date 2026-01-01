@@ -17,7 +17,7 @@ public class UserToken : IEntity<int>
     public bool IsUsed { get; set; }
     public bool IsRevoked { get; set; }
 
-    private UserToken() { }
+    protected UserToken() { }
     private UserToken(int userId, string? refreshTokenHash, string jwtId, DateTime expiryDate)
     {
         UserId = userId;
