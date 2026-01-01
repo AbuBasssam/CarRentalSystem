@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Localization;
 using Microsoft.Extensions.Options;
 using Presentation;
 using PresentationLayer.Middleware;
+using Serilog;
 using System.Globalization;
 var builder = WebApplication.CreateBuilder(args);
 
@@ -22,7 +23,7 @@ builder.Configuration.AddEnvironmentVariables();
 builder.Configuration["ConnectionStrings:DefaultConnection"] =
     Environment.GetEnvironmentVariable("DB_CONNECTION_STRING");
 
-builder.Configuration["JwtSettings:SecretKey"] =
+builder.Configuration["JwtSettings:Secret"] =
     Environment.GetEnvironmentVariable("JWT_SECRET_KEY");
 
 builder.Configuration["JwtSettings:Issuer"] =
@@ -31,13 +32,13 @@ builder.Configuration["JwtSettings:Issuer"] =
 builder.Configuration["JwtSettings:Audience"] =
     Environment.GetEnvironmentVariable("JWT_AUDIENCE");
 
-builder.Configuration["EmailSettings:SmtpHost"] =
+builder.Configuration["EmailSettings:host"] =
     Environment.GetEnvironmentVariable("SMTP_HOST");
 
-builder.Configuration["EmailSettings:Username"] =
+builder.Configuration["EmailSettings:FromEmail"] =
     Environment.GetEnvironmentVariable("SMTP_USERNAME");
 
-builder.Configuration["EmailSettings:Password"] =
+builder.Configuration["EmailSettings:password"] =
     Environment.GetEnvironmentVariable("SMTP_PASSWORD");
 
 // Add services to the container.
@@ -69,10 +70,10 @@ builder.Services
 
 #region Serilog
 
-//Log.Logger = new LoggerConfiguration().ReadFrom
-//      .Configuration(builder.Configuration)
-//      .CreateLogger();
-//builder.Services.AddSerilog();
+Log.Logger = new LoggerConfiguration().ReadFrom
+      .Configuration(builder.Configuration)
+      .CreateLogger();
+builder.Services.AddSerilog();
 
 #endregion
 
