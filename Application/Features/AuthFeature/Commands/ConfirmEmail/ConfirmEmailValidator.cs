@@ -17,12 +17,9 @@ public class ConfirmEmailValidator : AbstractValidator<ConfirmEmailCommand>
 
     private void _ApplyValidations()
     {
+        RuleFor(x => x.dto)
+            .NotNull().WithMessage(_Localizer[SharedResourcesKeys.RequestPayloadRequired])
+            .SetValidator(new ConfirmEmailDTO.Validator(_Localizer));
 
-        RuleFor(x => x.dto.OtpCode)
-            .NotEmpty()
-            .WithMessage(_Localizer[SharedResourcesKeys.CodeRequired])
-
-            .Length(6)
-            .WithMessage(_Localizer[SharedResourcesKeys.InvalidCode]);
     }
 }
