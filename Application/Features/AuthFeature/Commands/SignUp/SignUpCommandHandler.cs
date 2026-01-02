@@ -75,7 +75,7 @@ public class SignUpCommandHandler : IRequestHandler<SignUpCommand, Response<stri
 
                 user = createResult.Data;
 
-                // AssignDefaultRole
+                // Assign To Customer Role
                 await _userService.AddToRoleAsync(user, Roles.Customer);
 
 
@@ -85,35 +85,34 @@ public class SignUpCommandHandler : IRequestHandler<SignUpCommand, Response<stri
             // ========== Case 2 : UnConfirmed User ==========
             else if (!existingUser.EmailConfirmed)
             {
-
                 user = existingUser;
 
+                Log.Information("Re-registration attempt for unconfirmed user: {UserId}", user.Id);
 
-                await _refreshTokenRepo.RevokeUserTokenAsync(
-                    user.Id,
-                    enTokenType.VerificationToken
-                );
-                await _unitOfWork.SaveChangesAsync();
+                // Revoke old Verification Token
+                await _refreshTokenRepo.RevokeUserTokenAsync(user.Id, enTokenType.VerificationToken);
+
+                // Force Expire for Old Active Confirm email otps
+                await _otpService.ExpireActiveOtpAsync(user.Id, enOtpType.ConfirmEmail, cancellationToken);
+
+
+                await _unitOfWork.SaveChangesAsync(cancellationToken);
             }
+
 
             // ========== Case 3 : Existing User ==========
             else
             {
+                Log.Warning("Registration attempt with confirmed email: {Email}", request.Dto.Email);
                 await transaction.RollbackAsync();
                 return _responseHandler.BadRequest<string>(
                     _localizer[SharedResourcesKeys.EmailAlreadyExists]
                 );
             }
 
-            var otpResult = await _otpService.GenerateAndSendOtpAsync
-            (
-                user.Id,
-                request.Dto.Email,
-                enOtpType.ConfirmEmail,
-                5
-            );
+            var sendingEmailResult = await _otpService.SendOtpEmailAsync(user.Id, request.Dto.Email, enOtpType.ConfirmEmail, 5);
 
-            if (!otpResult.IsSuccess)
+            if (!sendingEmailResult.IsSuccess)
             {
                 await transaction.RollbackAsync();
                 return _responseHandler.Success(string.Empty);
@@ -127,6 +126,22 @@ public class SignUpCommandHandler : IRequestHandler<SignUpCommand, Response<stri
             await transaction.CommitAsync();
 
             return _responseHandler.Success(verificationToken.AccessToken);
+        }
+        catch (DbUpdateException dex)
+        {
+            await transaction.RollbackAsync(cancellationToken);
+
+
+            if (dex.IsUniqueConstraintViolation())
+            {
+                Log.Warning(dex, "Unique constraint violation during sign-up");
+
+                return _responseHandler.BadRequest<string>(_localizer[SharedResourcesKeys.EmailAlreadyExists]);
+            }
+
+            Log.Error(dex, "Database error during sign-up");
+            return _responseHandler.BadRequest<string>(
+                _localizer[SharedResourcesKeys.UnexpectedError]);
         }
         catch (Exception ex)
         {
