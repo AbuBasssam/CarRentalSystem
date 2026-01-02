@@ -118,7 +118,7 @@ public class SignUpCommandHandler : IRequestHandler<SignUpCommand, Response<stri
                 return _responseHandler.Success(string.Empty);
             }
 
-            var verificationToken = _authService.GenerateVerificationToken(user, 15);
+            var verificationToken = _authService.GenerateVerificationToken(user, 1440);// one day
             await _refreshTokenRepo.AddAsync(verificationToken.refreshToken);
 
 
