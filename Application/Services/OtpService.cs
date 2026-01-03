@@ -1,8 +1,11 @@
-﻿using Application.Models;
+﻿using Application.Features.AuthFeature;
+using Application.Models;
+using ApplicationLayer.Resources;
 using Domain.Entities;
 using Domain.Enums;
 using Interfaces;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 using Serilog;
 
 
@@ -10,16 +13,23 @@ namespace Application.Services;
 
 public class OtpService : IOtpService
 {
+    #region Field(s)
     private readonly IEmailService _emailService;
     private readonly IOtpRepository _otpRepo;
+    private readonly IStringLocalizer<SharedResources> _localizer;
+    #endregion
 
-
-    public OtpService(IEmailService emailService, IOtpRepository otpRepo)
+    #region Constructor(s)
+    public OtpService(IEmailService emailService, IOtpRepository otpRepo, IStringLocalizer<SharedResources> localizer)
     {
         _emailService = emailService;
         _otpRepo = otpRepo;
+        _localizer = localizer;
     }
 
+    #endregion
+
+    #region Method(s)
     public async Task<Result<bool>> SendOtpEmailAsync(int userId, string email, enOtpType otpType, int validityMinutes, CancellationToken cancellationToken = default)
     {
 
@@ -45,6 +55,7 @@ public class OtpService : IOtpService
 
         return Result<bool>.Success(true);
     }
+
     /// <summary>
     /// Expires and marks old active OTP as used before creating new one
     /// Prevents Unique Constraint Violation on active OTPs
@@ -116,11 +127,67 @@ public class OtpService : IOtpService
         }
     }
 
+    /// <summary>
+    /// Validates the OTP and manages attempt counting.
+    /// </summary>
+    public async Task<ValidationOtpResuult> ValidateOtp(int userId, string otpCode, enOtpType enOtpType, CancellationToken ct)
+    {
+        var validtionResult = new ValidationOtpResuult();
+        var otp = await _otpRepo
+                .GetLatestValidOtpAsync(userId, enOtpType)
+                .FirstOrDefaultAsync(ct);
+
+
+        if (otp == null)
+        {
+            Log.Warning(
+            $"OTP validation failed: no active OTP found for UserId {userId}");
+
+            return validtionResult;
+
+        }
+        if (!otp.IsValidForVerification())
+        {
+            Log.Warning(
+                $"OTP invalid state for UserId {userId}. Expired/Used/MaxAttempts");
+
+            return validtionResult;
+        }
+
+        // Verify OTP code
+        var hashedCode = Helpers.HashString(otpCode);
+        if (otp.Code != hashedCode)
+        {
+            otp.IncrementAttempts();
+
+            if (otp.HasExceededMaxAttempts())
+            {
+                otp.ForceExpire();
+                otp.MarkAsUsed();
+
+                Log.Warning($"OTP locked after max attempts for UserId {userId}");
+                validtionResult.IsExceededMaxAttempts = true;
+                return validtionResult;
+            }
+            else
+                Log.Warning($"OTP validation failed: invalid code for UserId {userId}");
+
+            return validtionResult;
+        }
+        validtionResult.Otp = otp;
+
+        return validtionResult;
+    }
+
+    #endregion
+
+    #region Helper Method(s)
     private string _GenerateOtp()
     {
         Random generator = new Random();
         return generator.Next(100000, 1000000).ToString("D6");
     }
+
     private async Task _SaveOtpToDb(int UserID, string otp, enOtpType otpType, int minutesValidDuration)
     {
         var validFor = TimeSpan.FromMinutes(minutesValidDuration);
@@ -131,4 +198,6 @@ public class OtpService : IOtpService
 
 
     }
+
+    #endregion
 }

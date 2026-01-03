@@ -8,12 +8,18 @@ namespace Application.Features.AuthFeature;
 
 public class ConfirmEmailDTO
 {
+    #region Field(s)
     public string OtpCode { get; set; } = null!;
 
+    #endregion
+
+    #region Constructor(s)
     public ConfirmEmailDTO(string otpCode)
     {
         OtpCode = otpCode;
     }
+
+    #endregion
 
     #region Validation
     public class Validator : AbstractValidator<ConfirmEmailDTO>

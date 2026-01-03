@@ -15,6 +15,16 @@ public class Otp : IEntity<int>
 
     public DateTime ExpirationTime { get; private set; }
 
+    // NEW: Track failed attempts
+    public int AttemptsCount { get; private set; }
+
+    // NEW: Track last attempt time
+    public DateTime? LastAttemptAt { get; private set; }
+
+    // NEW: Track associated JWT ID for password reset flow
+    public string? TokenJti { get; private set; }
+
+    private byte MaxAttempts = 5;
     public bool IsUsed { get; private set; }
 
 
@@ -24,7 +34,7 @@ public class Otp : IEntity<int>
     public virtual User User { get; set; } = null!;
     protected Otp() { }
 
-    public Otp(string code, enOtpType type, int userId, TimeSpan validFor)
+    public Otp(string code, enOtpType type, int userId, TimeSpan validFor, string? tokenJti = null)
     {
         if (validFor <= TimeSpan.Zero)
             throw new Exception("OTP validity duration must be positive");
@@ -32,20 +42,13 @@ public class Otp : IEntity<int>
         Code = code;
         Type = type;
         UserId = userId;
+        TokenJti = tokenJti;
         CreationTime = DateTime.UtcNow;
         ExpirationTime = CreationTime.Add(validFor);
+        AttemptsCount = 0;
+        LastAttemptAt = null;
     }
     public bool IsExpired() => DateTime.UtcNow >= ExpirationTime;
-
-    private TimeSpan _GetCooldownPeriod()
-    {
-        return Type switch
-        {
-            enOtpType.ConfirmEmail => TimeSpan.FromMinutes(2),
-            enOtpType.ResetPassword => TimeSpan.FromMinutes(1),
-            _ => TimeSpan.FromMinutes(2)
-        };
-    }
 
     /// <summary>
     /// Force OTP to expire immediately
@@ -62,12 +65,31 @@ public class Otp : IEntity<int>
     /// Mark otp as used 
     /// </summary>
     public void MarkAsUsed() => IsUsed = true;
-    public bool CanResend()
+    /// <summary>
+    /// Increment failed verification attempts
+    /// </summary>
+    public void IncrementAttempts()
     {
-        TimeSpan cooldown = _GetCooldownPeriod();
-        var timeSince = DateTime.UtcNow - CreationTime;
-        return timeSince >= cooldown;
+        AttemptsCount++;
+        LastAttemptAt = DateTime.UtcNow;
     }
+
+    /// <summary>
+    /// Check if OTP has exceeded maximum attempts
+    /// </summary>
+    public bool HasExceededMaxAttempts()
+    {
+        return AttemptsCount >= MaxAttempts;
+    }
+
+    /// <summary>
+    /// Check if OTP is valid for verification
+    /// </summary>
+    public bool IsValidForVerification()
+    {
+        return !IsExpired() && !IsUsed && !HasExceededMaxAttempts();
+    }
+
 
     public TimeSpan? GetRemainingCooldown()
     {
@@ -76,6 +98,15 @@ public class Otp : IEntity<int>
         return elapsed < cooldownPeriod
             ? cooldownPeriod - elapsed
             : null;
+    }
+    private TimeSpan _GetCooldownPeriod()
+    {
+        return Type switch
+        {
+            enOtpType.ConfirmEmail => TimeSpan.FromMinutes(2),
+            enOtpType.ResetPassword => TimeSpan.FromMinutes(1),
+            _ => TimeSpan.FromMinutes(2)
+        };
     }
 
 }

@@ -6,15 +6,20 @@ namespace Application.Features.AuthFeature;
 
 public class ConfirmEmailValidator : AbstractValidator<ConfirmEmailCommand>
 {
+    #region Field(s)
     private readonly IStringLocalizer<SharedResources> _Localizer;
+    #endregion
 
+    #region Constructor(s)
     public ConfirmEmailValidator(IStringLocalizer<SharedResources> localizer)
     {
         _Localizer = localizer;
 
         _ApplyValidations();
     }
+    #endregion
 
+    #region Method(s)
     private void _ApplyValidations()
     {
         RuleFor(x => x.dto)
@@ -22,4 +27,5 @@ public class ConfirmEmailValidator : AbstractValidator<ConfirmEmailCommand>
             .SetValidator(new ConfirmEmailDTO.Validator(_Localizer));
 
     }
+    #endregion
 }

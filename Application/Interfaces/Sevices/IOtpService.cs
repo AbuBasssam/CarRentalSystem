@@ -1,4 +1,5 @@
-﻿using Application.Models;
+﻿using Application.Features.AuthFeature;
+using Application.Models;
 using Domain.Enums;
 
 namespace Interfaces;
@@ -44,5 +45,7 @@ public interface IOtpService : IScopedService
         enOtpType otpType,
         int expirationMinutes,
         CancellationToken cancellationToken = default);
+
+    Task<ValidationOtpResuult> ValidateOtp(int userId, string otpCode, enOtpType enOtpType, CancellationToken ct = default);
 }
 

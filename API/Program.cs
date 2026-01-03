@@ -99,8 +99,8 @@ builder.Services.Configure<RequestLocalizationOptions>(options =>
 });
 
 #endregion
-// έν Program.cs
 builder.Services.AddHttpContextAccessor();
+
 var app = builder.Build();
 
 #region Seeder
