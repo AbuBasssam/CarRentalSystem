@@ -12,12 +12,11 @@ namespace Presentation.Controller;
 public class AuthController : ApiController
 {
     [HttpPost(Router.AuthenticationRouter.SignIn)]
-    [ProducesResponseType(typeof(JwtAuthResult), StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(StatusCodes.Status422UnprocessableEntity)]
-    [ProducesResponseType(StatusCodes.Status429TooManyRequests)]
-    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    [AllowAnonymous]
+    [ProducesResponseType(typeof(Response<JwtAuthResult>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(Response<JwtAuthResult>), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(Response<JwtAuthResult>), StatusCodes.Status422UnprocessableEntity)]
+    [ProducesResponseType(typeof(Response<JwtAuthResult>), StatusCodes.Status429TooManyRequests)]
+    //[ProducesResponseType(typeof(Response<JwtAuthResult>), StatusCodes.Status401Unauthorized)]//Locked account
     public async Task<IActionResult> SignIn([FromBody] SignInCommand command)
     {
 
@@ -30,11 +29,11 @@ public class AuthController : ApiController
 
 
     [HttpPost(Router.AuthenticationRouter.SignUp)]
-    [ProducesResponseType(StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(StatusCodes.Status422UnprocessableEntity)]
-    [ProducesResponseType(StatusCodes.Status429TooManyRequests)]
-    [AllowAnonymous]
+    [ProducesResponseType(typeof(Response<string>), StatusCodes.Status201Created)]
+    [ProducesResponseType(typeof(Response<string>), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(Response<string>), StatusCodes.Status422UnprocessableEntity)]
+    [ProducesResponseType(typeof(Response<string>), StatusCodes.Status429TooManyRequests)]
+    [ProducesResponseType(typeof(Response<string>), StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> SignUp([FromBody] SignUpCommandDTO dto)
     {
 
@@ -46,12 +45,13 @@ public class AuthController : ApiController
     }
 
     [HttpPost(Router.AuthenticationRouter.EmailConfirmation)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    [ProducesResponseType(StatusCodes.Status422UnprocessableEntity)]
-    [ProducesResponseType(StatusCodes.Status429TooManyRequests)]
+    [ProducesResponseType(typeof(Response<bool>), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(Response<bool>), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(Response<bool>), StatusCodes.Status422UnprocessableEntity)]
+    [ProducesResponseType(typeof(Response<bool>), StatusCodes.Status429TooManyRequests)]
+    [ProducesResponseType(typeof(Response<bool>), StatusCodes.Status500InternalServerError)]
     [Authorize(Policy = Policies.VerificationOnly)]
-    public async Task<IActionResult> VerifyEmailConfirmationOtp([FromBody] ConfirmEmailDTO dto)
+    public async Task<IActionResult> ConfirmEmail([FromBody] ConfirmEmailDTO dto)
     {
 
 
@@ -64,12 +64,16 @@ public class AuthController : ApiController
 
 
     [HttpPost(Router.AuthenticationRouter.Token)]
-    [ProducesResponseType(StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(StatusCodes.Status429TooManyRequests)]
+    [ProducesResponseType(typeof(Response<string>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(Response<string>), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(Response<string>), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(Response<string>), StatusCodes.Status429TooManyRequests)]
     public async Task<IActionResult> ValidateRefreshToken([FromRoute] string token)
     {
-        return await CommandExecutor.Execute(new AuthorizeUserQuery { AccessToken = token }, Sender, (Response<string> response) => NewResult(response)
+        return await CommandExecutor.Execute(
+            new AuthorizeUserQuery { AccessToken = token },
+            Sender,
+            (Response<string> response) => NewResult(response)
         );
 
     }
@@ -93,18 +97,21 @@ public class AuthController : ApiController
     /// <response code="429">Too many requests - rate limit exceeded</response>
     /// <response code="500">Internal server error</response>
     [HttpPost(Router.AuthenticationRouter.ResendVerification)]
-    [ProducesResponseType(StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    [ProducesResponseType(StatusCodes.Status429TooManyRequests)]
-    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    [ProducesResponseType(typeof(Response<string>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(Response<string>), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(Response<string>), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(Response<string>), StatusCodes.Status429TooManyRequests)]
+    [ProducesResponseType(typeof(Response<string>), StatusCodes.Status500InternalServerError)]
+
     [Authorize(Policy = Policies.VerificationOnly)]
     [TypeFilter(typeof(OtpCooldownFilter), Arguments = new object[] { enOtpType.ConfirmEmail })]
     public async Task<IActionResult> ResendVerificationCode()
     {
         ResendVerificationCodeCommand command = new ResendVerificationCodeCommand();
-        return await CommandExecutor.Execute(command, Sender, (Response<string> response) => NewResult(response)
+        return await CommandExecutor.Execute(
+            command,
+            Sender,
+            (Response<string> response) => NewResult(response)
         );
     }
 }

@@ -131,7 +131,7 @@ public class SignUpCommandHandler : IRequestHandler<SignUpCommand, Response<stri
             var sendingEmailResult = await _emailService.SendConfirmEmailMessage(user.Email!, generateOtpResult.Data);
             if (!sendingEmailResult.IsSuccess)
             {
-                return _responseHandler.Success(string.Empty);
+                return _responseHandler.Created(string.Empty);
             }
 
 

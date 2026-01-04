@@ -58,10 +58,16 @@ public class ResendVerificationCodeHandler : IRequestHandler<ResendVerificationC
             string email = emailResult.Data!;
             var user = await _userService.GetUserByEmailAsync(email).FirstOrDefaultAsync();
 
-            if (user == null || user.EmailConfirmed)
+            if (user == null)
             {
                 await transaction.RollbackAsync(cancellationToken);
-                return _responseHandler.BadRequest<string>("Invalid Request");
+                return _responseHandler.Unauthorized<string>();
+            }
+
+            if (user.EmailConfirmed)
+            {
+                await transaction.RollbackAsync(cancellationToken);
+                return _responseHandler.BadRequest<string>(_localizer[SharedResourcesKeys.EmailAlreadyVerified]);
             }
 
             var regenerationResult = await _otpService.RegenerateOtpAsync(user.Id, enOtpType.ConfirmEmail, 5, cancellationToken);

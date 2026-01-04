@@ -69,7 +69,7 @@ public class ConfirmEmailCommandHandler : IRequestHandler<ConfirmEmailCommand, R
             {
                 await transaction.RollbackAsync(cancellationToken);
 
-                return _responseHandler.NotFound<bool>();
+                return _responseHandler.Unauthorized<bool>();
             }
             var userId = userIdResult.Data;
 
@@ -84,7 +84,7 @@ public class ConfirmEmailCommandHandler : IRequestHandler<ConfirmEmailCommand, R
             {
                 await transaction.RollbackAsync(cancellationToken);
 
-                return _responseHandler.NotFound<bool>();
+                return _responseHandler.Unauthorized<bool>();
             }
 
 
