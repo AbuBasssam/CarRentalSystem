@@ -226,28 +226,7 @@ public class AuthService : IAuthService
 
     #endregion
 
-    #region ResetPassword Methods
 
-
-    private async Task _DeactiveSessionToken(int UserID, enTokenType type)
-    {
-        var activeRefreshToken =
-               await _refreshTokenRepo
-               .GetActiveSessionTokenByUserId(UserID, type)
-               .FirstOrDefaultAsync();
-
-        if (activeRefreshToken == null) return;
-
-        activeRefreshToken.IsRevoked = true;
-
-        activeRefreshToken.IsUsed = false;
-
-        activeRefreshToken.ExpiryDate = DateTime.UtcNow;
-
-        _refreshTokenRepo.Update(activeRefreshToken);
-
-    }
-    #endregion
 
     #region AccessToken Methods
     private List<Claim> _GenerateUserClaims(User User, List<string> Roles)
@@ -389,8 +368,7 @@ public class AuthService : IAuthService
 
         if (refreshTokenEntity.ExpiryDate < DateTime.UtcNow)
         {
-            refreshTokenEntity.IsRevoked = true;
-            refreshTokenEntity.IsUsed = false;
+            refreshTokenEntity.Revoke();
             _refreshTokenRepo.Update(refreshTokenEntity);
             return (null, new SecurityTokenArgumentException(_Localizer[SharedResourcesKeys.RevokedRefreshToken]));
         }
@@ -554,9 +532,8 @@ public class AuthService : IAuthService
     /// </summary>
     private async Task _RevokeToken(UserToken tokenEntity)
     {
-        tokenEntity.IsRevoked = true;
-        tokenEntity.IsUsed = false;
-        tokenEntity.ExpiryDate = DateTime.UtcNow; // Force expire
+        tokenEntity.Revoke();
+        tokenEntity.ForceExpire();
 
         _refreshTokenRepo.Update(tokenEntity);
 
