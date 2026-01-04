@@ -19,6 +19,7 @@ public class SignUpCommandHandler : IRequestHandler<SignUpCommand, Response<stri
     private readonly IUserService _userService;
     private readonly IAuthService _authService;
     private readonly IOtpService _otpService;
+    private readonly IEmailService _emailService;
 
     private readonly IRefreshTokenRepository _refreshTokenRepo;
     private readonly IUnitOfWork _unitOfWork;
@@ -32,7 +33,7 @@ public class SignUpCommandHandler : IRequestHandler<SignUpCommand, Response<stri
 
     #region Constructure(s)
 
-    public SignUpCommandHandler(IUserService userService, IAuthService authService, IMapper mapper, ResponseHandler responseHandler, IStringLocalizer<SharedResources> localizer, IRefreshTokenRepository refreshTokenRepo, IUnitOfWork unitOfWork, IOtpService otpService)
+    public SignUpCommandHandler(IUserService userService, IAuthService authService, IMapper mapper, ResponseHandler responseHandler, IStringLocalizer<SharedResources> localizer, IRefreshTokenRepository refreshTokenRepo, IUnitOfWork unitOfWork, IOtpService otpService, IEmailService emailService)
     {
         _userService = userService;
         _authService = authService;
@@ -43,6 +44,7 @@ public class SignUpCommandHandler : IRequestHandler<SignUpCommand, Response<stri
         _refreshTokenRepo = refreshTokenRepo;
         _unitOfWork = unitOfWork;
         _otpService = otpService;
+        _emailService = emailService;
     }
 
     #endregion
@@ -103,27 +105,36 @@ public class SignUpCommandHandler : IRequestHandler<SignUpCommand, Response<stri
             // ========== Case 3 : Existing User ==========
             else
             {
-                Log.Warning("Registration attempt with confirmed email: {Email}", request.Dto.Email);
+                Log.Warning($"Registration attempt with confirmed email: {request.Dto.Email}");
                 await transaction.RollbackAsync();
                 return _responseHandler.BadRequest<string>(
                     _localizer[SharedResourcesKeys.EmailAlreadyExists]
                 );
             }
 
-            var sendingEmailResult = await _otpService.SendOtpEmailAsync(user.Id, request.Dto.Email, enOtpType.ConfirmEmail, 5);
+            var generateOtpResult = await _otpService.GenerateOtpAsync(user.Id, enOtpType.ConfirmEmail, 5);
 
-            if (!sendingEmailResult.IsSuccess)
+            if (!generateOtpResult.IsSuccess)
             {
-                await transaction.RollbackAsync();
-                return _responseHandler.Success(string.Empty);
+                await transaction.RollbackAsync(cancellationToken);
+                return _responseHandler.InternalServerError<string>();
             }
-
             var verificationToken = _authService.GenerateVerificationToken(user, 1440);// one day
             await _refreshTokenRepo.AddAsync(verificationToken.refreshToken);
 
 
             await _unitOfWork.SaveChangesAsync();
             await transaction.CommitAsync();
+
+
+
+            var sendingEmailResult = await _emailService.SendConfirmEmailMessage(user.Email!, generateOtpResult.Data);
+            if (!sendingEmailResult.IsSuccess)
+            {
+                return _responseHandler.Success(string.Empty);
+            }
+
+
 
             return _responseHandler.Success(verificationToken.AccessToken);
         }

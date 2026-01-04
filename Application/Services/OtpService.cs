@@ -30,30 +30,23 @@ public class OtpService : IOtpService
     #endregion
 
     #region Method(s)
-    public async Task<Result<bool>> SendOtpEmailAsync(int userId, string email, enOtpType otpType, int validityMinutes, CancellationToken cancellationToken = default)
+    public async Task<Result<string>> GenerateOtpAsync(int userId, enOtpType otpType, int expirationMinutes, CancellationToken cancellationToken = default)
     {
+        try
+        {
+            var otpCode = Helpers.GenerateOtp();
 
-        var otpCode = _GenerateOtp();
+            await _SaveOtpToDb(userId, otpCode, otpType, expirationMinutes);
 
-        var subject = otpType == enOtpType.ConfirmEmail
-            ? "Confirm Email"
-            : "Reset Password";
+            return Result<string>.Success(otpCode);
 
-        var message = otpType == enOtpType.ConfirmEmail
-            ? $"Your code to confirm your email is: {otpCode}"
-            : $"Your code to reset your password is: {otpCode}";
+        }
+        catch (Exception ex)
+        {
 
-
-        var sendResult = await _emailService.SendEmailAsync(email, message, subject);
-
-        if (!sendResult.IsSuccess)
-            return Result<bool>.Failure(sendResult.Errors);
-
-
-        await _SaveOtpToDb(userId, otpCode, otpType, validityMinutes);
-
-
-        return Result<bool>.Success(true);
+            Log.Error(ex, $"Error generating OTP for user {userId}, type {otpType}");
+            return Result<string>.Failure(["Failed to generate OTP"]);
+        }
     }
 
     /// <summary>
@@ -69,61 +62,49 @@ public class OtpService : IOtpService
                 .FirstOrDefaultAsync(cancellationToken);
 
             if (activeOtp == null)
-            {
-                Log.Debug("No active OTP found for user {UserId} and type {OtpType}", userId, otpType);
-                return false;
-            }
+                return true;
 
             // Expire and mark as used
             activeOtp.ForceExpire();
             activeOtp.MarkAsUsed();
-            _otpRepo.Update(activeOtp);
 
-            Log.Information(
-                "Expired active OTP for user {UserId}, type {OtpType}",
-                userId,
-                otpType);
+            Log.Information($"Expired active OTP for user {userId}, type {otpType}");
 
             return true;
         }
         catch (Exception ex)
         {
-            Log.Error(ex, "Error expiring active OTP for user {UserId}, type {OtpType}", userId, otpType);
+            Log.Error(ex, $"Error expiring active OTP for user {userId}, type {otpType}");
 
-            throw; // Re-throw to handle in calling code
+            return false;
         }
     }
 
     /// <summary>
     /// Combines ExpireActiveOtpAsync + GenerateAndSendOtpAsync in one atomic operation
-    /// This is the RECOMMENDED method to use to prevent race conditions
     /// </summary>
-    public async Task<Result<bool>> RegenerateOtpAsync(int userId, string email, enOtpType otpType, int expirationMinutes, CancellationToken cancellationToken = default)
+    public async Task<Result<string>> RegenerateOtpAsync(int userId, enOtpType otpType, int expirationMinutes, CancellationToken cancellationToken = default)
     {
         try
         {
             // Step 1: Expire old OTP if exists
             await ExpireActiveOtpAsync(userId, otpType, cancellationToken);
 
-            // Note: Caller should save changes here before generating new OTP
-            // This ensures the old OTP is actually marked as used in DB
-            // before the unique constraint check happens on the new OTP
+            // Step 2: Generate new OTP
+            var otpCode = Helpers.GenerateOtp();
 
 
-            // Step 2: Generate and send new OTP
-            var result = await SendOtpEmailAsync(userId, email, otpType, expirationMinutes);
+            await _SaveOtpToDb(userId, otpCode, otpType, expirationMinutes);
 
-            return result;
+            return Result<string>.Success(otpCode);
         }
         catch (Exception ex)
         {
             Log.Error(
                 ex,
-                "Error regenerating OTP for user {UserId}, type {OtpType}",
-                userId,
-                otpType);
+                $"Error regenerating OTP for user {userId}, type {otpType}");
 
-            return Result<bool>.Failure(["Failed to regenerate OTP"]);
+            return Result<string>.Failure(["Failed to regenerate OTP"]);
         }
     }
 
@@ -182,16 +163,12 @@ public class OtpService : IOtpService
     #endregion
 
     #region Helper Method(s)
-    private string _GenerateOtp()
-    {
-        Random generator = new Random();
-        return generator.Next(100000, 1000000).ToString("D6");
-    }
 
     private async Task _SaveOtpToDb(int UserID, string otp, enOtpType otpType, int minutesValidDuration)
     {
         var validFor = TimeSpan.FromMinutes(minutesValidDuration);
-        var otpEntity = new Otp(Helpers.HashString(otp), otpType, UserID, validFor);
+        var hashedOtp = Helpers.HashString(otp);
+        var otpEntity = new Otp(hashedOtp, otpType, UserID, validFor);
 
 
         await _otpRepo.AddAsync(otpEntity);

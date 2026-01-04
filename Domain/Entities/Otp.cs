@@ -37,14 +37,18 @@ public class Otp : IEntity<int>
     public Otp(string code, enOtpType type, int userId, TimeSpan validFor, string? tokenJti = null)
     {
         if (validFor <= TimeSpan.Zero)
-            throw new Exception("OTP validity duration must be positive");
+            throw new ArgumentOutOfRangeException(nameof(validFor), "OTP validity duration must be positive");
+
+        DateTime creationTime = DateTime.UtcNow;
+        TimeSpan sendTimeBuffer = TimeSpan.FromSeconds(15);
+        var compensatedValidity = validFor + sendTimeBuffer;
 
         Code = code;
         Type = type;
         UserId = userId;
         TokenJti = tokenJti;
-        CreationTime = DateTime.UtcNow;
-        ExpirationTime = CreationTime.Add(validFor);
+        CreationTime = creationTime;
+        ExpirationTime = creationTime.Add(compensatedValidity);
         AttemptsCount = 0;
         LastAttemptAt = null;
     }

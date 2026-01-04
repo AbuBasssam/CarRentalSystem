@@ -11,18 +11,19 @@ namespace Application.Services;
 
 public class EmailsService : IEmailService
 {
+    #region Field(s)
     private readonly EmailSettings _emailSettings;
+    #endregion
 
+    #region Constructor(s)
     public EmailsService(EmailSettings emailSettings)
     {
         _emailSettings = emailSettings;
     }
+    #endregion
 
-    public async Task<Result<bool>> SendEmailAsync(
-     string toEmail,
-     string body,
-     string subject,
-     CancellationToken cancellationToken = default)
+    #region Method(s)
+    public async Task<Result<bool>> SendEmailAsync(string toEmail, string body, string subject, CancellationToken cancellationToken = default)
     {
         try
         {
@@ -84,6 +85,36 @@ public class EmailsService : IEmailService
         }
     }
 
+    public async Task<Result<bool>> SendConfirmEmailMessage(string email, string otpCode, CancellationToken cancellationToken = default)
+    {
+        var subject = "Confirm Email";
+
+        var message = $"Your code to confirm your email is: {otpCode}";
+
+
+        var sendResult = await SendEmailAsync(email, message, subject);
+
+        return sendResult.IsSuccess ? Result<bool>.Success(true) :
+        Result<bool>.Failure(sendResult.Errors);
+
+
+    }
+
+    public async Task<Result<bool>> SendResetPasswordMessage(string email, string otpCode, CancellationToken cancellationToken = default)
+    {
+        var subject = "Reset Password";
+
+        var message = $"Your code to reset your password is: {otpCode}";
+
+
+        var sendResult = await SendEmailAsync(email, message, subject);
+
+        return sendResult.IsSuccess ? Result<bool>.Success(true) :
+        Result<bool>.Failure(sendResult.Errors);
+
+
+    }
+    #endregion
 }
 
 

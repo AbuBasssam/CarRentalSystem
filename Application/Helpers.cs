@@ -21,4 +21,13 @@ internal static class Helpers
         }
         return Convert.ToBase64String(randomNumber);
     }
+    public static string GenerateOtp()
+    {
+        Random generator = new Random();
+        return generator.Next(100000, 1000000).ToString("D6");
+    }
+
+
+
+
 }
