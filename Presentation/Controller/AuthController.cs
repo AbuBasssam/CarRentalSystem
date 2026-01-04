@@ -101,9 +101,9 @@ public class AuthController : ApiController
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     [Authorize(Policy = Policies.VerificationOnly)]
     [TypeFilter(typeof(OtpCooldownFilter), Arguments = new object[] { enOtpType.ConfirmEmail })]
-    public async Task<IActionResult> ResendVerificationCode(ResendVerificationCodeCommand command)
+    public async Task<IActionResult> ResendVerificationCode()
     {
-
+        ResendVerificationCodeCommand command = new ResendVerificationCodeCommand();
         return await CommandExecutor.Execute(command, Sender, (Response<string> response) => NewResult(response)
         );
     }
