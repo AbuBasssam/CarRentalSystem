@@ -16,6 +16,7 @@ public class ResendVerificationCodeHandler : IRequestHandler<ResendVerificationC
     private readonly IRefreshTokenRepository _refreshTokenRepo;
     private readonly IUserService _userService;
     private readonly IOtpService _otpService;
+    private readonly IEmailService _emailService;
     private readonly IOtpRepository _otpRepo;
     private readonly IUnitOfWork _unitOfWork;
     private readonly IRequestContext _context;
@@ -25,15 +26,9 @@ public class ResendVerificationCodeHandler : IRequestHandler<ResendVerificationC
 
     #region Constructor(s)
     public ResendVerificationCodeHandler(
-    IAuthService authService,
-    IRefreshTokenRepository refreshTokenRepository,
-    IUserService userService,
-    IOtpService otpService,
-    IOtpRepository otpRepo,
-    IUnitOfWork unitOfWork,
-    IRequestContext context,
-    IStringLocalizer<SharedResources> localizer,
-    ResponseHandler responseHandler
+    IAuthService authService, IRefreshTokenRepository refreshTokenRepository, IUserService userService,
+    IOtpService otpService, IEmailService emailService, IOtpRepository otpRepo,
+    IUnitOfWork unitOfWork, IRequestContext context, IStringLocalizer<SharedResources> localizer, ResponseHandler responseHandler
     )
     {
         _authService = authService;
@@ -45,132 +40,77 @@ public class ResendVerificationCodeHandler : IRequestHandler<ResendVerificationC
         _context = context;
         _localizer = localizer;
         _responseHandler = responseHandler;
+        _emailService = emailService;
     }
+
     #endregion
 
     #region Handler(s)
     public async Task<Response<string>> Handle(ResendVerificationCodeCommand request, CancellationToken cancellationToken)
     {
-        using var transaction = await _unitOfWork.BeginTransactionAsync(cancellationToken);
 
+        var token = _context.AuthToken;
+        var emailResult = _authService.GetEmailFromSessionToken(token!);
+
+        using var transaction = await _unitOfWork.BeginTransactionAsync(cancellationToken);
         try
         {
-            // Step 1: Validate verification token
-            var token = _context.AuthToken;
-            if (string.IsNullOrEmpty(token))
-            {
-                Log.Warning("Resend verification attempt without token");
-                return _responseHandler.Unauthorized<string>();
-            }
-
-            var isTokenValid = await _authService.ValidateSessionToken(
-                token,
-                enTokenType.VerificationToken);
-
-            if (!isTokenValid)
-            {
-                Log.Warning("Invalid verification token");
-
-                await transaction.RollbackAsync(cancellationToken);
-                return _responseHandler.Unauthorized<string>(
-                    _localizer[SharedResourcesKeys.InvalidToken]);
-            }
-
-            // Step 2: Extract email from token
-            var getEmailResult = _authService.GetEmailFromSessionToken(token);
-            if (!getEmailResult.IsSuccess)
-            {
-                Log.Error("Failed to extract email from token");
-                await transaction.RollbackAsync(cancellationToken);
-                return _responseHandler.BadRequest<string>(getEmailResult.Errors.First());
-            }
-
-            string email = getEmailResult.Data!;
-            Log.Information("Processing resend verification for email: {Email}", email);
-
-            // Step 3: Validate user exists
+            string email = emailResult.Data!;
             var user = await _userService.GetUserByEmailAsync(email).FirstOrDefaultAsync();
-            if (user == null)
+
+            if (user == null || user.EmailConfirmed)
             {
-                Log.Warning("User not found for email: {Email}", email);
                 await transaction.RollbackAsync(cancellationToken);
-                return _responseHandler.NotFound<string>(
-                    _localizer[SharedResourcesKeys.UserNotFound]);
+                return _responseHandler.BadRequest<string>("Invalid Request");
             }
 
-            // Step 4: Check if already verified
-            if (user.EmailConfirmed)
+            var regenerationResult = await _otpService.RegenerateOtpAsync(user.Id, enOtpType.ConfirmEmail, 5, cancellationToken);
+            if (!regenerationResult.IsSuccess)
             {
-                Log.Information("Email already verified for user: {UserId}", user.Id);
                 await transaction.RollbackAsync(cancellationToken);
-                return _responseHandler.BadRequest<string>(
-                    _localizer[SharedResourcesKeys.EmailAlreadyVerified]);
+                return _responseHandler.InternalServerError<string>();
             }
-
-
-
-            // Step 5: Check cooldown period (2 minutes between requests)
-            var lastOtp = await _otpRepo.GetLatestValidOtpAsync(
-                user.Id,
-                enOtpType.ConfirmEmail
-                ).FirstOrDefaultAsync();
-
-            if (lastOtp != null)
-            {
-                var remainingCooldown = lastOtp.GetRemainingCooldown();
-
-                if (remainingCooldown.HasValue)
-                {
-                    var remainingSeconds = (int)remainingCooldown.Value.TotalSeconds;
-
-                    Log.Information(
-                        "Cooldown active for user {UserId}. Remaining: {Seconds}s",
-                        user.Id,
-                        remainingSeconds);
-
-                    await transaction.RollbackAsync(cancellationToken);
-                    return _responseHandler.BadRequest<string>(
-                        string.Format(
-                            _localizer[SharedResourcesKeys.ResendCooldown],
-                            remainingSeconds));
-                }
-
-                // Expire old OTP
-                lastOtp.ForceExpire();
-                lastOtp.MarkAsUsed();
-                _otpRepo.Update(lastOtp);
-
-                Log.Information("Expired old OTP for user: {UserId}", user.Id);
-            }
-
-            // Step 7: Generate and send new OTP
-            await _otpService.GenerateAndSendOtpAsync(
-               user.Id,
-               user.Email!,
-                enOtpType.ConfirmEmail,
-                 5
-              );
-
-            Log.Information("New verification code sent to user: {UserId}", user.Id);
-
-            // Step 8: Commit transaction
             await _unitOfWork.SaveChangesAsync(cancellationToken);
+
             await transaction.CommitAsync(cancellationToken);
 
-            return _responseHandler.Success(
-                string.Empty
-               );
+
+            string otpCode = regenerationResult.Data;
+
+            await _emailService.SendConfirmEmailMessage(user.Email!, otpCode);
+
+            return _responseHandler.Success(string.Empty);
+
+
+        }
+        catch (DbUpdateException dex)
+        {
+            await transaction.RollbackAsync(cancellationToken);
+
+
+            if (dex.IsUniqueConstraintViolation())
+            {
+                Log.Warning(dex, "Unique constraint violation during Resend Verification");
+
+                return _responseHandler.BadRequest<string>(_localizer[SharedResourcesKeys.InvalidExpiredCode]);
+            }
+            await transaction.RollbackAsync(cancellationToken);
+
+            Log.Error(dex, "Database error during email confirmation Resend code");
+            return _responseHandler.BadRequest<string>(
+                _localizer[SharedResourcesKeys.UnexpectedError]);
         }
         catch (Exception ex)
         {
             await transaction.RollbackAsync(cancellationToken);
-            Log.Error(ex, "Error resending verification code");
-
-            return _responseHandler.InternalServerError<string>(
-                _localizer[SharedResourcesKeys.ErrorOccurred]);
+            Log.Error(ex, "Error in Resend confirm Email otp Process");
+            return _responseHandler.InternalServerError<string>("Error Occurred");
         }
+
     }
 
     #endregion
+
+
 }
 

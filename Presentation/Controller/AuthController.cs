@@ -1,6 +1,7 @@
 ﻿using Application.Features.AuthFeature;
 using Application.Models;
 using Domain.AppMetaData;
+using Domain.Enums;
 using Domain.HelperClasses;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -99,7 +100,7 @@ public class AuthController : ApiController
     [ProducesResponseType(StatusCodes.Status429TooManyRequests)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     [Authorize(Policy = Policies.VerificationOnly)]
-
+    [TypeFilter(typeof(OtpCooldownFilter), Arguments = new object[] { enOtpType.ConfirmEmail })]
     public async Task<IActionResult> ResendVerificationCode(ResendVerificationCodeCommand command)
     {
 
