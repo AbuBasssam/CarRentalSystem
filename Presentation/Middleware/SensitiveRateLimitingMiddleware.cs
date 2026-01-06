@@ -50,7 +50,7 @@ public class SensitiveRateLimitingMiddleware
                     if (now > current.ResetTime)
                         return (1, now.Add(rateLimit.Window)); // Reset if expired
 
-                    if (current.Count <= rateLimit.Limit)
+                    if (current.Count < rateLimit.Limit)
                         return (current.Count + 1, current.ResetTime); // Increment if allowed
 
                     return current; // Block if over limit
@@ -60,7 +60,13 @@ public class SensitiveRateLimitingMiddleware
             {
                 context.Response.StatusCode = StatusCodes.Status429TooManyRequests;
                 context.Response.Headers["Retry-After"] = ((int)(entry.ResetTime - now).TotalSeconds).ToString();
-                await context.Response.WriteAsync("Rate limit exceeded. Try again later.");
+                await context.Response.WriteAsJsonAsync(new
+                {
+                    statusCode = 429,
+                    succeeded = false,
+                    message = "Too many requests. Please try again later.",
+                    retryAfter = (int)(entry.ResetTime - now).TotalSeconds
+                });
                 return;
             }
         }
@@ -101,17 +107,10 @@ public class SensitiveRateLimitingMiddleware
     private void CleanupExpiredEntries(object? state)
     {
         var now = DateTime.UtcNow;
-        var expiredKeys = new List<string>();
 
-        foreach (var kvp in _requestCounts)
-        {
-            if (now > kvp.Value.ResetTime.AddMinutes(5)) // 5-minute buffer
-                expiredKeys.Add(kvp.Key);
-        }
-
-        foreach (var key in expiredKeys)
-        {
-            _requestCounts.TryRemove(key, out _);
-        }
+        var expiredKeys = _requestCounts
+            .Where(kvp => now > kvp.Value.ResetTime.AddMinutes(5))
+            .Select(kvp => kvp.Key)
+            .ToList();
     }
 }

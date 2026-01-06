@@ -103,6 +103,14 @@ public class Otp : IEntity<int>
             ? cooldownPeriod - elapsed
             : null;
     }
+
+    /// <summary>
+    /// Update TokenJti when transitioning between reset password stages
+    /// </summary>
+    public void UpdateTokenJti(string newJti)
+    {
+        TokenJti = newJti;
+    }
     private TimeSpan _GetCooldownPeriod()
     {
         return Type switch
@@ -112,6 +120,7 @@ public class Otp : IEntity<int>
             _ => TimeSpan.FromMinutes(2)
         };
     }
+
 
 }
 

@@ -11,6 +11,7 @@ public interface IAuthService : IScopedService
 {
     Task<JwtAuthResult> GetJwtAuthForuser(User User);
     (int, Exception?) GetUserIdFromJwtAccessTokenObj(JwtSecurityToken jwtAccessTokenObj);
+    string? GetJtiFromAccessTokenString(string accessToken);
     Result<string> GetEmailFromSessionToken(string sessionToken);
     Result<int> GetUserIdFromSessionToken(string sessionToken);
     bool IsValidAccessToken(string AccessTokenStr);
@@ -18,7 +19,7 @@ public interface IAuthService : IScopedService
     (ClaimsPrincipal?, Exception?) GetClaimsPrinciple(string AccessToken);
     Task<(UserToken?, Exception?)> ValidateRefreshToken(int UserId, string RefreshTokenStr);
     (UserToken refreshToken, string AccessToken) GenerateVerificationToken(User user, int minutesValidDuration);
-
+    (UserToken refreshToken, string AccessToken) GenerateResetToken(User user, int expiresInMinutes, string jti, enResetPasswordStage stage);
 
 
     /// <summary>
@@ -36,5 +37,6 @@ public interface IAuthService : IScopedService
     /// <returns>Result indicating success or failure</returns>
     Task<Result<bool>> LogoutFromAllDevices(int userId);
     Task<bool> ValidateSessionToken(string sessionToken, enTokenType tokenType);
+    Task<bool> ValidateResetPasswordToken(string token, enResetPasswordStage requiredStage);
 
 }

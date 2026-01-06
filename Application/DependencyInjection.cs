@@ -1,9 +1,7 @@
 ﻿using Application.Behaviors;
 using Application.Models;
 using ApplicationLayer.Resources;
-using Domain.AppMetaData;
 using Domain.HelperClasses;
-using Domain.Security;
 using FluentValidation;
 using Interfaces;
 using MediatR;
@@ -35,9 +33,6 @@ public static class DependencyInjection
         EmailSetting(services, configuration);
 
         FluentValidatorConfiguration(services);
-
-        // add authorization policies
-        _AddPolicies(services);
 
         // Configuration for MediaR
         services.AddMediatR(_getMediatRServiceConfiguration);
@@ -135,20 +130,7 @@ public static class DependencyInjection
     }
 
 
-    private static void _AddPolicies(this IServiceCollection services)
-    {
-        // add policies for authorization
-        services.AddAuthorization(options =>
-        {
-            options.AddPolicy(Policies.VerificationOnly, policy =>
-                policy.Requirements.Add(new VerificationOnlyRequirement()));
 
-            options.AddPolicy(Policies.ResetPasswordOnly, policy =>
-                policy.Requirements.Add(new ResetPasswordOnlyRequirement()));
-        });
-
-
-    }
 
     private static void EmailSetting(IServiceCollection services, IConfiguration configuration)
     {

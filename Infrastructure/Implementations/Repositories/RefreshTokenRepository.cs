@@ -30,12 +30,26 @@ public class RefreshTokenRepository : GenericRepository<UserToken, int>, IRefres
         return IsTokenExpired;
     }
 
+    public async Task<bool> RevokeUserTokenAsync(string jwtId)
+    {
+        var affectedRows = await _dbSet
+                   .Where(token => token.JwtId == jwtId)
+                   .ExecuteUpdateAsync(setters => setters
+                   .SetProperty(t => t.IsRevoked, true)
+                   .SetProperty(t => t.ExpiryDate, DateTime.UtcNow)
+                   );
+
+        return affectedRows >= 0;
+    }
+
     public async Task<bool> RevokeUserTokenAsync(int userId, enTokenType type)
     {
-        var affectedRows = await _dbSet.Where(token => token.UserId == userId && token.Type == type)
+        var affectedRows = await _dbSet
+            .Where(token => token.UserId == userId && token.Type == type)
             .ExecuteUpdateAsync(setters => setters
             .SetProperty(t => t.IsRevoked, true)
-            .SetProperty(t => t.ExpiryDate, DateTime.UtcNow));
+            .SetProperty(t => t.ExpiryDate, DateTime.UtcNow)
+            );
 
         return affectedRows >= 0;
 

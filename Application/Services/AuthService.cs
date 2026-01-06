@@ -338,6 +338,17 @@ public class AuthService : IAuthService
             ("", new ArgumentNullException(_Localizer[SharedResourcesKeys.InvalidEmailClaim])) : (emailClaim, null);
     }
 
+    public string? GetJtiFromAccessTokenString(string accessToken)
+    {
+        var (principal, error) = GetClaimsPrinciple(accessToken);
+
+        if (principal == null || error != null)
+            return null;
+
+        var jtiClaim = principal.FindFirst(JwtRegisteredClaimNames.Jti);
+
+        return jtiClaim?.Value;
+    }
     #endregion
 
     #region RefreshToken Methods
@@ -386,28 +397,6 @@ public class AuthService : IAuthService
 
     #region Helpers
 
-    private string _GenerateOTPCode()
-    {
-        Random generator = new Random();
-        return generator.Next(100000, 1000000).ToString("D6");
-    }
-
-    private async Task _SaveOtpToDb(int UserID, string otp, enOtpType otpType, int minutesValidDuration)
-    {
-        var validFor = TimeSpan.FromMinutes(minutesValidDuration);
-        var otpEntity = new Otp(Helpers.HashString(otp), otpType, UserID, validFor);
-
-        await _otpRepo.AddAsync(otpEntity);
-
-
-    }
-
-    private async Task<Otp?> _GetLastCode(string Email, enOtpType otpType)
-    {
-        return await _otpRepo
-            .GetLatestValidOtpAsync(1, otpType)
-            .FirstOrDefaultAsync();
-    }
 
     private List<Claim> _GetVerificationClaims(User user)
     {
@@ -455,8 +444,76 @@ public class AuthService : IAuthService
 
 
     }
+    public (UserToken refreshToken, string AccessToken) GenerateResetToken(User user, int expiresInMinutes, string jti, enResetPasswordStage stage)
+    {
+        var claims = _GetResetClaims(user, jti, stage);
+        var (jwtAccessTokenObj, AccessToken) = _GenerateSessionToken(claims, expiresInMinutes);
+        var validFor = TimeSpan.FromMinutes(expiresInMinutes);
 
 
+
+
+        UserToken refreshToken = new UserToken(user.Id, enTokenType.VerificationToken, null, jwtAccessTokenObj.Id, validFor);
+
+
+        return (refreshToken, AccessToken);
+
+
+    }
+    private List<Claim> _GetResetClaims(User user, string jti, enResetPasswordStage stage)
+    {
+        var claims = new List<Claim>
+        {
+            new Claim(SessionTokenClaims.IsResetToken, "true"),
+            new Claim(SessionTokenClaims.ResetTokenStage, ((int)stage).ToString()),
+            new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+            new Claim(ClaimTypes.Email, user.Email!),
+            new Claim(JwtRegisteredClaimNames.Jti, jti)
+        };
+        return claims;
+
+    }
+    public async Task<bool> ValidateResetPasswordToken(string token, enResetPasswordStage requiredStage)
+    {
+        // 1. التحقق الأساسي من صحة التوكن (Signature, Expiry, etc.)
+        var (principal, exception) = GetClaimsPrinciple(token);
+        if (principal == null || exception != null)
+        {
+            return false;
+        }
+
+        // 2. التحقق من أن التوكن مخصص لعملية Reset Password حصراً
+        var isResetTokenClaim = principal.FindFirstValue(SessionTokenClaims.IsResetToken);
+        if (string.IsNullOrEmpty(isResetTokenClaim) || isResetTokenClaim != "true")
+        {
+            return false;
+        }
+
+        // 3. التحقق من المرحلة (Stage) - أهم خطوة أمنية
+        var stageClaim = principal.FindFirstValue(SessionTokenClaims.ResetTokenStage);
+        if (string.IsNullOrEmpty(stageClaim) || stageClaim != ((int)requiredStage).ToString())
+        {
+            return false;
+        }
+
+        // 4. استخراج الـ JTI للتحقق منه في قاعدة البيانات
+        var jti = principal.FindFirstValue(JwtRegisteredClaimNames.Jti);
+        if (string.IsNullOrEmpty(jti))
+        {
+            return false;
+        }
+
+        // 5. التحقق من وجود التوكن في قاعدة البيانات وصلاحيته (Blacklist check)
+        // نستخدم الدالة التي قدمتها ValidateSessionToken ولكن هنا نمرر نوع التوكن المناسب
+        var isValidInDb = await ValidateSessionToken(token, enTokenType.ResetPasswordToken);
+
+        if (!isValidInDb)
+        {
+            return false;
+        }
+
+        return true;
+    }
     #endregion
 
 

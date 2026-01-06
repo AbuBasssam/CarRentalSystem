@@ -1,5 +1,7 @@
 ﻿using Interfaces;
 using Microsoft.AspNetCore.Http;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 
 
 
@@ -14,7 +16,7 @@ public class HttpRequestContext : IRequestContext
         _accessor = accessor;
     }
 
-    private HttpContext? Context => _accessor.HttpContext;
+    public HttpContext? Context => _accessor.HttpContext;
 
     public string? AuthToken =>
         Context?.Request.Headers["Authorization"]
@@ -35,4 +37,9 @@ public class HttpRequestContext : IRequestContext
                 : lang.Split(',').First().Trim().ToLower();
         }
     }
+    public int UserId => int.Parse(Context?.User?.FindFirstValue(ClaimTypes.NameIdentifier) ?? "0");
+
+    public string TokenJti => Context?.User?.FindFirstValue(JwtRegisteredClaimNames.Jti) ?? string.Empty;
+
+    public string Email => Context?.User?.FindFirstValue(ClaimTypes.Email) ?? string.Empty;
 }

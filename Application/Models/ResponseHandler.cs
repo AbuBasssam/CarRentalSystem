@@ -31,11 +31,11 @@ public class ResponseHandler : ITransientService
             .Build();
 
 
-    public Response<T> Success<T>(T entity, object? meta = null)
+    public Response<T> Success<T>(T entity, object? meta = null, string? message = null)
         => new ResponseBuilder<T>()
             .WithStatusCode(HttpStatusCode.OK)
             .WithSuccess(true)
-            .WithMessage(_stringLocalizer[SharedResourcesKeys.Success])
+            .WithMessage(message ?? _stringLocalizer[SharedResourcesKeys.Success])
             .WithData(entity)
             .WithMeta(meta)
             .Build();
