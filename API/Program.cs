@@ -99,7 +99,6 @@ builder.Services.Configure<RequestLocalizationOptions>(options =>
 });
 
 #endregion
-builder.Services.AddHttpContextAccessor();
 
 var app = builder.Build();
 

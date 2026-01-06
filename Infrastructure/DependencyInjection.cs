@@ -1,9 +1,7 @@
 ﻿using Domain.Entities;
 using Implementations;
 using Infrastructure.Repositories;
-using Infrastructure.Security;
 using Interfaces;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -24,8 +22,7 @@ public static class DependencyInjection
 
         AutoRegisterRepositories(services);
 
-        // Register the custom authorization handlers and providers
-        AddHandlers(services);
+
 
 
 
@@ -120,14 +117,6 @@ public static class DependencyInjection
         // Add them here if Scrutor doesn't pick them up automatically
         // services.AddScoped(typeof(IGenericRepository<,>), typeof(GenericRepository<,>));
     }
-    private static void AddHandlers(IServiceCollection services)
-    {
-        services.AddScoped<IAuthorizationHandler, VerificationOnlyHandler>();
-        services.AddScoped<IAuthorizationHandler, ResetPasswordOnlyHandler>();
 
-        services.AddSingleton<IAuthorizationHandler, PermissionAuthorizationHandler>();
-
-        services.AddSingleton<IAuthorizationPolicyProvider, PermissionPolicyProvider>();
-    }
 
 }

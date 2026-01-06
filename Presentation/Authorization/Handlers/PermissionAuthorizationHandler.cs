@@ -2,7 +2,7 @@
 using Domain.Security;
 using Microsoft.AspNetCore.Authorization;
 
-namespace Infrastructure.Security;
+namespace Presentation.Authorization.Handlers;
 
 public class PermissionAuthorizationHandler : AuthorizationHandler<PermissionRequirement>
 {
