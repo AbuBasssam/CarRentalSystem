@@ -453,7 +453,7 @@ public class AuthService : IAuthService
 
 
 
-        UserToken refreshToken = new UserToken(user.Id, enTokenType.VerificationToken, null, jwtAccessTokenObj.Id, validFor);
+        UserToken refreshToken = new UserToken(user.Id, enTokenType.ResetPasswordToken, null, jwtAccessTokenObj.Id, validFor);
 
 
         return (refreshToken, AccessToken);
