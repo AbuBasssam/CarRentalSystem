@@ -17,6 +17,16 @@ public class HttpRequestContext : IRequestContext
     }
 
     public HttpContext? Context => _accessor.HttpContext;
+    private bool IsAuthenticated
+    {
+        get
+        {
+            if (Context?.User?.Identity?.IsAuthenticated != true)
+                return false;
+
+            return true;
+        }
+    }
 
     public string? AuthToken =>
         Context?.Request.Headers["Authorization"]
@@ -24,22 +34,51 @@ public class HttpRequestContext : IRequestContext
             .Replace("Bearer ", "", StringComparison.OrdinalIgnoreCase)
             .Trim();
 
-    public string? ClientIP =>
-        Context?.Connection.RemoteIpAddress?.ToString();
+    public string? ClientIP
+    {
+        get
+        {
+            if (!IsAuthenticated)
+                return null;
+
+            return Context?.Connection.RemoteIpAddress?.ToString();
+        }
+    }
 
     public string Language
     {
         get
         {
+
             var lang = Context?.Request.Headers["Accept-Language"].FirstOrDefault();
             return string.IsNullOrWhiteSpace(lang)
                 ? "en"
                 : lang.Split(',').First().Trim().ToLower();
         }
     }
-    public int UserId => int.Parse(Context?.User?.FindFirstValue(ClaimTypes.NameIdentifier) ?? "0");
+    public int? UserId =>
+        int.TryParse(Context?.User?.FindFirstValue(ClaimTypes.NameIdentifier), out var id)
+            ? id
+            : null;
+    public string? TokenJti
+    {
+        get
+        {
+            if (!IsAuthenticated)
+                return null;
 
-    public string TokenJti => Context?.User?.FindFirstValue(JwtRegisteredClaimNames.Jti) ?? string.Empty;
+            return Context?.User.FindFirstValue(JwtRegisteredClaimNames.Jti);
+        }
+    }
 
-    public string Email => Context?.User?.FindFirstValue(ClaimTypes.Email) ?? string.Empty;
+    public string? Email
+    {
+        get
+        {
+            if (!IsAuthenticated)
+                return null;
+
+            return Context?.User.FindFirstValue(ClaimTypes.Email) ?? null;
+        }
+    }
 }
