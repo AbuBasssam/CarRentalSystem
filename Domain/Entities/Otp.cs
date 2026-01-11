@@ -40,7 +40,7 @@ public class Otp : IEntity<int>
             throw new ArgumentOutOfRangeException(nameof(validFor), "OTP validity duration must be positive");
 
         DateTime creationTime = DateTime.UtcNow;
-        TimeSpan sendTimeBuffer = TimeSpan.FromSeconds(15);
+        TimeSpan sendTimeBuffer = TimeSpan.FromMinutes(1);
         var compensatedValidity = validFor + sendTimeBuffer;
 
         Code = code;
@@ -53,6 +53,7 @@ public class Otp : IEntity<int>
         LastAttemptAt = null;
     }
     public bool IsExpired() => DateTime.UtcNow >= ExpirationTime;
+    public void UpdateLastAttempt() => LastAttemptAt = DateTime.UtcNow;
 
     /// <summary>
     /// Force OTP to expire immediately
@@ -63,12 +64,10 @@ public class Otp : IEntity<int>
             return;
 
         ExpirationTime = DateTime.UtcNow;
+        IsUsed = true;
     }
 
-    /// <summary>
-    /// Mark otp as used 
-    /// </summary>
-    public void MarkAsUsed() => IsUsed = true;
+
     /// <summary>
     /// Increment failed verification attempts
     /// </summary>
@@ -120,6 +119,23 @@ public class Otp : IEntity<int>
             _ => TimeSpan.FromMinutes(2)
         };
     }
+    public (bool canResend, TimeSpan? remaining) CanResend()
+    {
+        var now = DateTime.UtcNow;
+        var cooldownPeriod = _GetCooldownPeriod();
+
+        DateTime referenceTime = LastAttemptAt.HasValue ? LastAttemptAt.Value : CreationTime;
+
+        var cooldownEndsAt = referenceTime.Add(cooldownPeriod);
+
+        if (now < cooldownEndsAt)
+        {
+            return (false, cooldownEndsAt - now);
+        }
+
+        return (true, null);
+    }
+
 
 
 }

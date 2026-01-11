@@ -24,7 +24,7 @@ public class OtpRepository : GenericRepository<Otp, int>, IOtpRepository
             .OrderByDescending(o => o.CreationTime);
 
     }
-    public IQueryable<Otp> GetByTokenJtiAsync(string tokenJti, enOtpType otpType)
+    public IQueryable<Otp> GetByTokenJti(string tokenJti, enOtpType otpType)
     {
         return _dbSet
             .Where(o => o.TokenJti == tokenJti && o.Type == otpType);

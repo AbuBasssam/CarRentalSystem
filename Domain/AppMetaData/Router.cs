@@ -29,7 +29,7 @@ public static class Router
 
         public const string EmailConfirmation = BASE + "/email-confirmation";
 
-        public const string ResendVerification = "re-verification";
+        public const string ResendVerification = BASE + "re-verification";
 
 
 
@@ -40,6 +40,8 @@ public static class Router
         public const string PasswordResetVerification = BASE + "/password-reset-verification";
 
         public const string Password = BASE + "/password";
+
+        public const string ResendPasswordReset = BASE + "/password-reset/resend";
 
         // Token management endpoints
         public const string Token = BASE + "/token";
