@@ -29,8 +29,8 @@ public record SendResetCodeDTO
         {
             _localizer = localizer;
             RuleFor(x => x.Email)
-                .ApplyNotEmptyRule(_localizer[SharedResourcesKeys.EmailRequired].Value)
-                .ApplyEmailAddressRule(_localizer[SharedResourcesKeys.InvalidEmail].Value);
+                .ApplyNotEmptyRule(_localizer[SharedResourcesKeys.EmailRequired])
+                .ApplyEmailAddressRule(_localizer[SharedResourcesKeys.InvalidEmail]);
 
 
         }

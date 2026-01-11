@@ -1,6 +1,5 @@
 ﻿using Application.Models;
 using ApplicationLayer.Resources;
-using Domain.Entities;
 using Domain.Enums;
 using Interfaces;
 using MediatR;
@@ -15,6 +14,7 @@ public class SendResetCodeCommandHandler : IRequestHandler<SendResetCodeCommand,
     private readonly IUserService _userService;
     private readonly IEmailService _emailService;
     private readonly IAuthService _authServic;
+    private readonly IOtpService _otpService;
 
     private readonly IOtpRepository _otpRepo;
     private readonly IRefreshTokenRepository _refreshTokenRepo;
@@ -30,7 +30,7 @@ public class SendResetCodeCommandHandler : IRequestHandler<SendResetCodeCommand,
 
     public SendResetCodeCommandHandler(IEmailService emailService, IUserService userService, IAuthService authServic,
         IOtpRepository otpRepo, IRefreshTokenRepository refreshTokenRepo, IUnitOfWork unitOfWork,
-        IStringLocalizer<SharedResources> localizer, ResponseHandler responseHandler)
+        IStringLocalizer<SharedResources> localizer, ResponseHandler responseHandler, IOtpService otpService)
     {
         _emailService = emailService;
         _userService = userService;
@@ -42,6 +42,7 @@ public class SendResetCodeCommandHandler : IRequestHandler<SendResetCodeCommand,
         _unitOfWork = unitOfWork;
         _responseHandler = responseHandler;
         _localizer = localizer;
+        _otpService = otpService;
     }
 
     public async Task<Response<VerificationFlowResponse>> Handle(SendResetCodeCommand request, CancellationToken cancellationToken)
@@ -52,7 +53,9 @@ public class SendResetCodeCommandHandler : IRequestHandler<SendResetCodeCommand,
         try
         {
             // Step 1: Find user by email 
-            var user = await _userService.GetUserByEmailAsync(email).FirstOrDefaultAsync();
+            var user = await _userService
+                .GetUserByEmailAsync(email)
+                .FirstOrDefaultAsync();
 
             if (user == null)
             {
@@ -67,7 +70,7 @@ public class SendResetCodeCommandHandler : IRequestHandler<SendResetCodeCommand,
             // Step 2: Check for existing active reset codes
             var existingOtp = _otpRepo
                 .GetLatestValidOtpAsync(user.Id, enOtpType.ResetPassword)
-                .FirstOrDefault(o => !o.IsUsed && !(o.ExpirationTime <= DateTime.UtcNow));
+                .FirstOrDefault();
 
             if (existingOtp != null)
             {
@@ -78,24 +81,26 @@ public class SendResetCodeCommandHandler : IRequestHandler<SendResetCodeCommand,
 
 
             // Step 3: Generate new OTP code
-            var otpCode = Helpers.GenerateOtp();
 
-            var hashedCode = Helpers.HashString(otpCode);
+            Result<(string otpCode, string jti)> result = await _otpService.GenerateOtpWithJtiAsync(
+                user.Id,
+                enOtpType.ResetPassword,
+                OTP_VALIDITY_MINUTES,
+                cancellationToken
+            );
 
-            var jti = Guid.NewGuid().ToString();
+            if (!result.IsSuccess)
+            {
+                return _GetSuccessResponse(string.Empty, DateTime.UtcNow.AddMinutes(TOKEN_VALIDITY_MINUTES));
 
-            var validFor = TimeSpan.FromMinutes(OTP_VALIDITY_MINUTES);
 
-            var otp = new Otp(hashedCode, enOtpType.ResetPassword, user.Id, validFor, jti);
-
+            }
 
             // Step 4: Generate JWT token for stage 1 (AwaitingVerification)
-            var token = _authServic.GenerateResetToken(user, TOKEN_VALIDITY_MINUTES, jti, enResetPasswordStage.AwaitingVerification);
+            var token = _authServic.GenerateResetToken(user, TOKEN_VALIDITY_MINUTES, result.Data.jti, enResetPasswordStage.AwaitingVerification);
 
 
             // Step 5: Save to DB 
-
-            await _otpRepo.AddAsync(otp);
 
             await _refreshTokenRepo.AddAsync(token.refreshToken);
 
@@ -103,11 +108,11 @@ public class SendResetCodeCommandHandler : IRequestHandler<SendResetCodeCommand,
 
             await transaction.CommitAsync(cancellationToken);
 
-            Log.Information($"OTP and token saved for user {user.Id}. Attempting to send email.");
+            Log.Information($"OTP and token saved for user {user.Id}. Attempting to send reset password email.");
 
 
             // Step 5: Send email (don't save OTP if email fails)
-            var emailResult = await _emailService.SendResetPasswordMessage(user.Email!, otpCode);
+            var emailResult = await _emailService.SendResetPasswordMessage(user.Email!, result.Data.otpCode);
 
             if (!emailResult.IsSuccess)
             {
@@ -116,7 +121,7 @@ public class SendResetCodeCommandHandler : IRequestHandler<SendResetCodeCommand,
 
             }
 
-            Log.Information("Password reset code sent successfully to user {UserId}", user.Id);
+            Log.Information($"Password reset code sent successfully to user {user.Id}");
 
             return _GetSuccessResponse(token.AccessToken, (DateTime)token.refreshToken.ExpiryDate!);
         }
