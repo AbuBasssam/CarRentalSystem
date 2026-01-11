@@ -12,7 +12,7 @@ public interface IOtpRepository : IGenericRepository<Otp, int>
     /// <summary>
     /// Get OTP by TokenJti for password reset flow tracking
     /// </summary>
-    Task<Otp?> GetByTokenJtiAsync(string tokenJti, enOtpType otpType);
+    IQueryable<Otp> GetByTokenJtiAsync(string tokenJti, enOtpType otpType);
 
     /// <summary>
     /// Check if user has any active (non-expired, non-used) OTP of given type

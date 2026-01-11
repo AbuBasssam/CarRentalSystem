@@ -18,6 +18,9 @@ public class RefreshTokenRepository : GenericRepository<UserToken, int>, IRefres
                          && token.ExpiryDate > DateTime.UtcNow
                          && token.Type == type);
     }
+
+    public IQueryable<UserToken> GetTokenByJti(string jti) => _dbSet.Where(t => t.JwtId == jti);
+
     public async Task<bool> IsTokenExpired(string jwtId)
     {
         var IsTokenExpired = await _dbSet.AnyAsync

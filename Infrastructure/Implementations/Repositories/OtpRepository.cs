@@ -16,14 +16,18 @@ public class OtpRepository : GenericRepository<Otp, int>, IOtpRepository
     public IQueryable<Otp> GetLatestValidOtpAsync(int userId, enOtpType otpType)
     {
         return _dbSet
-            .Where(o => o.User.Id == userId && o.Type == otpType)
+            .Where(
+            o => o.UserId == userId
+            && o.Type == otpType
+            && o.ExpirationTime > DateTime.UtcNow
+            )
             .OrderByDescending(o => o.CreationTime);
 
     }
-    public async Task<Otp?> GetByTokenJtiAsync(string tokenJti, enOtpType otpType)
+    public IQueryable<Otp> GetByTokenJtiAsync(string tokenJti, enOtpType otpType)
     {
-        return await _dbSet
-            .FirstOrDefaultAsync(o => o.TokenJti == tokenJti && o.Type == otpType);
+        return _dbSet
+            .Where(o => o.TokenJti == tokenJti && o.Type == otpType);
     }
 
     public async Task<bool> HasActiveOtpAsync(int userId, enOtpType otpType)
@@ -48,6 +52,7 @@ public class OtpRepository : GenericRepository<Otp, int>, IOtpRepository
             .ExecuteUpdateAsync(
                 setters => setters
                 .SetProperty(o => o.ExpirationTime, now)
+                .SetProperty(o => o.IsUsed, true)
             );
     }
 }
