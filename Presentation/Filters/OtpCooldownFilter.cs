@@ -7,84 +7,87 @@ using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Localization;
 
+namespace Infrastructure.Filters;
+
+/// <summary>
+/// Action filter to enforce OTP cooldown period
+/// Prevents rapid resend requests for OTP codes
+/// </summary>
 public class OtpCooldownFilter : IAsyncActionFilter
 {
-
-    #region Field(s)
     private readonly IOtpRepository _otpRepo;
     private readonly IRequestContext _requestContext;
-    private readonly IAuthService _authService;
-
     private readonly enOtpType _otpType;
-
     private readonly IStringLocalizer<SharedResources> _localizer;
     private readonly ResponseHandler _responseHandler;
 
-    #endregion
 
-    #region Constructor(s)
-
-    public OtpCooldownFilter(IOtpRepository otpRepo, IRequestContext requestContext, IAuthService authService,
-        enOtpType otpType, IStringLocalizer<SharedResources> localizer, ResponseHandler responseHandler)
+    public OtpCooldownFilter(
+        IOtpRepository otpRepo,
+        IRequestContext requestContext,
+        IStringLocalizer<SharedResources> localizer,
+        ResponseHandler responseHandler,
+        enOtpType otpType)
     {
         _otpRepo = otpRepo;
         _requestContext = requestContext;
-        _authService = authService;
-        _otpType = otpType;
         _localizer = localizer;
         _responseHandler = responseHandler;
+        _otpType = otpType;
     }
 
-    #endregion
-
-    #region Method(s)
-
-    public async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
+    public async Task OnActionExecutionAsync(
+        ActionExecutingContext context,
+        ActionExecutionDelegate next)
     {
-        var token = _requestContext.AuthToken;
+        // ============================================================
+        // Step 1: Get UserId (user must already be authenticated)
+        // ============================================================
+        var userId = _requestContext.UserId;
 
-        if (string.IsNullOrEmpty(token))
+        if (!userId.HasValue || userId.Value <= 0)
         {
             var response = _responseHandler.Unauthorized<string>();
-            var result = new UnauthorizedObjectResult(response);
-
-            context.Result = result;
+            context.Result = new UnauthorizedObjectResult(response);
             return;
         }
 
-        var userIdResult = _authService.GetUserIdFromSessionToken(token);
-        if (!userIdResult.IsSuccess)
+        // ============================================================
+        // Step 2: Get last OTP for user (ANY status)
+        // ============================================================
+        var lastOtp = await _otpRepo
+            .GetLatestValidOtpAsync(userId.Value, _otpType)
+            .FirstOrDefaultAsync();
+
+        if (lastOtp is null)
         {
-            var response = _responseHandler.Unauthorized<string>();
-            var result = new UnauthorizedObjectResult(response);
-            context.Result = result;
+            // User never requested OTP before → allow
+            await next();
             return;
         }
 
-        int userId = userIdResult.Data;
+        // ============================================================
+        // Step 3: Check cooldown
+        // ============================================================
 
-        var lastOtp = await _otpRepo.GetLatestValidOtpAsync(userId, _otpType).FirstOrDefaultAsync();
-        var cooldown = lastOtp?.GetRemainingCooldown();
-
-        if (cooldown.HasValue)
+        var canResendResult = lastOtp.CanResend();
+        if (!canResendResult.canResend)
         {
-            var time = cooldown.Value;
+            var secondsRemaining = (int)Math.Ceiling(canResendResult.remaining!.Value.TotalSeconds);
 
-            string formattedTime = string.Format("{0:00}:{1:00}", (int)time.TotalMinutes, time.Seconds);
+            var errorMessage = string.Format(
+                _localizer[SharedResourcesKeys.ResendCooldown],
+                secondsRemaining
+            );
 
-            var errMessage = string.Format(_localizer[SharedResourcesKeys.ResendCooldown], formattedTime);
-
-            var response = _responseHandler.BadRequest<string>(string.Format(_localizer[SharedResourcesKeys.ResendCooldown], Math.Ceiling(cooldown.Value.TotalSeconds)));
-
-            var result = new BadRequestObjectResult(response);
-
-            context.Result = result;
-
+            context.Result = new BadRequestObjectResult(
+                _responseHandler.BadRequest<string>(errorMessage)
+            );
             return;
         }
+
 
         await next();
     }
-
-    #endregion
 }
+
