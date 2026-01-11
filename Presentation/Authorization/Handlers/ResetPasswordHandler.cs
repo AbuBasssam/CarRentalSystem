@@ -61,12 +61,11 @@ public class ResetPasswordHandler : AuthorizationHandler<ResetPasswordRequiremen
         try
         {
             var tokenEntity = await _refreshTokenRepo
-                .GetTableNoTracking()
-                .Where(t => t.JwtId == jti && t.Type == enTokenType.ResetPasswordToken)
+                .GetTokenByJti(jti)
                 .FirstOrDefaultAsync();
 
             // ✅ FIXED: Correct logic - token must exist AND be valid
-            if (tokenEntity != null && tokenEntity.IsValid())
+            if (tokenEntity != null && tokenEntity.Type == enTokenType.ResetPasswordToken && tokenEntity.IsValid())
             {
                 context.Succeed(requirement);
             }
