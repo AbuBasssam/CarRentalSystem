@@ -47,7 +47,7 @@ public class ResetPasswordCommandHandler : IRequestHandler<ResetPasswordCommand,
         await using var transaction = await _unitOfWork.BeginTransactionAsync(cancellationToken);
         try
         {
-            var userId = _context.UserId;
+            int userId = (int)_context.UserId!;
             var currentJti = _context.TokenJti;
 
             // ============================================================
@@ -69,9 +69,8 @@ public class ResetPasswordCommandHandler : IRequestHandler<ResetPasswordCommand,
             }
 
             // Step 2: Verify OTP exists and matches JTI from stage 2
-            var otp = _otpRepo
-                    .GetLatestValidOtpAsync(userId, enOtpType.ResetPassword)
-                    .FirstOrDefault(o => o.TokenJti == currentJti && o.IsUsed);
+
+            var otp = await _otpRepo.GetByTokenJti(currentJti!, enOtpType.ResetPassword).FirstOrDefaultAsync();
 
             if (otp == null)
             {
@@ -84,17 +83,7 @@ public class ResetPasswordCommandHandler : IRequestHandler<ResetPasswordCommand,
                 );
             }
 
-            // Step 3: Check if OTP is expired (even though it's marked as used)
-            if (otp.IsExpired())
-            {
-                await transaction.RollbackAsync(cancellationToken);
 
-                Log.Information($"Expired OTP for password reset for user {userId}");
-
-                return _responseHandler.BadRequest<bool>(
-                    _localizer[SharedResourcesKeys.ResetSessionExpired]
-                );
-            }
 
             // ============================================================
             // Step 5: Remove old password
@@ -148,7 +137,7 @@ public class ResetPasswordCommandHandler : IRequestHandler<ResetPasswordCommand,
             // ============================================================
             // Step 9: Revoke current reset token
             // ============================================================
-            await _RevokeCurrentResetTokenAsync(currentJti);
+            await _RevokeCurrentResetTokenAsync(currentJti!);
 
             // ============================================================
             // Step 10: Update security stamp (invalidates existing sessions)
@@ -168,14 +157,6 @@ public class ResetPasswordCommandHandler : IRequestHandler<ResetPasswordCommand,
             await transaction.CommitAsync(cancellationToken);
 
             Log.Information($"Password successfully reset for user {userId}");
-
-
-            await _unitOfWork.SaveChangesAsync(cancellationToken);
-            await transaction.CommitAsync(cancellationToken);
-
-
-
-            Log.Information($"Password successfully reset for user {user.Id}");
 
             return _responseHandler.Success(true);
         }
