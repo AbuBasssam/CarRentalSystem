@@ -47,47 +47,19 @@ public class VerifyResetCodeCommandHandler : IRequestHandler<VerifyResetCodeComm
         await using var transaction = await _unitOfWork.BeginTransactionAsync(cancellationToken);
         try
         {
-            var userId = _context.UserId;
+            var userId = (int)_context.UserId!;
+            var tokenJti = _context.TokenJti!;
 
-            // Step 2: Get latest OTP with matching JTI
-            var otp = _otpRepo.GetLatestValidOtpAsync(userId, enOtpType.ResetPassword)
-                .FirstOrDefault(o => o.TokenJti == _context.TokenJti);
+            // ========= Validate OTP =========
 
-            // ========= 3. Validate OTP =========
-            if (otp == null || !otp.IsValidForVerification())
+            var otpValidationResult = await _otpService.ValidateOtp(tokenJti, request.DTO.Code, enOtpType.ResetPassword, cancellationToken);
+
+            if (!otpValidationResult.IsValid)
             {
-                Log.Warning(
-                $"OTP validation failed: no active OTP found for UserId {userId}");
 
-                await transaction.RollbackAsync(cancellationToken);
-                return _responseHandler.BadRequest<VerificationFlowResponse>(_localizer[SharedResourcesKeys.InvalidExpiredCode]);
+                if (otpValidationResult.IsExceededMaxAttempts)
 
-            }
-
-            // Verify OTP code
-            var hashedCode = Helpers.HashString(request.DTO.Code);
-            if (otp.Code != hashedCode)
-            {
-                otp.IncrementAttempts();
-
-                if (otp.HasExceededMaxAttempts())
-                {
-                    otp.ForceExpire();
-                    otp.MarkAsUsed();
-
-                    Log.Warning($"OTP locked after max attempts for UserId {userId}");
-
-                    await _RevokeCurrentTokenAsync(_context.TokenJti);
-
-
-                    await _unitOfWork.SaveChangesAsync(cancellationToken);
-
-                    await transaction.CommitAsync(cancellationToken);
-
-                    return _responseHandler.BadRequest<VerificationFlowResponse>(_localizer[SharedResourcesKeys.InvalidExpiredCode]);
-                }
-                else
-                    Log.Warning($"OTP validation failed: invalid code for UserId {userId}");
+                    await _refreshTokenRepo.RevokeUserTokenAsync(userId, enTokenType.VerificationToken);
 
                 await _unitOfWork.SaveChangesAsync(cancellationToken);
 
@@ -96,7 +68,12 @@ public class VerifyResetCodeCommandHandler : IRequestHandler<VerifyResetCodeComm
                 return _responseHandler.BadRequest<VerificationFlowResponse>(_localizer[SharedResourcesKeys.InvalidExpiredCode]);
             }
 
-            // Step 3: Code is valid - Get user
+
+            otpValidationResult.Otp?.ForceExpire();
+
+            await _RevokeCurrentTokenAsync(tokenJti);
+
+
             var user = await _userService
                 .GetUserByIdAsync(userId)
                 .FirstOrDefaultAsync(cancellationToken);
@@ -111,15 +88,11 @@ public class VerifyResetCodeCommandHandler : IRequestHandler<VerifyResetCodeComm
                 );
             }
 
-            otp.MarkAsUsed();
-
-            await _refreshTokenRepo.RevokeUserTokenAsync(_context.TokenJti);
-
             // Generate new JTI for stage 2 token
             var newJti = Guid.NewGuid().ToString();
 
             // Update OTP with new JTI for tracking
-            otp.UpdateTokenJti(newJti);
+            otpValidationResult.Otp?.UpdateTokenJti(newJti);
 
             // Generate stage 2 token (Verified)
             var newToken = _authService.GenerateResetToken(user, TOKEN_VALIDITY_MINUTES, newJti, enResetPasswordStage.Verified);
