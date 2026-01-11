@@ -13,6 +13,15 @@ using Presentation.Helpers;
 namespace Presentation.Controller;
 public class AuthController : ApiController
 {
+    /// <summary>
+    /// Authenticates user with email and password
+    /// </summary>
+    /// <param name="command">Sign in credentials</param>
+    /// <returns>JWT authentication result with access and refresh tokens</returns>
+    /// <response code="200">Successfully authenticated</response>
+    /// <response code="400">Invalid credentials or account locked</response>
+    /// <response code="422">Validation error</response>
+    /// <response code="429">Too many login attempts</response>
     [HttpPost(Router.AuthenticationRouter.SignIn)]
     [ProducesResponseType(typeof(Response<JwtAuthResult>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(Response<JwtAuthResult>), StatusCodes.Status400BadRequest)]
@@ -30,6 +39,16 @@ public class AuthController : ApiController
     }
 
 
+    /// <summary>
+    /// Registers a new user account
+    /// </summary>
+    /// <param name="dto">User registration data</param>
+    /// <returns>Success message with verification instructions</returns>
+    /// <response code="201">User successfully created</response>
+    /// <response code="400">Email already exists or invalid data</response>
+    /// <response code="422">Validation error</response>
+    /// <response code="429">Too many registration attempts</response>
+    /// <response code="500">Internal server error</response>
     [HttpPost(Router.AuthenticationRouter.SignUp)]
     [ProducesResponseType(typeof(Response<string>), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(Response<string>), StatusCodes.Status400BadRequest)]
@@ -46,6 +65,17 @@ public class AuthController : ApiController
         );
     }
 
+    /// <summary>
+    /// Confirms user email with verification code
+    /// </summary>
+    /// <param name="dto">Email confirmation data containing OTP code</param>
+    /// <returns>Confirmation result</returns>
+    /// <response code="200">Email successfully confirmed</response>
+    /// <response code="400">Invalid or expired code</response>
+    /// <response code="401">Invalid or expired verification token</response>
+    /// <response code="422">Validation error</response>
+    /// <response code="429">Too many verification attempts</response>
+    /// <response code="500">Internal server error</response>
     [HttpPost(Router.AuthenticationRouter.EmailConfirmation)]
     [ProducesResponseType(typeof(Response<bool>), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(Response<bool>), StatusCodes.Status401Unauthorized)]
@@ -64,7 +94,15 @@ public class AuthController : ApiController
         );
     }
 
-
+    /// <summary>
+    /// Validates and refreshes access token
+    /// </summary>
+    /// <param name="token">Refresh token</param>
+    /// <returns>New access token</returns>
+    /// <response code="200">Token successfully refreshed</response>
+    /// <response code="400">Invalid refresh token</response>
+    /// <response code="401">Token expired or revoked</response>
+    /// <response code="429">Too many token refresh requests</response>
     [HttpPost(Router.AuthenticationRouter.Token)]
     [ProducesResponseType(typeof(Response<string>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(Response<string>), StatusCodes.Status400BadRequest)]

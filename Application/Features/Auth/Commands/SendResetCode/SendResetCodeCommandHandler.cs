@@ -8,43 +8,64 @@ using Microsoft.Extensions.Localization;
 using Serilog;
 
 namespace Application.Features.AuthFeature;
-
+/// <summary>
+/// Handles initial password reset request and sends verification code
+/// </summary>
 public class SendResetCodeCommandHandler : IRequestHandler<SendResetCodeCommand, Response<VerificationFlowResponse>>
 {
+    #region Field(s)
+
     private readonly IUserService _userService;
     private readonly IEmailService _emailService;
     private readonly IAuthService _authServic;
     private readonly IOtpService _otpService;
-
     private readonly IOtpRepository _otpRepo;
     private readonly IRefreshTokenRepository _refreshTokenRepo;
-
     private readonly IUnitOfWork _unitOfWork;
-
     private readonly IStringLocalizer<SharedResources> _localizer;
-
     private readonly ResponseHandler _responseHandler;
-    // Configuration constants
+
     private const int OTP_VALIDITY_MINUTES = 3;
     private const int TOKEN_VALIDITY_MINUTES = 15;
 
-    public SendResetCodeCommandHandler(IEmailService emailService, IUserService userService, IAuthService authServic,
-        IOtpRepository otpRepo, IRefreshTokenRepository refreshTokenRepo, IUnitOfWork unitOfWork,
-        IStringLocalizer<SharedResources> localizer, ResponseHandler responseHandler, IOtpService otpService)
+    #endregion
+
+    #region Constructor(s)
+
+    /// <summary>
+    /// Initializes a new instance of SendResetCodeCommandHandler
+    /// </summary>
+    public SendResetCodeCommandHandler(
+        IEmailService emailService,
+        IUserService userService,
+        IAuthService authServic,
+        IOtpRepository otpRepo,
+        IRefreshTokenRepository refreshTokenRepo,
+        IUnitOfWork unitOfWork,
+        IStringLocalizer<SharedResources> localizer,
+        ResponseHandler responseHandler,
+        IOtpService otpService)
     {
         _emailService = emailService;
         _userService = userService;
         _authServic = authServic;
-
         _otpRepo = otpRepo;
         _refreshTokenRepo = refreshTokenRepo;
-
         _unitOfWork = unitOfWork;
         _responseHandler = responseHandler;
         _localizer = localizer;
         _otpService = otpService;
     }
 
+    #endregion
+
+    #region Handler(s)
+    /// <summary>
+    /// Processes password reset initiation request
+    /// </summary>
+    /// <param name="request">Send reset code command containing user email</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>Response containing verification token</returns>
     public async Task<Response<VerificationFlowResponse>> Handle(SendResetCodeCommand request, CancellationToken cancellationToken)
     {
         using var transaction = await _unitOfWork.BeginTransactionAsync();
@@ -145,9 +166,15 @@ public class SendResetCodeCommandHandler : IRequestHandler<SendResetCodeCommand,
         }
     }
 
+    #endregion
+
+    #region Helper Method(s)
     /// <summary>
-    /// Helper method to create consistent success responses
+    /// Creates consistent success response for password reset flow
     /// </summary>
+    /// <param name="token">Verification token</param>
+    /// <param name="expiresAt">Token expiration timestamp</param>
+    /// <returns>Success response with verification flow data</returns>
     private Response<VerificationFlowResponse> _GetSuccessResponse(string token, DateTime expiresAt)
     {
         return _responseHandler.Success(
@@ -159,4 +186,5 @@ public class SendResetCodeCommandHandler : IRequestHandler<SendResetCodeCommand,
         );
     }
 
+    #endregion
 }

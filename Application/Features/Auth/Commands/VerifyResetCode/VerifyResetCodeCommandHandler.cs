@@ -8,8 +8,14 @@ using Microsoft.Extensions.Localization;
 using Serilog;
 
 namespace Application.Features.AuthFeature;
+
+/// <summary>
+/// Handles verification of password reset code
+/// </summary>
 public class VerifyResetCodeCommandHandler : IRequestHandler<VerifyResetCodeCommand, Response<VerificationFlowResponse>>
 {
+
+    #region Field(s)
 
     private readonly IUserService _userService;
     private readonly IAuthService _authService;
@@ -23,10 +29,16 @@ public class VerifyResetCodeCommandHandler : IRequestHandler<VerifyResetCodeComm
     private readonly ResponseHandler _responseHandler;
     private const int TOKEN_VALIDITY_MINUTES = 5;
 
+    #endregion
 
+    #region Constructor(s)
+
+    /// <summary>
+    /// Initializes a new instance of VerifyResetCodeCommandHandler
+    /// </summary>
     public VerifyResetCodeCommandHandler(IUserService userService, IAuthService authService, IOtpService otpService, IRequestContext context,
-      IRefreshTokenRepository refreshTokenRepo, IOtpRepository otpRepo, IUnitOfWork unitOfWork,
-      IStringLocalizer<SharedResources> localizer, ResponseHandler responseHandler)
+  IRefreshTokenRepository refreshTokenRepo, IOtpRepository otpRepo, IUnitOfWork unitOfWork,
+  IStringLocalizer<SharedResources> localizer, ResponseHandler responseHandler)
     {
 
         _userService = userService;
@@ -42,6 +54,16 @@ public class VerifyResetCodeCommandHandler : IRequestHandler<VerifyResetCodeComm
         _responseHandler = responseHandler;
     }
 
+    #endregion
+
+    #region Handler(s)
+
+    /// <summary>
+    /// Processes OTP verification for password reset
+    /// </summary>
+    /// <param name="request">Verify reset code command containing OTP</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>Response containing verified token for password reset</returns>
     public async Task<Response<VerificationFlowResponse>> Handle(VerifyResetCodeCommand request, CancellationToken cancellationToken)
     {
         await using var transaction = await _unitOfWork.BeginTransactionAsync(cancellationToken);
@@ -145,9 +167,15 @@ public class VerifyResetCodeCommandHandler : IRequestHandler<VerifyResetCodeComm
 
 
     }
+
+    #endregion
+
+    #region Helper Method(s)
+
     /// <summary>
-    /// Revoke current reset token by JTI
+    /// Revokes current reset token by JTI
     /// </summary>
+    /// <param name="jti">JWT token identifier</param>
     private async Task _RevokeCurrentTokenAsync(string jti)
     {
 
@@ -164,4 +192,6 @@ public class VerifyResetCodeCommandHandler : IRequestHandler<VerifyResetCodeComm
 
 
     }
+
+    #endregion
 }
