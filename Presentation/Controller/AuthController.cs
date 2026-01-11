@@ -3,9 +3,11 @@ using Application.Models;
 using Domain.AppMetaData;
 using Domain.Enums;
 using Domain.HelperClasses;
+using Infrastructure.Filters;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Presentation.Constants;
 using Presentation.Helpers;
 
 namespace Presentation.Controller;
@@ -104,7 +106,7 @@ public class AuthController : ApiController
     [ProducesResponseType(typeof(Response<string>), StatusCodes.Status500InternalServerError)]
 
     [Authorize(Policy = Policies.VerificationOnly)]
-    [TypeFilter(typeof(OtpCooldownFilter), Arguments = new object[] { enOtpType.ConfirmEmail })]
+    [OtpCooldown(enOtpType.ConfirmEmail)]
     public async Task<IActionResult> ResendVerificationCode()
     {
         ResendVerificationCodeCommand command = new ResendVerificationCodeCommand();
@@ -113,5 +115,95 @@ public class AuthController : ApiController
             Sender,
             (Response<string> response) => NewResult(response)
         );
+    }
+    /// <summary>
+    /// Send password reset code to email
+    /// </summary>
+    [HttpPost(Router.AuthenticationRouter.PasswordReset)]
+    [ProducesResponseType(typeof(Response<VerificationFlowResponse>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(Response<object>), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status429TooManyRequests)]
+    [AllowAnonymous]
+
+    public async Task<IActionResult> SendResetCode([FromBody] SendResetCodeDTO dto)
+    {
+        SendResetCodeCommand command = new SendResetCodeCommand(dto);
+        return await CommandExecutor.Execute(
+            command,
+            Sender,
+            (Response<VerificationFlowResponse> response) => NewResult(response)
+        );
+    }
+
+
+    /// <summary>
+    /// Step 2: Verify the reset code
+    /// </summary>
+    [HttpPost(Router.AuthenticationRouter.PasswordResetVerification)]
+    [ProducesResponseType(typeof(Response<VerificationFlowResponse>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(Response<object>), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status429TooManyRequests)]
+    [Authorize(Policy = Policies.AwaitVerification)]
+
+    public async Task<IActionResult> VerifyResetCode([FromBody] VerifyResetCodeDTO dto)
+    {
+        VerifyResetCodeCommand command = new VerifyResetCodeCommand(dto);
+        return await CommandExecutor.Execute(
+            command,
+            Sender,
+            (Response<VerificationFlowResponse> response) => NewResult(response)
+        );
+    }
+    /// <summary>
+    /// Step 3: Reset password with new password
+    /// </summary>
+    /// <remarks>
+    /// Requires valid reset token from Step 2 (Verified stage).
+    /// Updates user's password and invalidates all existing sessions.
+    /// </remarks>
+    [HttpPut(Router.AuthenticationRouter.PasswordReset)]
+    [Authorize(Policy = Policies.ResetPasswordVerified)]
+    [ProducesResponseType(typeof(Response<bool>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(Response<object>), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status429TooManyRequests)]
+    public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordCommand command)
+    {
+        return await CommandExecutor.Execute(
+          command,
+          Sender,
+          (Response<bool> response) => NewResult(response)
+        );
+    }
+
+    /// <summary>
+    /// Resend password reset code (Token-based for security)
+    /// </summary>
+    /// <remarks>
+    /// Requires valid reset token from previous send/resend.
+    /// 
+    /// Security benefits:
+    /// - Token rotation (old token invalidated, new token issued)
+    /// - Cannot resend to different email (email from token only)
+    /// - Rate limiting on user level (not just IP)
+    /// - Cooldown period enforced (60 seconds)
+    /// 
+    /// Similar to RefreshToken pattern:
+    /// - Must use valid token from previous step
+    /// - Old token becomes invalid after resend
+    /// - New token must be used for verification
+    /// </remarks>
+    [HttpPost(Router.AuthenticationRouter.ResendPasswordReset)]
+    [Authorize(Policy = Policies.AwaitVerification)]
+    [OtpCooldown(enOtpType.ResetPassword)]
+    public async Task<IActionResult> ResendResetCode()
+    {
+        var command = new ResendResetCodeCommand();
+        return await CommandExecutor.Execute(
+         command,
+         Sender,
+         (Response<VerificationFlowResponse> response) => NewResult(response)
+       );
     }
 }
