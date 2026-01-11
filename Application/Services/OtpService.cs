@@ -48,6 +48,15 @@ public class OtpService : IOtpService
             return Result<string>.Failure(["Failed to generate OTP"]);
         }
     }
+    public async Task<Result<(string otp, string jti)>> GenerateOtpWithJtiAsync(int userId, enOtpType otpType, int expirationMinutes, CancellationToken cancellationToken = default)
+    {
+        var otpCode = Helpers.GenerateOtp();
+        var jti = Guid.NewGuid().ToString();
+
+        await _SaveOtpToDb(userId, otpCode, otpType, expirationMinutes, jti);
+
+        return Result<(string, string)>.Success((otpCode, jti));
+    }
 
     /// <summary>
     /// Expires and marks old active OTP as used before creating new one
@@ -66,7 +75,6 @@ public class OtpService : IOtpService
 
             // Expire and mark as used
             activeOtp.ForceExpire();
-            activeOtp.MarkAsUsed();
 
             Log.Information($"Expired active OTP for user {userId}, type {otpType}");
 
@@ -111,47 +119,71 @@ public class OtpService : IOtpService
     /// <summary>
     /// Validates the OTP and manages attempt counting.
     /// </summary>
-    public async Task<ValidationOtpResuult> ValidateOtp(int userId, string otpCode, enOtpType enOtpType, CancellationToken ct)
+    public async Task<ValidationOtpResuult> ValidateOtp(string tokenJti, string otpCode, enOtpType enOtpType, CancellationToken ct = default)
     {
-        var validtionResult = new ValidationOtpResuult();
-        var otp = await _otpRepo
+        var otp = await _otpRepo.GetByTokenJti(tokenJti, enOtpType).FirstOrDefaultAsync(ct);
+        if (otp == null)
+        {
+            Log.Warning(
+            $"OTP validation failed: no active OTP found With jti {tokenJti}");
+
+            return new ValidationOtpResuult();
+
+        }
+
+        return _OtpValidationResult(otp, otpCode);
+    }
+    public async Task<ValidationOtpResuult> ValidateOtp(int userId, string otpCode, enOtpType enOtpType, CancellationToken ct = default)
+    {
+        var otp =
+            await _otpRepo
                 .GetLatestValidOtpAsync(userId, enOtpType)
                 .FirstOrDefaultAsync(ct);
-
-
         if (otp == null)
         {
             Log.Warning(
             $"OTP validation failed: no active OTP found for UserId {userId}");
 
-            return validtionResult;
+            return new ValidationOtpResuult();
 
         }
+
+        return _OtpValidationResult(otp, otpCode);
+
+
+
+    }
+
+    private ValidationOtpResuult _OtpValidationResult(Otp otp, string originalCode)
+    {
+        var validtionResult = new ValidationOtpResuult();
+
         if (!otp.IsValidForVerification())
         {
             Log.Warning(
-                $"OTP invalid state for UserId {userId}. Expired/Used/MaxAttempts");
+                $"OTP invalid state for UserId {otp.UserId}. Expired/Used/MaxAttempts");
 
             return validtionResult;
         }
 
         // Verify OTP code
-        var hashedCode = Helpers.HashString(otpCode);
+        var hashedCode = Helpers.HashString(originalCode);
         if (otp.Code != hashedCode)
         {
             otp.IncrementAttempts();
+            otp.UpdateLastAttempt();
+
 
             if (otp.HasExceededMaxAttempts())
             {
                 otp.ForceExpire();
-                otp.MarkAsUsed();
 
-                Log.Warning($"OTP locked after max attempts for UserId {userId}");
+                Log.Warning($"OTP locked after max attempts for UserId {otp.UserId}");
                 validtionResult.IsExceededMaxAttempts = true;
                 return validtionResult;
             }
             else
-                Log.Warning($"OTP validation failed: invalid code for UserId {userId}");
+                Log.Warning($"OTP validation failed: invalid code for UserId {otp.UserId}");
 
             return validtionResult;
         }
@@ -164,17 +196,18 @@ public class OtpService : IOtpService
 
     #region Helper Method(s)
 
-    private async Task _SaveOtpToDb(int UserID, string otp, enOtpType otpType, int minutesValidDuration)
+    private async Task _SaveOtpToDb(int UserID, string otp, enOtpType otpType, int minutesValidDuration, string? jti = null)
     {
         var validFor = TimeSpan.FromMinutes(minutesValidDuration);
         var hashedOtp = Helpers.HashString(otp);
-        var otpEntity = new Otp(hashedOtp, otpType, UserID, validFor);
+        var otpEntity = new Otp(hashedOtp, otpType, UserID, validFor, jti);
 
 
         await _otpRepo.AddAsync(otpEntity);
 
 
     }
+
 
     #endregion
 }
