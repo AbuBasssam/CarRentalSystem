@@ -126,6 +126,7 @@
         public const string Currency = "Currency";// Not used
         public const string UnexpectedError = "UnexpectedError";
         public const string ErrorOccurred = "ErrorOccurred";
+        public const string ResetSessionExpired = "ResetSessionExpired";
         #endregion
     }
 }

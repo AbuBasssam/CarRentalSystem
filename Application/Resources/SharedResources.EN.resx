@@ -339,4 +339,7 @@
   <data name="ErrorOccurred" xml:space="preserve">
     <value>An error occurred</value>
   </data>
+  <data name="ResetSessionExpired" xml:space="preserve">
+    <value>Reset session has expired. Please start over.</value>
+  </data>
 </root>

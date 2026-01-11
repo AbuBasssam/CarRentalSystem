@@ -339,4 +339,7 @@
   <data name="ErrorOccurred" xml:space="preserve">
     <value>حدث خطأ</value>
   </data>
+  <data name="ResetSessionExpired" xml:space="preserve">
+    <value>أنتهت صلاحية العملية الرجاء المحاولة من جديد</value>
+  </data>
 </root>
