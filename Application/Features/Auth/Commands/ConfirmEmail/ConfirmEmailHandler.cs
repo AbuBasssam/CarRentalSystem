@@ -92,7 +92,7 @@ public class ConfirmEmailCommandHandler : IRequestHandler<ConfirmEmailCommand, R
             // ========= 3. Validate OTP =========
             var otpValidation = await _otpService.ValidateOtp(userId, request.dto.OtpCode, enOtpType.ConfirmEmail, cancellationToken);
 
-            if (!otpValidation.IsValid) // Validation Failed
+            if (!otpValidation.IsValid)
             {
 
                 if (otpValidation.IsExceededMaxAttempts)
@@ -115,7 +115,7 @@ public class ConfirmEmailCommandHandler : IRequestHandler<ConfirmEmailCommand, R
 
             // ========= 5. Consume OTP =========
             var otp = otpValidation.Otp!;
-            otp.MarkAsUsed();
+
             otp.ForceExpire();
 
             // ========= 6. Revoke Verification Token =========
