@@ -38,8 +38,9 @@ public class RefreshTokenRepository : GenericRepository<UserToken, int>, IRefres
         var affectedRows = await _dbSet
                    .Where(token => token.JwtId == jwtId)
                    .ExecuteUpdateAsync(setters => setters
-                   .SetProperty(t => t.IsRevoked, true)
-                   .SetProperty(t => t.ExpiryDate, DateTime.UtcNow)
+                        .SetProperty(t => t.IsRevoked, true)
+                        .SetProperty(t => t.ExpiryDate, DateTime.UtcNow)
+                        .SetProperty(t => t.IsUsed, true)
                    );
 
         return affectedRows >= 0;
@@ -50,8 +51,10 @@ public class RefreshTokenRepository : GenericRepository<UserToken, int>, IRefres
         var affectedRows = await _dbSet
             .Where(token => token.UserId == userId && token.Type == type)
             .ExecuteUpdateAsync(setters => setters
-            .SetProperty(t => t.IsRevoked, true)
-            .SetProperty(t => t.ExpiryDate, DateTime.UtcNow)
+                .SetProperty(t => t.IsRevoked, true)
+                .SetProperty(t => t.ExpiryDate, DateTime.UtcNow)
+                .SetProperty(t => t.IsUsed, true)
+
             );
 
         return affectedRows >= 0;
