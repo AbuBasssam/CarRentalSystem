@@ -9,7 +9,7 @@ using Serilog;
 
 namespace Application.Features.AuthFeature;
 
-public class ResendVerificationCodeHandler : IRequestHandler<ResendVerificationCodeCommand, Response<string>>
+public class ResendVerificationCodeHandler : IRequestHandler<ResendVerificationCodeCommand, Response<VerificationFlowResponse>>
 {
     #region Field(s)
     private readonly IAuthService _authService;
@@ -22,6 +22,10 @@ public class ResendVerificationCodeHandler : IRequestHandler<ResendVerificationC
     private readonly IRequestContext _context;
     private readonly IStringLocalizer<SharedResources> _localizer;
     private readonly ResponseHandler _responseHandler;
+
+    // Configuration
+    private const int OTP_VALIDITY_MINUTES = 5;
+    private const int TOKEN_VALIDITY_MINUTES = 15;
     #endregion
 
     #region Constructor(s)
@@ -46,36 +50,48 @@ public class ResendVerificationCodeHandler : IRequestHandler<ResendVerificationC
     #endregion
 
     #region Handler(s)
-    public async Task<Response<string>> Handle(ResendVerificationCodeCommand request, CancellationToken cancellationToken)
+    public async Task<Response<VerificationFlowResponse>> Handle(ResendVerificationCodeCommand request, CancellationToken cancellationToken)
     {
 
-        var token = _context.AuthToken;
-        var emailResult = _authService.GetEmailFromSessionToken(token!);
 
         using var transaction = await _unitOfWork.BeginTransactionAsync(cancellationToken);
         try
         {
-            string email = emailResult.Data!;
-            var user = await _userService.GetUserByEmailAsync(email).FirstOrDefaultAsync();
+            var user = await _userService.GetUserByEmailAsync(request.DTO.Email).FirstOrDefaultAsync();
 
             if (user == null)
             {
                 await transaction.RollbackAsync(cancellationToken);
-                return _responseHandler.Unauthorized<string>();
+                return _responseHandler.Unauthorized<VerificationFlowResponse>();
             }
 
             if (user.EmailConfirmed)
             {
                 await transaction.RollbackAsync(cancellationToken);
-                return _responseHandler.BadRequest<string>(_localizer[SharedResourcesKeys.EmailAlreadyVerified]);
+                return _responseHandler.BadRequest<VerificationFlowResponse>(_localizer[SharedResourcesKeys.EmailAlreadyVerified]);
             }
 
-            var regenerationResult = await _otpService.RegenerateOtpAsync(user.Id, enOtpType.ConfirmEmail, 5, cancellationToken);
+            var regenerationResult = await _otpService.RegenerateOtpAsync(user.Id, enOtpType.ConfirmEmail, OTP_VALIDITY_MINUTES, cancellationToken);
             if (!regenerationResult.IsSuccess)
             {
                 await transaction.RollbackAsync(cancellationToken);
-                return _responseHandler.InternalServerError<string>();
+                return _responseHandler.InternalServerError<VerificationFlowResponse>();
             }
+            // Step 6: Revoke old reset token
+
+            await _RevokeOldTokenAsync(_context.UserId ?? 0);
+
+            // Step 7: Generate new reset token (stage 1: AwaitingVerification)
+
+            var newToken = _authService.GenerateVerificationToken(
+                user,
+                TOKEN_VALIDITY_MINUTES
+
+            );
+
+            await _refreshTokenRepo.AddAsync(newToken.refreshToken);
+
+
             await _unitOfWork.SaveChangesAsync(cancellationToken);
 
             await transaction.CommitAsync(cancellationToken);
@@ -83,9 +99,17 @@ public class ResendVerificationCodeHandler : IRequestHandler<ResendVerificationC
 
             string otpCode = regenerationResult.Data;
 
-            await _emailService.SendConfirmEmailMessage(user.Email!, otpCode);
+            var emailSendResult = await _emailService.SendConfirmEmailMessage(user.Email!, otpCode);
 
-            return _responseHandler.Success(string.Empty);
+            if (!emailSendResult.IsSuccess)
+            {
+                Log.Error($"Failed to send resend reset code email to user {_context.UserId}");
+                return _GetFailurResponse();
+
+            }
+            var response = _GetSuccessResponse(newToken.AccessToken, (DateTime)newToken.refreshToken.ExpiryDate!);
+
+            return response;
 
 
         }
@@ -98,24 +122,72 @@ public class ResendVerificationCodeHandler : IRequestHandler<ResendVerificationC
             {
                 Log.Warning(dex, "Unique constraint violation during Resend Verification");
 
-                return _responseHandler.BadRequest<string>(_localizer[SharedResourcesKeys.InvalidExpiredCode]);
+                return _responseHandler.BadRequest<VerificationFlowResponse>(_localizer[SharedResourcesKeys.InvalidExpiredCode]);
             }
             await transaction.RollbackAsync(cancellationToken);
 
             Log.Error(dex, "Database error during email confirmation Resend code");
-            return _responseHandler.BadRequest<string>(
+            return _responseHandler.BadRequest<VerificationFlowResponse>(
                 _localizer[SharedResourcesKeys.UnexpectedError]);
         }
         catch (Exception ex)
         {
             await transaction.RollbackAsync(cancellationToken);
             Log.Error(ex, "Error in Resend confirm Email otp Process");
-            return _responseHandler.InternalServerError<string>("Error Occurred");
+            return _responseHandler.InternalServerError<VerificationFlowResponse>("Error Occurred");
         }
 
     }
 
     #endregion
+
+    /// <summary>
+    /// Revoke old reset token by JTI
+    /// </summary>
+    private async Task _RevokeOldTokenAsync(int userId)
+    {
+        var isTokenFound = await _refreshTokenRepo.RevokeUserTokenAsync(userId, enTokenType.VerificationToken);
+
+        if (isTokenFound)
+        {
+            Log.Information($"Revoked verification token for user Id: {userId}");
+        }
+        else
+        {
+            Log.Warning($"No verification token found to revoke with user Id: {userId}");
+        }
+    }
+    /// <summary>
+    /// Creates consistent success response for password reset flow
+    /// </summary>
+    /// <param name="token">Verification token</param>
+    /// <param name="expiresAt">Token expiration timestamp</param>
+    /// <returns>Success response with verification flow data</returns>
+    private Response<VerificationFlowResponse> _GetSuccessResponse(string token, DateTime expiresAt)
+    {
+        return _responseHandler.Success(
+            new VerificationFlowResponse
+            {
+                Token = token,
+                ExpiresAt = expiresAt
+            }
+        );
+    }
+
+    /// <summary>
+    /// Creates consistent failur response for password reset flow
+    /// </summary>
+    /// <returns>failur response with verification flow data</returns>
+    private Response<VerificationFlowResponse> _GetFailurResponse()
+    {
+        return _responseHandler.Success(
+            new VerificationFlowResponse
+            {
+                Token = string.Empty,
+                ExpiresAt = DateTime.UtcNow.AddMinutes(OTP_VALIDITY_MINUTES)
+            }
+        );
+    }
 
 
 }

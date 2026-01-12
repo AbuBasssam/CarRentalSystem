@@ -2,4 +2,4 @@
 using MediatR;
 
 namespace Application.Features.AuthFeature;
-public record ResendVerificationCodeCommand() : IRequest<Response<string>>;
+public record ResendVerificationCodeCommand(ResendCodeDTO DTO) : IRequest<Response<VerificationFlowResponse>>;

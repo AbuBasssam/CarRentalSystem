@@ -142,16 +142,14 @@ public class AuthController : ApiController
     [ProducesResponseType(typeof(Response<string>), StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(typeof(Response<string>), StatusCodes.Status429TooManyRequests)]
     [ProducesResponseType(typeof(Response<string>), StatusCodes.Status500InternalServerError)]
-
-    [Authorize(Policy = Policies.VerificationOnly)]
     [OtpCooldown(enOtpType.ConfirmEmail)]
-    public async Task<IActionResult> ResendVerificationCode()
+    public async Task<IActionResult> ResendVerificationCode(ResendCodeDTO dto)
     {
-        ResendVerificationCodeCommand command = new ResendVerificationCodeCommand();
+        ResendVerificationCodeCommand command = new ResendVerificationCodeCommand(dto);
         return await CommandExecutor.Execute(
             command,
             Sender,
-            (Response<string> response) => NewResult(response)
+            (Response<VerificationFlowResponse> response) => NewResult(response)
         );
     }
     /// <summary>
