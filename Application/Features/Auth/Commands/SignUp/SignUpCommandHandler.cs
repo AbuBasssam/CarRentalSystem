@@ -12,7 +12,7 @@ using Serilog;
 
 namespace Application.Features.AuthFeature;
 
-public class SignUpCommandHandler : IRequestHandler<SignUpCommand, Response<string>>
+public class SignUpCommandHandler : IRequestHandler<SignUpCommand, Response<bool>>
 {
     #region Field(s)
 
@@ -50,7 +50,7 @@ public class SignUpCommandHandler : IRequestHandler<SignUpCommand, Response<stri
     #endregion
 
     #region Handler(s)
-    public async Task<Response<string>> Handle(SignUpCommand request, CancellationToken cancellationToken)
+    public async Task<Response<bool>> Handle(SignUpCommand request, CancellationToken cancellationToken)
     {
 
         using var transaction = await _unitOfWork.BeginTransactionAsync();
@@ -72,7 +72,7 @@ public class SignUpCommandHandler : IRequestHandler<SignUpCommand, Response<stri
                 if (!createResult.IsSuccess)
                 {
                     await transaction.RollbackAsync();
-                    return _responseHandler.BadRequest<string>(string.Join('\n', createResult.Errors));
+                    return _responseHandler.BadRequest<bool>(string.Join('\n', createResult.Errors));
                 }
 
                 user = createResult.Data;
@@ -107,7 +107,7 @@ public class SignUpCommandHandler : IRequestHandler<SignUpCommand, Response<stri
             {
                 Log.Warning($"Registration attempt with confirmed email: {request.Dto.Email}");
                 await transaction.RollbackAsync();
-                return _responseHandler.BadRequest<string>(
+                return _responseHandler.BadRequest<bool>(
                     _localizer[SharedResourcesKeys.EmailAlreadyExists]
                 );
             }
@@ -117,11 +117,8 @@ public class SignUpCommandHandler : IRequestHandler<SignUpCommand, Response<stri
             if (!generateOtpResult.IsSuccess)
             {
                 await transaction.RollbackAsync(cancellationToken);
-                return _responseHandler.InternalServerError<string>();
+                return _responseHandler.InternalServerError<bool>();
             }
-            var verificationToken = _authService.GenerateVerificationToken(user, 1440);// one day
-            await _refreshTokenRepo.AddAsync(verificationToken.refreshToken);
-
 
             await _unitOfWork.SaveChangesAsync();
             await transaction.CommitAsync();
@@ -129,14 +126,8 @@ public class SignUpCommandHandler : IRequestHandler<SignUpCommand, Response<stri
 
 
             var sendingEmailResult = await _emailService.SendConfirmEmailMessage(user.Email!, generateOtpResult.Data);
-            if (!sendingEmailResult.IsSuccess)
-            {
-                return _responseHandler.Created(string.Empty);
-            }
 
-
-
-            return _responseHandler.Success(verificationToken.AccessToken);
+            return _responseHandler.Created(true);
         }
         catch (DbUpdateException dex)
         {
@@ -147,18 +138,18 @@ public class SignUpCommandHandler : IRequestHandler<SignUpCommand, Response<stri
             {
                 Log.Warning(dex, "Unique constraint violation during sign-up");
 
-                return _responseHandler.BadRequest<string>(_localizer[SharedResourcesKeys.EmailAlreadyExists]);
+                return _responseHandler.BadRequest<bool>(_localizer[SharedResourcesKeys.EmailAlreadyExists]);
             }
 
             Log.Error(dex, "Database error during sign-up");
-            return _responseHandler.BadRequest<string>(
+            return _responseHandler.BadRequest<bool>(
                 _localizer[SharedResourcesKeys.UnexpectedError]);
         }
         catch (Exception ex)
         {
             await transaction.RollbackAsync();
             Log.Error(ex, "Error during sign-up for {Email}", request.Dto.Email);
-            return _responseHandler.BadRequest<string>(_localizer[SharedResourcesKeys.UnexpectedError]);
+            return _responseHandler.BadRequest<bool>(_localizer[SharedResourcesKeys.UnexpectedError]);
         }
     }
     #endregion

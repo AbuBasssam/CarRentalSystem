@@ -13,6 +13,7 @@
     <PackageReference Include="MailKit" />
     <PackageReference Include="Scrutor" />
     <PackageReference Include="DotNetEnv" />
+    <PackageReference Include="BCrypt.Net-Next" />
     
 
   </ItemGroup>

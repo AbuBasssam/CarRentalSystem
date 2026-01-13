@@ -2,7 +2,7 @@
 using MediatR;
 
 namespace Application.Features.AuthFeature;
-public class SignUpCommand : IRequest<Response<string>>
+public class SignUpCommand : IRequest<Response<bool>>
 {
     public SignUpCommandDTO Dto { get; set; }
 

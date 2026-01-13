@@ -1,16 +1,13 @@
 ﻿using System.Security.Cryptography;
-using System.Text;
 
 namespace Application;
 internal static class Helpers
 {
     public static string HashString(string Value)
     {
-        using (var sha256 = SHA256.Create())
-        {
-            var hashedBytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(Value)).ToArray();
-            return Convert.ToBase64String(hashedBytes);
-        }
+        string hashedString = BCrypt.Net.BCrypt.HashPassword(Value, 10);
+
+        return hashedString;
     }
     public static string GenerateRandomString64Length()
     {
@@ -23,8 +20,9 @@ internal static class Helpers
     }
     public static string GenerateOtp()
     {
-        Random generator = new Random();
-        return generator.Next(100000, 1000000).ToString("D6");
+        // 1. توليد رمز عشوائي (6 أرقام)
+        string code = RandomNumberGenerator.GetInt32(100000, 999999).ToString();
+        return code;
     }
 
 

@@ -29,7 +29,7 @@ public static class Router
 
         public const string EmailConfirmation = BASE + "/email-confirmation";
 
-        public const string ResendVerification = BASE + "re-verification";
+        public const string ResendVerification = BASE + "/email-verification/resend";
 
 
 

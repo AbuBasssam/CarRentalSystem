@@ -59,10 +59,11 @@ public class SignUpCommandDTO
         #region Method(s)
         private void ApplyValidations()
         {
-            byte minLength = 3;
-            byte maxLength = 16;
-            byte passwordMinLength = 8;
-            byte passwordMaxLength = 16;
+            const byte minLength = 3;
+            const byte maxLength = 16;
+            const byte passwordMinLength = 8;
+            const byte passwordMaxLength = 16;
+            const int emailMaxLength = 256;
 
             // First Name Rules
             RuleFor(x => x.FirstName)
@@ -88,7 +89,8 @@ public class SignUpCommandDTO
             // Email Rules
             RuleFor(x => x.Email)
                 .ApplyNotEmptyRule(_Localizer[SharedResourcesKeys.EmailRequired].Value)
-                .ApplyEmailAddressRule(_Localizer[SharedResourcesKeys.InvalidEmail].Value);
+                .ApplyEmailAddressRule(_Localizer[SharedResourcesKeys.InvalidEmail].Value)
+                .ApplyMaxLengthRule(emailMaxLength, string.Format(_Localizer[SharedResourcesKeys.MinLength].Value, "Email", emailMaxLength));
 
             // Password Rules
             RuleFor(x => x.Password)
