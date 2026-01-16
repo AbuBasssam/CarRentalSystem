@@ -168,7 +168,7 @@ public class OtpService : IOtpService
 
         // Verify OTP code
         var hashedCode = Helpers.HashString(originalCode);
-        if (otp.Code != hashedCode)
+        if (hashedCode != otp.Code)
         {
             otp.IncrementAttempts();
             otp.UpdateLastAttempt();

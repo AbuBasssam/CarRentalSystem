@@ -1,13 +1,25 @@
 ﻿using System.Security.Cryptography;
+using System.Text;
 
 namespace Application;
 internal static class Helpers
 {
-    public static string HashString(string Value)
+    // ============================================================
+    // SHA-256 
+    // ============================================================
+    public static string HashString(string input)
     {
-        string hashedString = BCrypt.Net.BCrypt.HashPassword(Value, 10);
+        using SHA256 sha = SHA256.Create();
+        byte[] bytes = Encoding.UTF8.GetBytes(input);
+        byte[] hash = sha.ComputeHash(bytes);
 
-        return hashedString;
+        // Convert bytes : hex string for readable display
+        var sb = new StringBuilder(hash.Length * 2);
+        foreach (byte b in hash)
+            sb.Append(b.ToString("x2"));
+
+        return sb.ToString();
+
     }
     public static string GenerateRandomString64Length()
     {
@@ -24,6 +36,7 @@ internal static class Helpers
         string code = RandomNumberGenerator.GetInt32(100000, 999999).ToString();
         return code;
     }
+
 
 
 

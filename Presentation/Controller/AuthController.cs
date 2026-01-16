@@ -50,18 +50,18 @@ public class AuthController : ApiController
     /// <response code="429">Too many registration attempts</response>
     /// <response code="500">Internal server error</response>
     [HttpPost(Router.AuthenticationRouter.SignUp)]
-    [ProducesResponseType(typeof(Response<string>), StatusCodes.Status201Created)]
-    [ProducesResponseType(typeof(Response<string>), StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(typeof(Response<string>), StatusCodes.Status422UnprocessableEntity)]
-    [ProducesResponseType(typeof(Response<string>), StatusCodes.Status429TooManyRequests)]
-    [ProducesResponseType(typeof(Response<string>), StatusCodes.Status500InternalServerError)]
+    [ProducesResponseType(typeof(Response<bool>), StatusCodes.Status201Created)]
+    [ProducesResponseType(typeof(Response<bool>), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(Response<bool>), StatusCodes.Status422UnprocessableEntity)]
+    [ProducesResponseType(typeof(Response<bool>), StatusCodes.Status429TooManyRequests)]
+    [ProducesResponseType(typeof(Response<bool>), StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> SignUp([FromBody] SignUpCommandDTO dto)
     {
 
         return await CommandExecutor.Execute(
             new SignUpCommand(dto),
             Sender,
-            (Response<string> response) => NewResult(response)
+            (Response<bool> response) => NewResult(response)
         );
     }
 
@@ -77,13 +77,13 @@ public class AuthController : ApiController
     /// <response code="429">Too many verification attempts</response>
     /// <response code="500">Internal server error</response>
     [HttpPost(Router.AuthenticationRouter.EmailConfirmation)]
+    [ProducesResponseType(typeof(Response<bool>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(Response<bool>), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(Response<bool>), StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(typeof(Response<bool>), StatusCodes.Status422UnprocessableEntity)]
     [ProducesResponseType(typeof(Response<bool>), StatusCodes.Status429TooManyRequests)]
     [ProducesResponseType(typeof(Response<bool>), StatusCodes.Status500InternalServerError)]
-    [Authorize(Policy = Policies.VerificationOnly)]
-    public async Task<IActionResult> ConfirmEmail([FromBody] ConfirmEmailDTO dto)
+    public async Task<IActionResult> ConfirmEmail([FromBody] VerificationDTO dto)
     {
 
 

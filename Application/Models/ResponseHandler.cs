@@ -17,7 +17,7 @@ public class ResponseHandler : ITransientService
         if (string.IsNullOrEmpty(message))
             return new List<string>();
 
-        return message.Split(',', StringSplitOptions.RemoveEmptyEntries)
+        return message.Split(new[] { '\t', '\n', '\r', ',' }, StringSplitOptions.RemoveEmptyEntries)
                      .Select(msg => msg.Trim())
                      .Where(msg => !string.IsNullOrEmpty(msg))
                      .ToList();

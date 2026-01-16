@@ -91,9 +91,6 @@ public class SignUpCommandHandler : IRequestHandler<SignUpCommand, Response<bool
 
                 Log.Information("Re-registration attempt for unconfirmed user: {UserId}", user.Id);
 
-                // Revoke old Verification Token
-                await _refreshTokenRepo.RevokeUserTokenAsync(user.Id, enTokenType.VerificationToken);
-
                 // Force Expire for Old Active Confirm email otps
                 await _otpService.ExpireActiveOtpAsync(user.Id, enOtpType.ConfirmEmail, cancellationToken);
 
@@ -107,9 +104,7 @@ public class SignUpCommandHandler : IRequestHandler<SignUpCommand, Response<bool
             {
                 Log.Warning($"Registration attempt with confirmed email: {request.Dto.Email}");
                 await transaction.RollbackAsync();
-                return _responseHandler.BadRequest<bool>(
-                    _localizer[SharedResourcesKeys.EmailAlreadyExists]
-                );
+                return _responseHandler.BadRequest<bool>(_localizer[SharedResourcesKeys.EmailAlreadyExists]);
             }
 
             var generateOtpResult = await _otpService.GenerateOtpAsync(user.Id, enOtpType.ConfirmEmail, 5);
@@ -117,6 +112,7 @@ public class SignUpCommandHandler : IRequestHandler<SignUpCommand, Response<bool
             if (!generateOtpResult.IsSuccess)
             {
                 await transaction.RollbackAsync(cancellationToken);
+                Log.Error($"Failed to generate OTP for user {user.Id}: {string.Join(", ", generateOtpResult.Errors)}");
                 return _responseHandler.InternalServerError<bool>();
             }
 
@@ -148,8 +144,8 @@ public class SignUpCommandHandler : IRequestHandler<SignUpCommand, Response<bool
         catch (Exception ex)
         {
             await transaction.RollbackAsync();
-            Log.Error(ex, "Error during sign-up for {Email}", request.Dto.Email);
-            return _responseHandler.BadRequest<bool>(_localizer[SharedResourcesKeys.UnexpectedError]);
+            Log.Error(ex, $"Error during sign-up for {request.Dto.Email}:{ex.Message}");
+            return _responseHandler.InternalServerError<bool>(_localizer[SharedResourcesKeys.UnexpectedError]);
         }
     }
     #endregion

@@ -51,53 +51,36 @@ public class ConfirmEmailCommandHandler : IRequestHandler<ConfirmEmailCommand, R
 
         try
         {
-            // ========= 1. Validate Verification Token =========
-            var token = _context.AuthToken;
-
-            var isValidToken = await _authService.ValidateSessionToken(token!, enTokenType.VerificationToken);
-
-            if (!isValidToken)
-            {
-                await transaction.RollbackAsync(cancellationToken);
-
-                return _responseHandler.Unauthorized<bool>();
-
-            }
-            var userIdResult = _authService.GetUserIdFromSessionToken(token!);
-
-            if (!userIdResult.IsSuccess)
-            {
-                await transaction.RollbackAsync(cancellationToken);
-
-                return _responseHandler.Unauthorized<bool>();
-            }
-            var userId = userIdResult.Data;
 
 
 
             // ========= 2. Load User =========
             var user = await _userService
-                .GetUserByIdAsync(userId)
+                .GetUserByEmailAsync(request.dto.Email)
                 .FirstOrDefaultAsync(cancellationToken);
 
             if (user == null)
             {
-                await transaction.RollbackAsync(cancellationToken);
+                await Task.Delay(Random.Shared.Next(100, 300));
 
-                return _responseHandler.Unauthorized<bool>();
+                Log.Warning($"Email confirmation attempted for non-existent email: {request.dto.Email}");
+
+                return _responseHandler.BadRequest<bool>(_localizer[SharedResourcesKeys.InvalidExpiredCode]);
+            }
+
+            if (user.EmailConfirmed)
+            {
+                Log.Information($"User {user.Id} attempted to verify already verified account");
+                return _responseHandler.Success(true);
             }
 
 
 
             // ========= 3. Validate OTP =========
-            var otpValidation = await _otpService.ValidateOtp(userId, request.dto.OtpCode, enOtpType.ConfirmEmail, cancellationToken);
+            var otpValidation = await _otpService.ValidateOtp(user.Id, request.dto.OtpCode, enOtpType.ConfirmEmail, cancellationToken);
 
             if (!otpValidation.IsValid)
             {
-
-                if (otpValidation.IsExceededMaxAttempts)
-
-                    await _refreshTokenRepo.RevokeUserTokenAsync(userId, enTokenType.VerificationToken);
 
                 await _unitOfWork.SaveChangesAsync(cancellationToken);
 
@@ -118,11 +101,9 @@ public class ConfirmEmailCommandHandler : IRequestHandler<ConfirmEmailCommand, R
 
             otp.ForceExpire();
 
-            // ========= 6. Revoke Verification Token =========
-            await _refreshTokenRepo
-                .RevokeUserTokenAsync(userId, enTokenType.VerificationToken);
 
-            // ========= 7. Commit =========
+
+            // ========= 6. Commit =========
             await _unitOfWork.SaveChangesAsync(cancellationToken);
             await transaction.CommitAsync(cancellationToken);
 
@@ -139,14 +120,15 @@ public class ConfirmEmailCommandHandler : IRequestHandler<ConfirmEmailCommand, R
                 return _responseHandler.BadRequest<bool>(_localizer[SharedResourcesKeys.InvalidExpiredCode]);
             }
 
-            Log.Error(dex, "Database update error during email confirmation");
-            return _responseHandler.BadRequest<bool>(_localizer[SharedResourcesKeys.UnexpectedError]);
+            Log.Error(dex, $"Database update error during email confirmation{dex.Message}");
+
+            return _responseHandler.InternalServerError<bool>(_localizer[SharedResourcesKeys.UnexpectedError]);
         }
         catch (Exception ex)
         {
             await transaction.RollbackAsync(cancellationToken);
 
-            Log.Error(ex, "Error confirming email");
+            Log.Error(ex, $"Error in confirming email operation:{ex.Message}");
             return _responseHandler.BadRequest<bool>(
                 _localizer[SharedResourcesKeys.UnexpectedError]);
         }

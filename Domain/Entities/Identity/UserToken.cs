@@ -80,6 +80,7 @@ public class UserToken : IEntity<int>
             return;
 
         ExpiryDate = DateTime.UtcNow;
+        IsUsed = true;
     }
 
     public bool IsValid() => !IsExpired() && !IsRevoked && !IsUsed;

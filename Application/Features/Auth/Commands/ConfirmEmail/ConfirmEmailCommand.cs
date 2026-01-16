@@ -4,4 +4,4 @@ using MediatR;
 namespace Application.Features.AuthFeature;
 
 
-public record ConfirmEmailCommand(ConfirmEmailDTO dto) : IRequest<Response<bool>>;
+public record ConfirmEmailCommand(VerificationDTO dto) : IRequest<Response<bool>>;

@@ -24,7 +24,7 @@ public class ConfirmEmailValidator : AbstractValidator<ConfirmEmailCommand>
     {
         RuleFor(x => x.dto)
             .NotNull().WithMessage(_Localizer[SharedResourcesKeys.RequestPayloadRequired])
-            .SetValidator(new ConfirmEmailDTO.Validator(_Localizer));
+            .SetValidator(new VerificationDTO.Validator(_Localizer));
 
     }
     #endregion
