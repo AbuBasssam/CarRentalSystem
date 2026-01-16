@@ -18,7 +18,6 @@ public class ConfirmEmailCommandHandler : IRequestHandler<ConfirmEmailCommand, R
     private readonly IOtpRepository _otpRepo;
     private readonly IRefreshTokenRepository _refreshTokenRepo;
     private readonly IUnitOfWork _unitOfWork;
-    private readonly IRequestContext _context;
     private readonly ResponseHandler _responseHandler;
     private readonly IStringLocalizer<SharedResources> _localizer;
 
@@ -28,7 +27,7 @@ public class ConfirmEmailCommandHandler : IRequestHandler<ConfirmEmailCommand, R
     public ConfirmEmailCommandHandler(
     IUserService userService, IAuthService authService, IOtpService otpService,
     IOtpRepository otpRepo, IRefreshTokenRepository refreshTokenRepo, IUnitOfWork unitOfWork,
-    IRequestContext context, IStringLocalizer<SharedResources> localizer, ResponseHandler responseHandler
+    IStringLocalizer<SharedResources> localizer, ResponseHandler responseHandler
     )
     {
         _userService = userService;
@@ -36,7 +35,6 @@ public class ConfirmEmailCommandHandler : IRequestHandler<ConfirmEmailCommand, R
         _otpRepo = otpRepo;
         _refreshTokenRepo = refreshTokenRepo;
         _unitOfWork = unitOfWork;
-        _context = context;
         _responseHandler = responseHandler;
         _localizer = localizer;
         _otpService = otpService;
@@ -116,7 +114,7 @@ public class ConfirmEmailCommandHandler : IRequestHandler<ConfirmEmailCommand, R
 
             if (dex.IsUniqueConstraintViolation())
             {
-                Log.Warning(dex, "Attempted to confirm email that is already confirmed or duplicate transaction ");
+                Log.Warning(dex, $"Attempted to confirm email that is already confirmed or duplicate transaction {dex.Message} ");
                 return _responseHandler.BadRequest<bool>(_localizer[SharedResourcesKeys.InvalidExpiredCode]);
             }
 

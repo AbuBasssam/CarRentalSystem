@@ -6,9 +6,17 @@ namespace Interfaces;
 public interface IOtpRepository : IGenericRepository<Otp, int>
 {
     /// <summary>
-    /// Get latest OTPs for a user of specific type, ordered by creation time descending
+    /// Get latest OTP for verification attempt 
+    /// Used in: ConfirmEmailHandler, VerifyResetCodeHandler
+    /// </summary>
+    IQueryable<Otp> GetLatestOtp(int userId, enOtpType otpType);
+
+    /// <summary>
+    /// Get latest VALID OTP for resend checks
+    /// Used in: ResendVerificationCodeHandler, ResendResetCodeHandler
     /// </summary>
     IQueryable<Otp> GetLatestValidOtpAsync(int userId, enOtpType otpType);
+
     /// <summary>
     /// Get OTP by TokenJti for password reset flow tracking
     /// </summary>

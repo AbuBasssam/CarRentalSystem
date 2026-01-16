@@ -12,16 +12,27 @@ public class OtpRepository : GenericRepository<Otp, int>, IOtpRepository
     public OtpRepository(AppDbContext context) : base(context)
     {
     }
-
     public IQueryable<Otp> GetLatestValidOtpAsync(int userId, enOtpType otpType)
+    {
+        const byte MAX_ATTEMPTS = 5;
+
+        return _dbSet
+            .Where(o =>
+                o.UserId == userId
+                && o.Type == otpType
+                && o.ExpirationTime > DateTime.UtcNow
+                && !o.IsUsed
+                && o.AttemptsCount < MAX_ATTEMPTS
+            )
+            .OrderByDescending(o => o.CreationTime);
+    }
+    public IQueryable<Otp> GetLatestOtp(int userId, enOtpType otpType)
     {
         return _dbSet
             .Where(
             o => o.UserId == userId
             && o.Type == otpType
-            && o.ExpirationTime > DateTime.UtcNow
-            )
-            .OrderByDescending(o => o.CreationTime);
+            ).OrderByDescending(o => o.CreationTime);
 
     }
     public IQueryable<Otp> GetByTokenJti(string tokenJti, enOtpType otpType)

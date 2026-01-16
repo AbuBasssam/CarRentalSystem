@@ -43,7 +43,6 @@ public class AuthController : ApiController
     /// Registers a new user account
     /// </summary>
     /// <param name="dto">User registration data</param>
-    /// <returns>Success message with verification instructions</returns>
     /// <response code="201">User successfully created</response>
     /// <response code="400">Email already exists or invalid data</response>
     /// <response code="422">Validation error</response>
@@ -72,14 +71,12 @@ public class AuthController : ApiController
     /// <returns>Confirmation result</returns>
     /// <response code="200">Email successfully confirmed</response>
     /// <response code="400">Invalid or expired code</response>
-    /// <response code="401">Invalid or expired verification token</response>
     /// <response code="422">Validation error</response>
     /// <response code="429">Too many verification attempts</response>
     /// <response code="500">Internal server error</response>
     [HttpPost(Router.AuthenticationRouter.EmailConfirmation)]
     [ProducesResponseType(typeof(Response<bool>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(Response<bool>), StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(typeof(Response<bool>), StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(typeof(Response<bool>), StatusCodes.Status422UnprocessableEntity)]
     [ProducesResponseType(typeof(Response<bool>), StatusCodes.Status429TooManyRequests)]
     [ProducesResponseType(typeof(Response<bool>), StatusCodes.Status500InternalServerError)]
@@ -132,8 +129,6 @@ public class AuthController : ApiController
     /// </remarks>
     /// <response code="200">Verification code sent successfully</response>
     /// <response code="400">Bad request - user already verified or cooldown active</response>
-    /// <response code="401">Unauthorized - invalid or expired verification token</response>
-    /// <response code="404">User not found</response>
     /// <response code="429">Too many requests - rate limit exceeded</response>
     /// <response code="500">Internal server error</response>
     [HttpPost(Router.AuthenticationRouter.ResendVerification)]
@@ -142,14 +137,13 @@ public class AuthController : ApiController
     [ProducesResponseType(typeof(Response<string>), StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(typeof(Response<string>), StatusCodes.Status429TooManyRequests)]
     [ProducesResponseType(typeof(Response<string>), StatusCodes.Status500InternalServerError)]
-    [OtpCooldown(enOtpType.ConfirmEmail)]
-    public async Task<IActionResult> ResendVerificationCode(ResendCodeDTO dto)
+    public async Task<IActionResult> ResendVerificationCode([FromBody] ResendCodeDTO dto)
     {
         ResendVerificationCodeCommand command = new ResendVerificationCodeCommand(dto);
         return await CommandExecutor.Execute(
             command,
             Sender,
-            (Response<VerificationFlowResponse> response) => NewResult(response)
+            (Response<bool> response) => NewResult(response)
         );
     }
     /// <summary>

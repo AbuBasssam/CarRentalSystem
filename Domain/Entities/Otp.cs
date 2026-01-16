@@ -80,28 +80,15 @@ public class Otp : IEntity<int>
     /// <summary>
     /// Check if OTP has exceeded maximum attempts
     /// </summary>
-    public bool HasExceededMaxAttempts()
-    {
-        return AttemptsCount >= MaxAttempts;
-    }
+    public bool HasExceededMaxAttempts() => AttemptsCount >= MaxAttempts;
 
     /// <summary>
     /// Check if OTP is valid for verification
     /// </summary>
-    public bool IsValidForVerification()
-    {
-        return !IsExpired() && !IsUsed && !HasExceededMaxAttempts();
-    }
+    public bool IsValidForVerification() => !IsExpired() && !IsUsed && !HasExceededMaxAttempts();
 
 
-    public TimeSpan? GetRemainingCooldown()
-    {
-        TimeSpan cooldownPeriod = _GetCooldownPeriod();
-        var elapsed = DateTime.UtcNow - CreationTime;
-        return elapsed < cooldownPeriod
-            ? cooldownPeriod - elapsed
-            : null;
-    }
+
 
     /// <summary>
     /// Update TokenJti when transitioning between reset password stages
@@ -114,8 +101,8 @@ public class Otp : IEntity<int>
     {
         return Type switch
         {
-            enOtpType.ConfirmEmail => TimeSpan.FromMinutes(2),
-            enOtpType.ResetPassword => TimeSpan.FromMinutes(1),
+            enOtpType.ConfirmEmail => HasExceededMaxAttempts() ? TimeSpan.FromMinutes(5) : TimeSpan.FromMinutes(2),
+            enOtpType.ResetPassword => HasExceededMaxAttempts() ? TimeSpan.FromMinutes(5) : TimeSpan.FromMinutes(1),
             _ => TimeSpan.FromMinutes(2)
         };
     }
@@ -124,9 +111,8 @@ public class Otp : IEntity<int>
         var now = DateTime.UtcNow;
         var cooldownPeriod = _GetCooldownPeriod();
 
-        DateTime referenceTime = LastAttemptAt.HasValue ? LastAttemptAt.Value : CreationTime;
 
-        var cooldownEndsAt = referenceTime.Add(cooldownPeriod);
+        var cooldownEndsAt = CreationTime.Add(cooldownPeriod);
 
         if (now < cooldownEndsAt)
         {

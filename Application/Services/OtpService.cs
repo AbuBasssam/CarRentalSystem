@@ -1,11 +1,9 @@
 ﻿using Application.Features.AuthFeature;
 using Application.Models;
-using ApplicationLayer.Resources;
 using Domain.Entities;
 using Domain.Enums;
 using Interfaces;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Localization;
 using Serilog;
 
 
@@ -16,15 +14,14 @@ public class OtpService : IOtpService
     #region Field(s)
     private readonly IEmailService _emailService;
     private readonly IOtpRepository _otpRepo;
-    private readonly IStringLocalizer<SharedResources> _localizer;
+
     #endregion
 
     #region Constructor(s)
-    public OtpService(IEmailService emailService, IOtpRepository otpRepo, IStringLocalizer<SharedResources> localizer)
+    public OtpService(IEmailService emailService, IOtpRepository otpRepo)
     {
         _emailService = emailService;
         _otpRepo = otpRepo;
-        _localizer = localizer;
     }
 
     #endregion
@@ -66,15 +63,15 @@ public class OtpService : IOtpService
     {
         try
         {
-            var activeOtp = await _otpRepo
-                .GetLatestValidOtpAsync(userId, otpType)
+            var latestOtp = await _otpRepo
+                .GetLatestOtp(userId, otpType)
                 .FirstOrDefaultAsync(cancellationToken);
 
-            if (activeOtp == null)
+            if (latestOtp == null || latestOtp.IsExpired())
                 return true;
 
             // Expire and mark as used
-            activeOtp.ForceExpire();
+            latestOtp.ForceExpire();
 
             Log.Information($"Expired active OTP for user {userId}, type {otpType}");
 
@@ -97,6 +94,8 @@ public class OtpService : IOtpService
         {
             // Step 1: Expire old OTP if exists
             await ExpireActiveOtpAsync(userId, otpType, cancellationToken);
+
+
 
             // Step 2: Generate new OTP
             var otpCode = Helpers.GenerateOtp();
@@ -137,7 +136,7 @@ public class OtpService : IOtpService
     {
         var otp =
             await _otpRepo
-                .GetLatestValidOtpAsync(userId, enOtpType)
+                .GetLatestOtp(userId, enOtpType)
                 .FirstOrDefaultAsync(ct);
         if (otp == null)
         {
