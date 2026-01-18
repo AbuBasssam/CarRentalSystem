@@ -4,7 +4,7 @@ using Microsoft.Extensions.Localization;
 
 namespace Application.Features.AuthFeature;
 
-public class SendResetCodeCommandValidator : AbstractValidator<SendResetCodeCommand>
+public class SendResetCodeValidator : AbstractValidator<SendResetCodeCommand>
 {
     #region Field(s)
 
@@ -14,7 +14,7 @@ public class SendResetCodeCommandValidator : AbstractValidator<SendResetCodeComm
 
     #region Constructor(s)
 
-    public SendResetCodeCommandValidator(IStringLocalizer<SharedResources> Localizer)
+    public SendResetCodeValidator(IStringLocalizer<SharedResources> Localizer)
     {
         _Localizer = Localizer;
         ApplyValidations();

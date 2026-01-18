@@ -1,4 +1,5 @@
-﻿using ApplicationLayer.Resources;
+﻿using Application.Validations;
+using ApplicationLayer.Resources;
 using FluentValidation;
 using Microsoft.Extensions.Localization;
 
@@ -12,9 +13,7 @@ public class SignInCommandValidator : AbstractValidator<SignInCommand>
         _Localizer = stringLocalizer;
 
         RuleFor(x => x.Email)
-            .NotEmpty()
-            .WithMessage(_Localizer[SharedResourcesKeys.EmailRequired])
-            .EmailAddress().WithMessage(_Localizer[SharedResourcesKeys.InvalidEmail]);
+           .ApplyEmailValidation(_Localizer);
 
         RuleFor(x => x.Password)
             .NotEmpty()

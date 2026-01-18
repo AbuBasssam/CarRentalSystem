@@ -4,7 +4,7 @@ using MediatR;
 
 namespace Application.Features.AuthFeature;
 
-public class AuthorizeUserQueryHandler : IRequestHandler<AuthorizeUserQuery, Response<string>>
+public class AuthorizeUserHandler : IRequestHandler<AuthorizeUserQuery, Response<string>>
 {
     #region Field(s)
 
@@ -14,7 +14,7 @@ public class AuthorizeUserQueryHandler : IRequestHandler<AuthorizeUserQuery, Res
     #endregion
 
     #region Constructor(s)
-    public AuthorizeUserQueryHandler(IAuthService authService, ResponseHandler responseHandler)
+    public AuthorizeUserHandler(IAuthService authService, ResponseHandler responseHandler)
     {
         _authService = authService;
         _responseHandler1 = responseHandler;

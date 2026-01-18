@@ -7,7 +7,7 @@ using Microsoft.Extensions.Localization;
 
 namespace Application.Features.AuthFeature;
 
-public class SignUpCommandDTO
+public class SignUpDTO
 {
 
     #region Field(s)
@@ -20,7 +20,7 @@ public class SignUpCommandDTO
 
     #region Constructure(s)
 
-    public SignUpCommandDTO(string firstName, string lastName, string email, string password)
+    public SignUpDTO(string firstName, string lastName, string email, string password)
     {
         FirstName = firstName;
         LastName = lastName;
@@ -34,14 +34,14 @@ public class SignUpCommandDTO
     #region Mapper(s)
     private class Mapping : Profile
     {
-        public Mapping() => CreateMap<SignUpCommandDTO, User>()
+        public Mapping() => CreateMap<SignUpDTO, User>()
             .ForMember(dest => dest.UserName, opt => opt.MapFrom(src => src.Email));
 
     }
     #endregion
 
     #region Validation
-    public class Validator : AbstractValidator<SignUpCommandDTO>
+    public class Validator : AbstractValidator<SignUpDTO>
     {
         #region Field(s)
         private readonly IStringLocalizer<SharedResources> _Localizer;
@@ -63,7 +63,6 @@ public class SignUpCommandDTO
             const byte maxLength = 16;
             const byte passwordMinLength = 8;
             const byte passwordMaxLength = 16;
-            const int emailMaxLength = 256;
 
             // First Name Rules
             RuleFor(x => x.FirstName)
@@ -87,10 +86,7 @@ public class SignUpCommandDTO
 
 
             // Email Rules
-            RuleFor(x => x.Email)
-                .ApplyNotEmptyRule(_Localizer[SharedResourcesKeys.EmailRequired].Value)
-                .ApplyEmailAddressRule(_Localizer[SharedResourcesKeys.InvalidEmail].Value)
-                .ApplyMaxLengthRule(emailMaxLength, string.Format(_Localizer[SharedResourcesKeys.MinLength].Value, "Email", emailMaxLength));
+            RuleFor(x => x.Email).ApplyEmailValidation(_Localizer);
 
             // Password Rules
             RuleFor(x => x.Password)

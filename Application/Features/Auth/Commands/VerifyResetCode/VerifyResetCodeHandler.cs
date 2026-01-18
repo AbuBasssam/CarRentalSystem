@@ -12,7 +12,7 @@ namespace Application.Features.AuthFeature;
 /// <summary>
 /// Handles verification of password reset code
 /// </summary>
-public class VerifyResetCodeCommandHandler : IRequestHandler<VerifyResetCodeCommand, Response<VerificationFlowResponse>>
+public class VerifyResetCodeHandler : IRequestHandler<VerifyResetCodeCommand, Response<VerificationFlowResponse>>
 {
 
     #region Field(s)
@@ -20,23 +20,22 @@ public class VerifyResetCodeCommandHandler : IRequestHandler<VerifyResetCodeComm
     private readonly IUserService _userService;
     private readonly IAuthService _authService;
     private readonly IOtpService _otpService;
-    private readonly IRequestContext _context;
 
     private readonly IRefreshTokenRepository _refreshTokenRepo;
     private readonly IOtpRepository _otpRepo;
     private readonly IUnitOfWork _unitOfWork;
     private readonly IStringLocalizer<SharedResources> _localizer;
     private readonly ResponseHandler _responseHandler;
-    private const int TOKEN_VALIDITY_MINUTES = 5;
+    private const int TOKEN_VALIDITY_MINUTES = 15;
 
     #endregion
 
     #region Constructor(s)
 
     /// <summary>
-    /// Initializes a new instance of VerifyResetCodeCommandHandler
+    /// Initializes a new instance of VerifyResetCodeHandler
     /// </summary>
-    public VerifyResetCodeCommandHandler(IUserService userService, IAuthService authService, IOtpService otpService, IRequestContext context,
+    public VerifyResetCodeHandler(IUserService userService, IAuthService authService, IOtpService otpService,
   IRefreshTokenRepository refreshTokenRepo, IOtpRepository otpRepo, IUnitOfWork unitOfWork,
   IStringLocalizer<SharedResources> localizer, ResponseHandler responseHandler)
     {
@@ -44,7 +43,6 @@ public class VerifyResetCodeCommandHandler : IRequestHandler<VerifyResetCodeComm
         _userService = userService;
         _authService = authService;
         _otpService = otpService;
-        _context = context;
         _refreshTokenRepo = refreshTokenRepo;
 
         _otpRepo = otpRepo;
@@ -69,20 +67,26 @@ public class VerifyResetCodeCommandHandler : IRequestHandler<VerifyResetCodeComm
         await using var transaction = await _unitOfWork.BeginTransactionAsync(cancellationToken);
         try
         {
-            var userId = (int)_context.UserId!;
-            var tokenJti = _context.TokenJti!;
+            // =========  Load User =========
+            var user = await _userService
+                .GetUserByEmailAsync(request.DTO.Email)
+                .FirstOrDefaultAsync(cancellationToken);
+
+            if (user == null)
+            {
+                await Task.Delay(Random.Shared.Next(100, 300));
+
+                Log.Warning($"Email confirmation attempted for non-existent email: {request.DTO.Email}");
+
+                return _responseHandler.BadRequest<VerificationFlowResponse>(_localizer[SharedResourcesKeys.InvalidExpiredCode]);
+            }
 
             // ========= Validate OTP =========
 
-            var otpValidationResult = await _otpService.ValidateOtp(tokenJti, request.DTO.Code, enOtpType.ResetPassword, cancellationToken);
+            var otpValidationResult = await _otpService.ValidateOtp(user.Id, request.DTO.OtpCode, enOtpType.ResetPassword, cancellationToken);
 
             if (!otpValidationResult.IsValid)
             {
-
-                if (otpValidationResult.IsExceededMaxAttempts)
-
-                    await _refreshTokenRepo.RevokeUserTokenAsync(userId, enTokenType.VerificationToken);
-
                 await _unitOfWork.SaveChangesAsync(cancellationToken);
 
                 await transaction.CommitAsync(cancellationToken);
@@ -93,31 +97,9 @@ public class VerifyResetCodeCommandHandler : IRequestHandler<VerifyResetCodeComm
 
             otpValidationResult.Otp?.ForceExpire();
 
-            await _RevokeCurrentTokenAsync(tokenJti);
 
-
-            var user = await _userService
-                .GetUserByIdAsync(userId)
-                .FirstOrDefaultAsync(cancellationToken);
-            if (user == null)
-            {
-                await transaction.RollbackAsync(cancellationToken);
-
-                Log.Error($"User {userId} not found during verification");
-
-                return _responseHandler.BadRequest<VerificationFlowResponse>(
-                    _localizer[SharedResourcesKeys.UserNotFound]
-                );
-            }
-
-            // Generate new JTI for stage 2 token
-            var newJti = Guid.NewGuid().ToString();
-
-            // Update OTP with new JTI for tracking
-            otpValidationResult.Otp?.UpdateTokenJti(newJti);
-
-            // Generate stage 2 token (Verified)
-            var newToken = _authService.GenerateResetToken(user, TOKEN_VALIDITY_MINUTES, newJti, enResetPasswordStage.Verified);
+            // Generate reset token
+            var newToken = _authService.GenerateResetToken(user, TOKEN_VALIDITY_MINUTES);
 
             await _refreshTokenRepo.AddAsync(newToken.refreshToken);
 
@@ -125,7 +107,7 @@ public class VerifyResetCodeCommandHandler : IRequestHandler<VerifyResetCodeComm
 
             await transaction.CommitAsync(cancellationToken);
 
-            Log.Information($"Code verified successfully for user {userId}");
+            Log.Information($"Code verified successfully for user {user.Id}");
             var response = new VerificationFlowResponse
             {
                 Token = newToken.AccessToken,
@@ -143,22 +125,21 @@ public class VerifyResetCodeCommandHandler : IRequestHandler<VerifyResetCodeComm
             {
                 await transaction.RollbackAsync(cancellationToken);
 
-                Log.Warning(dex, "duplicate transaction");
+                Log.Warning(dex, $"duplicate transaction:{dex.Message}");
 
                 return _responseHandler.BadRequest<VerificationFlowResponse>(_localizer[SharedResourcesKeys.InvalidExpiredCode]);
             }
 
-            await transaction.RollbackAsync(cancellationToken);
 
-            Log.Error(dex, "Database update error during Reset Password Verifying");
+            Log.Error(dex, $"Database update error during Reset Password Verifying: {dex.Message}");
 
-            return _responseHandler.BadRequest<VerificationFlowResponse>(_localizer[SharedResourcesKeys.UnexpectedError]);
+            return _responseHandler.InternalServerError<VerificationFlowResponse>(_localizer[SharedResourcesKeys.UnexpectedError]);
         }
         catch (Exception ex)
         {
             await transaction.RollbackAsync(cancellationToken);
 
-            Log.Error(ex, $"Error verifying reset code for userId: {_context.UserId}");
+            Log.Error(ex, $"Error verifying reset code for user with email: {request.DTO.Email}: {ex.Message}");
 
             return _responseHandler.InternalServerError<VerificationFlowResponse>("An error occurred while verifying the code.");
         }
@@ -170,28 +151,5 @@ public class VerifyResetCodeCommandHandler : IRequestHandler<VerifyResetCodeComm
 
     #endregion
 
-    #region Helper Method(s)
 
-    /// <summary>
-    /// Revokes current reset token by JTI
-    /// </summary>
-    /// <param name="jti">JWT token identifier</param>
-    private async Task _RevokeCurrentTokenAsync(string jti)
-    {
-
-        var isTokenfound = await _refreshTokenRepo.RevokeUserTokenAsync(jti);
-
-        if (isTokenfound)
-        {
-            Log.Information("Revoked reset token with JTI {Jti}", jti);
-        }
-        else
-        {
-            Log.Warning("No token found to revoke with JTI {Jti}", jti);
-        }
-
-
-    }
-
-    #endregion
 }

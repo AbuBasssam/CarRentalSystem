@@ -20,7 +20,8 @@ public class SensitiveRateLimitingMiddleware
         { Normalize( Router.AuthenticationRouter.PasswordReset), (5, TimeSpan.FromMinutes(3)) },
         { Normalize( Router.AuthenticationRouter.PasswordResetVerification), (3, TimeSpan.FromMinutes(5)) },
         { Normalize( Router.AuthenticationRouter.Password), (5, TimeSpan.FromMinutes(5)) },
-        { Normalize(Router.AuthenticationRouter.ResendVerification),(5, TimeSpan.FromHours(24)) }
+        { Normalize(Router.AuthenticationRouter.ResendVerification),(5, TimeSpan.FromHours(24)) },
+        { Normalize(Router.AuthenticationRouter.ResendPasswordReset),(5, TimeSpan.FromHours(24)) }
 
     };
 

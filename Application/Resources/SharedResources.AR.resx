@@ -174,20 +174,11 @@
   <data name="PasswordRequired" xml:space="preserve">
     <value>كلمة المرور حقل مطلوب</value>
   </data>
-  <data name="TokenRequired" xml:space="preserve">
-    <value>الرمز حقل مطلوب</value>
-  </data>
   <data name="CodeRequired" xml:space="preserve">
     <value>الرمز حقل مطلوب</value>
   </data>
   <data name="PhoneNumberRequired" xml:space="preserve">
     <value>رقم الهاتف حقل مطلوب</value>
-  </data>
-  <data name="NameRequired" xml:space="preserve">
-    <value>الاسم حقل مطلوب</value>
-  </data>
-  <data name="GoogleIdTokenRequired" xml:space="preserve">
-    <value>رمز جوجل مطلوب لتسجيل الدخول بجوجل</value>
   </data>
   <data name="RequestPayloadRequired" xml:space="preserve">
     <value>بيانات الطلب مطلوبة</value>
@@ -196,28 +187,13 @@
     <value>تنسيق البريد الإلكتروني غير صالح</value>
   </data>
   <data name="InvalidCode" xml:space="preserve">
-    <value>تنسيق الرمز خاطئ</value>
+    <value> تنسيق الرمز خاطئ يجب أن يحتوي على أرقام فقط</value>
   </data>
   <data name="InvalidPhoneNumber" xml:space="preserve">
     <value>رقم الهاتف يجب أن يكون بالصيغة: +966 5X XXX XXXX</value>
   </data>
-  <data name="NameLengthRange" xml:space="preserve">
-    <value>يجب أن يكون الاسم بين 8 و 16 حرفاً</value>
-  </data>
   <data name="InValidCredentials" xml:space="preserve">
     <value>البريد الإلكتروني أو كلمة المرور غير صالحة</value>
-  </data>
-  <data name="InvalidAccessToken" xml:space="preserve">
-    <value>رمز الوصول غير صحيح</value>
-  </data>
-  <data name="InvalidGoogleToken" xml:space="preserve">
-    <value>رمز جوجل غير صالح</value>
-  </data>
-  <data name="ErrorConfirmingResetPasswordCode" xml:space="preserve">
-    <value>حدث خطأ أثناء تأكيد رقم الهاتف</value>
-  </data>
-  <data name="ErrorResettingPassword" xml:space="preserve">
-    <value>خطأ في إعادة تعيين كلمة المرور للرمز: {0}</value>
   </data>
   <data name="TwoFactorRequired" xml:space="preserve">
     <value>مطلوب المصادقة الثنائية لتسجيل الدخول</value>
@@ -225,14 +201,8 @@
   <data name="EmailAlreadyExists" xml:space="preserve">
     <value>الإيميل موجود بالفعل</value>
   </data>
-  <data name="UserNotFound" xml:space="preserve">
-    <value>المستخدم غير موجود</value>
-  </data>
   <data name="UserCreationFailed" xml:space="preserve">
     <value>فشل في إنشاء المستخدم</value>
-  </data>
-  <data name="EmailConfirmationFailed" xml:space="preserve">
-    <value>حدث خطأ أثناء تأكيد الإيميل</value>
   </data>
   <data name="AccountLockedOut" xml:space="preserve">
     <value>تم قفل حسابك بسبب محاولات تسجيل دخول فاشلة متعددة. يرجى المحاولة مرة أخرى خلال {0} دقيقة</value>
@@ -255,17 +225,11 @@
   <data name="RevokedRefreshToken" xml:space="preserve">
     <value>تم إلغاء الرمز المميز للتحديث</value>
   </data>
-  <data name="FailedExtractToken" xml:space="preserve">
-    <value>فشل في استخراج الرمز</value>
-  </data>
   <data name="FailedExtractEmail" xml:space="preserve">
     <value>فشل في استخراج البريد الإلكتروني من الرمز</value>
   </data>
   <data name="FailedExtractPhoneNumber" xml:space="preserve">
     <value>فشل في استخراج رقم الهاتف من الرمز</value>
-  </data>
-  <data name="FailedToExtractCustomerId" xml:space="preserve">
-    <value>فشل في استخراج معرف العميل من الرمز</value>
   </data>
   <data name="WaitCooldownPeriod" xml:space="preserve">
     <value>يرجى الانتظار دقيقتين قبل طلب رمز تأكيد جديد</value>
@@ -278,18 +242,6 @@
   </data>
   <data name="ResendCooldown" xml:space="preserve">
     <value>يرجى الانتظار {0} ثانية قبل طلب رمز جديد</value>
-  </data>
-  <data name="MinimumOrderAmount" xml:space="preserve">
-    <value>الحد الأدنى لمبلغ الطلب هو</value>
-  </data>
-  <data name="InsufficientStock" xml:space="preserve">
-    <value>مخزون غير كافي للصنف {0}</value>
-  </data>
-  <data name="FailedToUpdateInventory" xml:space="preserve">
-    <value>فشل في تحديث المخزون للصنف {0}</value>
-  </data>
-  <data name="RecentRefundError" xml:space="preserve">
-    <value>لا يمكنك تقديم طلب جديد بسبب استرداد حديث. يرجى الاتصال بالدعم</value>
   </data>
   <data name="EmailNotVerified" xml:space="preserve">
     <value>يرجى التحقق من عنوان بريدك الإلكتروني قبل تسجيل الدخول. تحقق من صندوق الوارد الخاص بك</value>
@@ -341,5 +293,8 @@
   </data>
   <data name="ResetSessionExpired" xml:space="preserve">
     <value>أنتهت صلاحية العملية الرجاء المحاولة من جديد</value>
+  </data>
+  <data name="OtpCodeLength" xml:space="preserve">
+    <value>رمز التحقق يجب أن يكون {0} أرقام بالضبط</value>
   </data>
 </root>

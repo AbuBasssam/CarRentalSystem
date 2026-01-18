@@ -10,7 +10,6 @@ public interface IOtpService : IScopedService
     /// Generates OTP to user
     /// </summary>
     Task<Result<string>> GenerateOtpAsync(int userId, enOtpType otpType, int expirationMinutes, CancellationToken cancellationToken = default);
-    Task<Result<(string otp, string jti)>> GenerateOtpWithJtiAsync(int userId, enOtpType otpType, int expirationMinutes, CancellationToken cancellationToken = default);
 
 
     /// <summary>
@@ -36,6 +35,14 @@ public interface IOtpService : IScopedService
     Task<Result<string>> RegenerateOtpAsync(int userId, enOtpType otpType, int expirationMinutes, CancellationToken cancellationToken = default);
 
     Task<ValidationOtpResuult> ValidateOtp(int userId, string otpCode, enOtpType enOtpType, CancellationToken ct = default);
-    Task<ValidationOtpResuult> ValidateOtp(string tokenJti, string otpCode, enOtpType enOtpType, CancellationToken ct = default);
+
+    /// <summary>
+    /// Check if user can resend OTP based on cooldown period
+    /// </summary>
+    /// <param name="userId">User ID</param>
+    /// <param name="otpType">OTP type</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>Result indicating if resend is allowed and remaining time if not</returns>
+    Task<(bool canResend, TimeSpan? remaining)> CanResendOtpAsync(int userId, enOtpType otpType, CancellationToken cancellationToken = default);
 }
 

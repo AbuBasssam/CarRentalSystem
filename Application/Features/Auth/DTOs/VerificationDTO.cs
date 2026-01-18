@@ -31,21 +31,11 @@ public class VerificationDTO
         public Validator(IStringLocalizer<SharedResources> localizer)
         {
             _localizer = localizer;
-            const int maxLength = 256;
 
             // Email Rules
-            RuleFor(x => x.Email)
-                .ApplyNotEmptyRule(_localizer[SharedResourcesKeys.EmailRequired])
-                .ApplyEmailAddressRule(_localizer[SharedResourcesKeys.InvalidEmail])
-                .ApplyMaxLengthRule(maxLength, string.Format(_localizer[SharedResourcesKeys.MaxLength].Value, "Email", maxLength));
+            RuleFor(x => x.Email).ApplyEmailValidation(_localizer);
 
-            RuleFor(x => x.OtpCode)
-                .NotEmpty()
-                .WithMessage(_localizer[SharedResourcesKeys.PropertyCannotBeEmpty])
-                .Length(6)
-                .WithMessage("OTP must be 6 digits")
-                .Matches(@"^\d{6}$")
-                .WithMessage("OTP must contain only digits");
+            RuleFor(x => x.OtpCode).ApplyOtpCodeRules(6, _localizer);
         }
     }
     #endregion

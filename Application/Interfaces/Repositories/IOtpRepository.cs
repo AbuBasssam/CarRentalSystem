@@ -17,10 +17,7 @@ public interface IOtpRepository : IGenericRepository<Otp, int>
     /// </summary>
     IQueryable<Otp> GetLatestValidOtpAsync(int userId, enOtpType otpType);
 
-    /// <summary>
-    /// Get OTP by TokenJti for password reset flow tracking
-    /// </summary>
-    IQueryable<Otp> GetByTokenJti(string tokenJti, enOtpType otpType);
+
 
     /// <summary>
     /// Check if user has any active (non-expired, non-used) OTP of given type

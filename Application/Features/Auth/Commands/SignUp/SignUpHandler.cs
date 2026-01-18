@@ -12,7 +12,7 @@ using Serilog;
 
 namespace Application.Features.AuthFeature;
 
-public class SignUpCommandHandler : IRequestHandler<SignUpCommand, Response<bool>>
+public class SignUpHandler : IRequestHandler<SignUpCommand, Response<bool>>
 {
     #region Field(s)
 
@@ -33,7 +33,7 @@ public class SignUpCommandHandler : IRequestHandler<SignUpCommand, Response<bool
 
     #region Constructure(s)
 
-    public SignUpCommandHandler(IUserService userService, IAuthService authService, IMapper mapper, ResponseHandler responseHandler, IStringLocalizer<SharedResources> localizer, IRefreshTokenRepository refreshTokenRepo, IUnitOfWork unitOfWork, IOtpService otpService, IEmailService emailService)
+    public SignUpHandler(IUserService userService, IAuthService authService, IMapper mapper, ResponseHandler responseHandler, IStringLocalizer<SharedResources> localizer, IRefreshTokenRepository refreshTokenRepo, IUnitOfWork unitOfWork, IOtpService otpService, IEmailService emailService)
     {
         _userService = userService;
         _authService = authService;

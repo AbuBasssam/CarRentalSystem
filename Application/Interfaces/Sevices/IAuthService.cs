@@ -19,7 +19,7 @@ public interface IAuthService : IScopedService
     (ClaimsPrincipal?, Exception?) GetClaimsPrinciple(string AccessToken);
     Task<(UserToken?, Exception?)> ValidateRefreshToken(int UserId, string RefreshTokenStr);
     (UserToken refreshToken, string AccessToken) GenerateVerificationToken(User user, int minutesValidDuration);
-    (UserToken refreshToken, string AccessToken) GenerateResetToken(User user, int expiresInMinutes, string jti, enResetPasswordStage stage);
+    (UserToken refreshToken, string AccessToken) GenerateResetToken(User user, int minutesValidDuration);
 
 
     /// <summary>

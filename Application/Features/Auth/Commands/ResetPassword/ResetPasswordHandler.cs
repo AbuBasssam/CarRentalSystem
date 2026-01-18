@@ -14,7 +14,7 @@ namespace Application.Features.AuthFeature;
 /// <summary>
 /// Handles password reset request after OTP verification
 /// </summary>
-public class ResetPasswordCommandHandler : IRequestHandler<ResetPasswordCommand, Response<bool>>
+public class ResetPasswordHandler : IRequestHandler<ResetPasswordCommand, Response<bool>>
 {
     #region Field(s)
 
@@ -32,9 +32,9 @@ public class ResetPasswordCommandHandler : IRequestHandler<ResetPasswordCommand,
     #region Constructor(s)
 
     /// <summary>
-    /// Initializes a new instance of ResetPasswordCommandHandler
+    /// Initializes a new instance of ResetPasswordHandler
     /// </summary>
-    public ResetPasswordCommandHandler(
+    public ResetPasswordHandler(
         IUserService userSerivce,
         IOtpRepository otpRepo,
         IRefreshTokenRepository tokenRepo,
@@ -81,20 +81,9 @@ public class ResetPasswordCommandHandler : IRequestHandler<ResetPasswordCommand,
             {
                 await transaction.RollbackAsync(cancellationToken);
                 Log.Warning($"Password reset attempted for non-existent user: {userId}");
-                return _responseHandler.BadRequest<bool>(_localizer[SharedResourcesKeys.UserNotFound]);
+                return _responseHandler.Success<bool>(true);
             }
 
-            // Step 2: Verify OTP exists and matches JTI from stage 2
-            var otp = await _otpRepo
-                .GetByTokenJti(currentJti!, enOtpType.ResetPassword)
-                .FirstOrDefaultAsync();
-
-            if (otp == null)
-            {
-                await transaction.RollbackAsync(cancellationToken);
-                Log.Warning($"No matching verified OTP found for user {userId}");
-                return _responseHandler.BadRequest<bool>(_localizer[SharedResourcesKeys.InvalidExpiredCode]);
-            }
 
             // Step 3: Remove old password
 
@@ -121,8 +110,7 @@ public class ResetPasswordCommandHandler : IRequestHandler<ResetPasswordCommand,
                 return _responseHandler.BadRequest<bool>(errMessage);
             }
 
-            // Step 5: Invalidate OTP
-            otp.ForceExpire();
+
 
             // Step 6: Revoke all existing auth tokens for security
             await _tokenRepo.RevokeUserTokenAsync(userId, enTokenType.AuthToken);

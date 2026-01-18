@@ -174,20 +174,11 @@
   <data name="PasswordRequired" xml:space="preserve">
     <value>Password is required field</value>
   </data>
-  <data name="TokenRequired" xml:space="preserve">
-    <value>Session token is required</value>
-  </data>
   <data name="CodeRequired" xml:space="preserve">
     <value>Code is required</value>
   </data>
   <data name="PhoneNumberRequired" xml:space="preserve">
     <value>Phone number is required field</value>
-  </data>
-  <data name="NameRequired" xml:space="preserve">
-    <value>Name is required field</value>
-  </data>
-  <data name="GoogleIdTokenRequired" xml:space="preserve">
-    <value>Google ID token is required for Google Sign-In</value>
   </data>
   <data name="RequestPayloadRequired" xml:space="preserve">
     <value>Request payload is required</value>
@@ -196,28 +187,13 @@
     <value>Invalid email format</value>
   </data>
   <data name="InvalidCode" xml:space="preserve">
-    <value>Invalid code format</value>
+    <value>Invalid code format must contain only digits</value>
   </data>
   <data name="InvalidPhoneNumber" xml:space="preserve">
     <value>Phone number must be in format: +966 5X XXX XXXX</value>
   </data>
-  <data name="NameLengthRange" xml:space="preserve">
-    <value>Name should be between 8 and 16 characters</value>
-  </data>
   <data name="InValidCredentials" xml:space="preserve">
     <value>Invalid email and/or password</value>
-  </data>
-  <data name="InvalidAccessToken" xml:space="preserve">
-    <value>Invalid access token</value>
-  </data>
-  <data name="InvalidGoogleToken" xml:space="preserve">
-    <value>Invalid Google token</value>
-  </data>
-  <data name="ErrorConfirmingResetPasswordCode" xml:space="preserve">
-    <value>An error occurred while confirming the reset password code</value>
-  </data>
-  <data name="ErrorResettingPassword" xml:space="preserve">
-    <value>Error resetting password for token: {0}</value>
   </data>
   <data name="TwoFactorRequired" xml:space="preserve">
     <value>Two-factor authentication is required to sign in</value>
@@ -225,14 +201,8 @@
   <data name="EmailAlreadyExists" xml:space="preserve">
     <value>Email already exists</value>
   </data>
-  <data name="UserNotFound" xml:space="preserve">
-    <value>User not found</value>
-  </data>
   <data name="UserCreationFailed" xml:space="preserve">
     <value>Failed to create user</value>
-  </data>
-  <data name="EmailConfirmationFailed" xml:space="preserve">
-    <value>An error occurred while confirming the email</value>
   </data>
   <data name="AccountLockedOut" xml:space="preserve">
     <value>Your account has been locked due to multiple failed login attempts. Please try again in {0} minutes</value>
@@ -255,17 +225,11 @@
   <data name="RevokedRefreshToken" xml:space="preserve">
     <value>Revoked refresh token</value>
   </data>
-  <data name="FailedExtractToken" xml:space="preserve">
-    <value>Failed to extract JWT token</value>
-  </data>
   <data name="FailedExtractEmail" xml:space="preserve">
     <value>Failed to extract email from token</value>
   </data>
   <data name="FailedExtractPhoneNumber" xml:space="preserve">
     <value>Failed to extract phone number from token</value>
-  </data>
-  <data name="FailedToExtractCustomerId" xml:space="preserve">
-    <value>Failed to extract customer ID from token</value>
   </data>
   <data name="WaitCooldownPeriod" xml:space="preserve">
     <value>Please wait for 2 minutes before requesting a new confirmation code</value>
@@ -279,18 +243,7 @@
   <data name="ResendCooldown" xml:space="preserve">
     <value>Please wait {0} seconds before requesting a new code</value>
   </data>
-  <data name="MinimumOrderAmount" xml:space="preserve">
-    <value>Minimum order amount is</value>
-  </data>
-  <data name="InsufficientStock" xml:space="preserve">
-    <value>Insufficient stock for item {0}</value>
-  </data>
-  <data name="FailedToUpdateInventory" xml:space="preserve">
-    <value>Failed to update inventory for item {0}</value>
-  </data>
-  <data name="RecentRefundError" xml:space="preserve">
-    <value>You cannot place a new order due to a recent refund. Please contact support</value>
-  </data>
+  
   <data name="EmailNotVerified" xml:space="preserve">
     <value>Please verify your email address before signing in. Check your inbox</value>
   </data>
@@ -341,5 +294,8 @@
   </data>
   <data name="ResetSessionExpired" xml:space="preserve">
     <value>Reset session has expired. Please start over.</value>
+  </data>
+  <data name="OtpCodeLength" xml:space="preserve">
+    <value>Verification code must be exactly {0} digits</value>
   </data>
 </root>

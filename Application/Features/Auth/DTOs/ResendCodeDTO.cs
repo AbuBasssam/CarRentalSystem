@@ -35,13 +35,10 @@ public class ResendCodeDTO
         }
         public void ApplyValidations()
         {
-            const int maxLength = 256;
 
             // Email Rules
             RuleFor(x => x.Email)
-                .ApplyNotEmptyRule(_localizer[SharedResourcesKeys.EmailRequired])
-                .ApplyEmailAddressRule(_localizer[SharedResourcesKeys.InvalidEmail])
-                .ApplyMaxLengthRule(maxLength, string.Format(_localizer[SharedResourcesKeys.MaxLength].Value, "Email", maxLength));
+                .ApplyEmailValidation(_localizer);
 
 
         }

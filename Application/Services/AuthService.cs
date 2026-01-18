@@ -444,9 +444,9 @@ public class AuthService : IAuthService
 
 
     }
-    public (UserToken refreshToken, string AccessToken) GenerateResetToken(User user, int expiresInMinutes, string jti, enResetPasswordStage stage)
+    public (UserToken refreshToken, string AccessToken) GenerateResetToken(User user, int expiresInMinutes)
     {
-        var claims = _GetResetClaims(user, jti, stage);
+        var claims = _GetResetClaims(user);
         var (jwtAccessTokenObj, AccessToken) = _GenerateSessionToken(claims, expiresInMinutes);
         var validFor = TimeSpan.FromMinutes(expiresInMinutes);
 
@@ -460,15 +460,14 @@ public class AuthService : IAuthService
 
 
     }
-    private List<Claim> _GetResetClaims(User user, string jti, enResetPasswordStage stage)
+    private List<Claim> _GetResetClaims(User user)
     {
         var claims = new List<Claim>
         {
             new Claim(SessionTokenClaims.IsResetToken, "true"),
-            new Claim(SessionTokenClaims.ResetTokenStage, ((int)stage).ToString()),
             new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
             new Claim(ClaimTypes.Email, user.Email!),
-            new Claim(JwtRegisteredClaimNames.Jti, jti)
+            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
         };
         return claims;
 
@@ -525,7 +524,7 @@ public class AuthService : IAuthService
         (JwtSecurityToken? jwtAccessTokenObj, Exception? exception) = GetJwtAccessTokenObjFromAccessTokenString(sessionToken);
 
         if (jwtAccessTokenObj == null)
-            return Result<string>.Failure([_Localizer[SharedResourcesKeys.InvalidAccessToken]]);
+            return Result<string>.Failure([_Localizer[SharedResourcesKeys.InvalidToken]]);
 
         (string email, Exception? emailException) = GetUserEmailFromJwtAccessTokenObj(jwtAccessTokenObj);
         if (string.IsNullOrEmpty(email)) return Result<string>.Failure([_Localizer[SharedResourcesKeys.FailedExtractEmail]]);
@@ -539,7 +538,7 @@ public class AuthService : IAuthService
 
         if (jwtAccessTokenObj == null)
             return Result<int>.Failure([
-                _Localizer[SharedResourcesKeys.InvalidAccessToken]
+                _Localizer[SharedResourcesKeys.InvalidToken]
             ]);
 
         (int userId, Exception? userIdException) =

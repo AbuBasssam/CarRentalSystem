@@ -31,35 +31,29 @@
         #region User Input Validation Keys
         public const string EmailRequired = "EmailRequired";
         public const string PasswordRequired = "PasswordRequired";
-        public const string TokenRequired = "TokenRequired";// Not used 
+
         public const string CodeRequired = "CodeRequired";
-        public const string PhoneNumberRequired = "PhoneNumberRequired";// Not used 
-        public const string NameRequired = "NameRequired";// Not used 
-        public const string GoogleIdTokenRequired = "GoogleIdTokenRequired";// Not used 
+        public const string OtpCodeLength = "OtpCodeLength";
+
+        public const string PhoneNumberRequired = "PhoneNumberRequired";
+
         public const string RequestPayloadRequired = "RequestPayloadRequired";
         #endregion
 
         #region Format Validation Keys
         public const string InvalidEmail = "InvalidEmail";
         public const string InvalidCode = "InvalidCode";
-        public const string InvalidPhoneNumber = "InvalidPhoneNumber";// Not used 
-        public const string NameLengthRange = "NameLengthRange";// Not used 
+        public const string InvalidPhoneNumber = "InvalidPhoneNumber";
         #endregion
 
         #region Authentication & Authorization Keys
         public const string InValidCredentials = "InValidCredentials";
-        public const string InvalidAccessToken = "InvalidAccessToken";
-        public const string InvalidGoogleToken = "InvalidGoogleToken";// Not used 
-        public const string ErrorConfirmingResetPasswordCode = "ErrorConfirmingResetPasswordCode";// Not used 
-        public const string ErrorResettingPassword = "ErrorResettingPassword";// Not used 
-        public const string TwoFactorRequired = "TwoFactorRequired";// Not used 
+        public const string TwoFactorRequired = "TwoFactorRequired"; // Not used 
         #endregion
 
         #region User Management Keys
         public const string EmailAlreadyExists = "EmailAlreadyExists";
-        public const string UserNotFound = "UserNotFound";
         public const string UserCreationFailed = "UserCreationFailed";// Not used
-        public const string EmailConfirmationFailed = "EmailConfirmationFailed";// Not used
         public const string AccountLockedOut = "AccountLockedOut";// Not used
         #endregion
 
@@ -73,10 +67,8 @@
         #endregion
 
         #region Token Extraction Keys
-        public const string FailedExtractToken = "FailedExtractToken";// Not used
         public const string FailedExtractEmail = "FailedExtractEmail";
         public const string FailedExtractPhoneNumber = "FailedExtractPhoneNumber";// Not used
-        public const string FailedToExtractCustomerId = "FailedToExtractCustomerId";// Not used
         #endregion
 
         #region Cooldown & Rate Limiting Keys
@@ -86,13 +78,6 @@
         public const string ResendCooldown = "ResendCooldown";// Not used
         #endregion
 
-        #region Order Processing Keys
-        // all Region not used 
-        public const string MinimumOrderAmount = "MinimumOrderAmount";
-        public const string InsufficientStock = "InsufficientStock";
-        public const string FailedToUpdateInventory = "FailedToUpdateInventory";
-        public const string RecentRefundError = "RecentRefundError";
-        #endregion
 
         #region Email Verification Keys
         // all Region not used 

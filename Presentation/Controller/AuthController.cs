@@ -1,9 +1,7 @@
 ﻿using Application.Features.AuthFeature;
 using Application.Models;
 using Domain.AppMetaData;
-using Domain.Enums;
 using Domain.HelperClasses;
-using Infrastructure.Filters;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -54,7 +52,7 @@ public class AuthController : ApiController
     [ProducesResponseType(typeof(Response<bool>), StatusCodes.Status422UnprocessableEntity)]
     [ProducesResponseType(typeof(Response<bool>), StatusCodes.Status429TooManyRequests)]
     [ProducesResponseType(typeof(Response<bool>), StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> SignUp([FromBody] SignUpCommandDTO dto)
+    public async Task<IActionResult> SignUp([FromBody] SignUpDTO dto)
     {
 
         return await CommandExecutor.Execute(
@@ -131,10 +129,10 @@ public class AuthController : ApiController
     /// <response code="400">Bad request - user already verified or cooldown active</response>
     /// <response code="429">Too many requests - rate limit exceeded</response>
     /// <response code="500">Internal server error</response>
+
     [HttpPost(Router.AuthenticationRouter.ResendVerification)]
     [ProducesResponseType(typeof(Response<string>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(Response<string>), StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(typeof(Response<string>), StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(typeof(Response<string>), StatusCodes.Status429TooManyRequests)]
     [ProducesResponseType(typeof(Response<string>), StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> ResendVerificationCode([FromBody] ResendCodeDTO dto)
@@ -146,14 +144,15 @@ public class AuthController : ApiController
             (Response<bool> response) => NewResult(response)
         );
     }
+
     /// <summary>
     /// Send password reset code to email
     /// </summary>
+
     [HttpPost(Router.AuthenticationRouter.PasswordReset)]
     [ProducesResponseType(typeof(Response<VerificationFlowResponse>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(Response<object>), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status429TooManyRequests)]
-    [AllowAnonymous]
 
     public async Task<IActionResult> SendResetCode([FromBody] SendResetCodeDTO dto)
     {
@@ -161,7 +160,7 @@ public class AuthController : ApiController
         return await CommandExecutor.Execute(
             command,
             Sender,
-            (Response<VerificationFlowResponse> response) => NewResult(response)
+            (Response<bool> response) => NewResult(response)
         );
     }
 
@@ -169,14 +168,14 @@ public class AuthController : ApiController
     /// <summary>
     /// Step 2: Verify the reset code
     /// </summary>
+
     [HttpPost(Router.AuthenticationRouter.PasswordResetVerification)]
     [ProducesResponseType(typeof(Response<VerificationFlowResponse>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(Response<object>), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status429TooManyRequests)]
-    [Authorize(Policy = Policies.AwaitVerification)]
 
-    public async Task<IActionResult> VerifyResetCode([FromBody] VerifyResetCodeDTO dto)
+    public async Task<IActionResult> VerifyResetCode([FromBody] VerificationDTO dto)
     {
         VerifyResetCodeCommand command = new VerifyResetCodeCommand(dto);
         return await CommandExecutor.Execute(
@@ -185,6 +184,8 @@ public class AuthController : ApiController
             (Response<VerificationFlowResponse> response) => NewResult(response)
         );
     }
+
+
     /// <summary>
     /// Step 3: Reset password with new password
     /// </summary>
@@ -192,8 +193,9 @@ public class AuthController : ApiController
     /// Requires valid reset token from Step 2 (Verified stage).
     /// Updates user's password and invalidates all existing sessions.
     /// </remarks>
+
     [HttpPut(Router.AuthenticationRouter.PasswordReset)]
-    [Authorize(Policy = Policies.ResetPasswordVerified)]
+    [Authorize(Policy = Policies.ResetPassword)]
     [ProducesResponseType(typeof(Response<bool>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(Response<object>), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -224,16 +226,15 @@ public class AuthController : ApiController
     /// - Old token becomes invalid after resend
     /// - New token must be used for verification
     /// </remarks>
+
     [HttpPost(Router.AuthenticationRouter.ResendPasswordReset)]
-    [Authorize(Policy = Policies.AwaitVerification)]
-    [OtpCooldown(enOtpType.ResetPassword)]
-    public async Task<IActionResult> ResendResetCode()
+    public async Task<IActionResult> ResendResetCode(ResendCodeDTO dto)
     {
-        var command = new ResendResetCodeCommand();
+        var command = new ResendResetCodeCommand(dto);
         return await CommandExecutor.Execute(
          command,
          Sender,
-         (Response<VerificationFlowResponse> response) => NewResult(response)
+         (Response<bool> response) => NewResult(response)
        );
     }
 }

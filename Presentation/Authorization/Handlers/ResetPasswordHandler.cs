@@ -13,8 +13,7 @@ namespace Presentation.Authorization.Handlers;
 /// Authorization handler for password reset flow
 /// Validates:
 /// 1. Token is a reset token
-/// 2. Token is at the correct stage
-/// 3. Token exists in database and is valid
+/// 2. Token exists in database and is valid
 /// </summary>
 public class ResetPasswordHandler : AuthorizationHandler<ResetPasswordRequirement>
 {
@@ -43,16 +42,9 @@ public class ResetPasswordHandler : AuthorizationHandler<ResetPasswordRequiremen
         // Step 2: Validate JWT claims
 
         var isResetToken = context.User.FindFirstValue(SessionTokenClaims.IsResetToken);
-        var currentStageStr = context.User.FindFirstValue(SessionTokenClaims.ResetTokenStage);
 
-        if (!int.TryParse(currentStageStr, out int currentStage) ||
-           currentStage != (int)requirement.RequiredStage)
+        if (string.IsNullOrEmpty(isResetToken) || isResetToken != "true")
         {
-            var expectedStage = requirement.RequiredStage.ToString();
-            var actualStage = Enum.IsDefined(typeof(enResetPasswordStage), currentStage)
-                ? ((enResetPasswordStage)currentStage).ToString()
-                : "Unknown";
-
             context.Fail(new AuthorizationFailureReason(this, Error_Message));
             return;
         }
@@ -64,7 +56,6 @@ public class ResetPasswordHandler : AuthorizationHandler<ResetPasswordRequiremen
                 .GetTokenByJti(jti)
                 .FirstOrDefaultAsync();
 
-            // ✅ FIXED: Correct logic - token must exist AND be valid
             if (tokenEntity != null && tokenEntity.Type == enTokenType.ResetPasswordToken && tokenEntity.IsValid())
             {
                 context.Succeed(requirement);
@@ -78,13 +69,9 @@ public class ResetPasswordHandler : AuthorizationHandler<ResetPasswordRequiremen
         }
         catch (Exception ex)
         {
-            // Log error but don't expose details to user
             Log.Error(ex, "Error validating reset token {Jti}", jti);
 
-            context.Fail(new AuthorizationFailureReason(
-                this,
-                Error_Message
-            ));
+            context.Fail(new AuthorizationFailureReason(this, Error_Message));
         }
 
     }

@@ -28,10 +28,9 @@ public record SendResetCodeDTO
         public Validator(IStringLocalizer<SharedResources> localizer)
         {
             _localizer = localizer;
-            RuleFor(x => x.Email)
-                .ApplyNotEmptyRule(_localizer[SharedResourcesKeys.EmailRequired])
-                .ApplyEmailAddressRule(_localizer[SharedResourcesKeys.InvalidEmail]);
 
+            RuleFor(x => x.Email)
+                .ApplyEmailValidation(localizer);
 
         }
     }

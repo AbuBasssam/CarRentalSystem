@@ -73,37 +73,28 @@ public class ResendVerificationCodeHandler : IRequestHandler<ResendVerificationC
                 return _responseHandler.Success(true);
             }
 
-            // Step 2: Get last OTP for user 
+            // Check if can resend (cooldown)
 
-            var lastOtp = await _otpRepo
-                .GetLatestValidOtpAsync(user.Id, enOtpType.ConfirmEmail)
-                .FirstOrDefaultAsync();
+            var canResendResult = await _otpService.CanResendOtpAsync(user.Id, enOtpType.ConfirmEmail, cancellationToken);
 
-            if (lastOtp is not null)
+            if (!canResendResult.canResend)
             {
-                // Check cooldown
+                var secondsRemaining = (int)Math.Ceiling(
+                    canResendResult.remaining!.Value.TotalSeconds
+                );
 
-                var canResendResult = lastOtp.CanResend();
+                Log.Information(
+                    "User {UserId} attempted resend during cooldown. Remaining: {Seconds}s",
+                    user.Id,
+                    secondsRemaining
+                );
 
-                if (!canResendResult.canResend)
-                {
-                    var secondsRemaining = (int)Math.Ceiling(canResendResult.remaining!.Value.TotalSeconds);
-
-                    var errorMessage = string.Format(
+                return _responseHandler.BadRequest<bool>(
+                    string.Format(
                         _localizer[SharedResourcesKeys.ResendCooldown],
                         secondsRemaining
-                    );
-
-                    Log.Information(
-                              "User {UserId} attempted resend during cooldown. Remaining: {Seconds}s",
-                              user.Id,
-                              secondsRemaining
-                    );
-
-                    return _responseHandler.BadRequest<bool>(errorMessage);
-                }
-
-
+                    )
+                );
             }
 
 

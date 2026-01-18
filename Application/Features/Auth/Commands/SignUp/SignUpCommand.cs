@@ -4,9 +4,9 @@ using MediatR;
 namespace Application.Features.AuthFeature;
 public class SignUpCommand : IRequest<Response<bool>>
 {
-    public SignUpCommandDTO Dto { get; set; }
+    public SignUpDTO Dto { get; set; }
 
-    public SignUpCommand(SignUpCommandDTO dto)
+    public SignUpCommand(SignUpDTO dto)
     {
         Dto = dto;
     }

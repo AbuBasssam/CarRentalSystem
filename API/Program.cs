@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.Extensions.Options;
 using Presentation;
+using Presentation.Constants;
 using PresentationLayer.Middleware;
 using Serilog;
 using System.Globalization;
@@ -100,6 +101,8 @@ builder.Services.Configure<RequestLocalizationOptions>(options =>
 
 #endregion
 
+
+
 var app = builder.Build();
 
 #region Seeder
@@ -139,6 +142,8 @@ if (app.Environment.IsDevelopment())
 
 
 app.UseHttpsRedirection();
+
+app.UseCors(Policies.CORS);
 
 app.UseAuthentication();
 

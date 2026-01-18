@@ -2,4 +2,4 @@
 using MediatR;
 
 namespace Application.Features.AuthFeature;
-public record SendResetCodeCommand(SendResetCodeDTO DTO) : IRequest<Response<VerificationFlowResponse>>;
+public record SendResetCodeCommand(SendResetCodeDTO DTO) : IRequest<Response<bool>>;

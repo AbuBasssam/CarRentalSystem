@@ -1,5 +1,4 @@
-﻿using Domain.Enums;
-using Infrastructure.Security;
+﻿using Infrastructure.Security;
 using Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.Configuration;
@@ -25,7 +24,23 @@ public static class DependencyInjection
         // Register the custom authorization handlers and providers
         AddHandlers(services);
 
+        _AddCORS(services);
+
         return services;
+    }
+
+    private static void _AddCORS(IServiceCollection services)
+    {
+        services.AddCors(options =>
+        {
+            options.AddPolicy(Policies.CORS, policy =>
+            {
+                policy
+                    .WithOrigins("https://localhost:7137", "http://localhost:5013")
+                    .AllowAnyHeader()
+                    .AllowAnyMethod();
+            });
+        });
     }
 
     /// <summary>
@@ -61,17 +76,8 @@ public static class DependencyInjection
         // add policies for authorization
         services.AddAuthorization(options =>
         {
-            options.AddPolicy(Policies.VerificationOnly, policy =>
-                policy.Requirements.Add(new VerificationOnlyRequirement()));
-
-            // إعداد سياسة المرحلة الأولى (انتظار التحقق)
-            options.AddPolicy(Policies.AwaitVerification, policy =>
-                policy.Requirements.Add(new ResetPasswordRequirement(enResetPasswordStage.AwaitingVerification)));
-
-
-            // إعداد سياسة المرحلة الثانية (تم التحقق - جاهز لإعادة التعيين)
-            options.AddPolicy(Policies.ResetPasswordVerified, policy =>
-                policy.Requirements.Add(new ResetPasswordRequirement(enResetPasswordStage.Verified)));
+            options.AddPolicy(Policies.ResetPassword, policy =>
+                policy.Requirements.Add(new ResetPasswordRequirement()));
 
         });
 

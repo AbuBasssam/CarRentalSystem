@@ -1,10 +1,10 @@
-using ApplicationLayer.Resources;
+﻿using ApplicationLayer.Resources;
 using FluentValidation;
 using Microsoft.Extensions.Localization;
 
 namespace Application.Features.AuthFeature;
 
-public class VerifyResetCodeCommandValidator : AbstractValidator<VerifyResetCodeCommand>
+public class SignUpValidator : AbstractValidator<SignUpCommand>
 {
     #region Field(s)
 
@@ -13,22 +13,22 @@ public class VerifyResetCodeCommandValidator : AbstractValidator<VerifyResetCode
     #endregion
 
     #region Constructor(s)
-    public VerifyResetCodeCommandValidator(IStringLocalizer<SharedResources> localizer)
-    {
-        _Localizer = localizer;
 
-        _ApplyValidations();
+    public SignUpValidator(IStringLocalizer<SharedResources> Localizer)
+    {
+        _Localizer = Localizer;
+        ApplyValidations();
+
     }
     #endregion
 
     #region Method(s)
-    private void _ApplyValidations()
-    {
-        RuleFor(x => x.DTO)
-            .NotNull().WithMessage(_Localizer[SharedResourcesKeys.RequestPayloadRequired])
-            .SetValidator(new VerifyResetCodeDTO.Validator(_Localizer));
 
+    private void ApplyValidations()
+    {
+        RuleFor(x => x.Dto)
+            .NotNull().WithMessage(_Localizer[SharedResourcesKeys.RequestPayloadRequired])
+            .SetValidator(new SignUpDTO.Validator(_Localizer));
     }
     #endregion
-
 }

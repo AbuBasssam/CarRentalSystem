@@ -6,13 +6,13 @@ using Microsoft.Extensions.Localization;
 
 namespace Application.Validators.PasswordReset;
 
-public class ResetPasswordCommandValidator : AbstractValidator<ResetPasswordCommand>
+public class ResetPasswordValidator : AbstractValidator<ResetPasswordCommand>
 {
     #region Field(s)
     private readonly IStringLocalizer<SharedResources> _Localizer;
     #endregion
 
-    public ResetPasswordCommandValidator(IStringLocalizer<SharedResources> localizer)
+    public ResetPasswordValidator(IStringLocalizer<SharedResources> localizer)
     {
         _Localizer = localizer;
 

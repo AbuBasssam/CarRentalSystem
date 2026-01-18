@@ -45,15 +45,7 @@ public class OtpService : IOtpService
             return Result<string>.Failure(["Failed to generate OTP"]);
         }
     }
-    public async Task<Result<(string otp, string jti)>> GenerateOtpWithJtiAsync(int userId, enOtpType otpType, int expirationMinutes, CancellationToken cancellationToken = default)
-    {
-        var otpCode = Helpers.GenerateOtp();
-        var jti = Guid.NewGuid().ToString();
 
-        await _SaveOtpToDb(userId, otpCode, otpType, expirationMinutes, jti);
-
-        return Result<(string, string)>.Success((otpCode, jti));
-    }
 
     /// <summary>
     /// Expires and marks old active OTP as used before creating new one
@@ -86,7 +78,7 @@ public class OtpService : IOtpService
     }
 
     /// <summary>
-    /// Combines ExpireActiveOtpAsync + GenerateAndSendOtpAsync in one atomic operation
+    /// Expire active otp and generate new one in one atomic operation
     /// </summary>
     public async Task<Result<string>> RegenerateOtpAsync(int userId, enOtpType otpType, int expirationMinutes, CancellationToken cancellationToken = default)
     {
@@ -115,23 +107,7 @@ public class OtpService : IOtpService
         }
     }
 
-    /// <summary>
-    /// Validates the OTP and manages attempt counting.
-    /// </summary>
-    public async Task<ValidationOtpResuult> ValidateOtp(string tokenJti, string otpCode, enOtpType enOtpType, CancellationToken ct = default)
-    {
-        var otp = await _otpRepo.GetByTokenJti(tokenJti, enOtpType).FirstOrDefaultAsync(ct);
-        if (otp == null)
-        {
-            Log.Warning(
-            $"OTP validation failed: no active OTP found With jti {tokenJti}");
 
-            return new ValidationOtpResuult();
-
-        }
-
-        return _OtpValidationResult(otp, otpCode);
-    }
     public async Task<ValidationOtpResuult> ValidateOtp(int userId, string otpCode, enOtpType enOtpType, CancellationToken ct = default)
     {
         var otp =
@@ -153,6 +129,32 @@ public class OtpService : IOtpService
 
     }
 
+    public async Task<(bool canResend, TimeSpan? remaining)> CanResendOtpAsync(int userId, enOtpType otpType, CancellationToken cancellationToken = default)
+    {
+        var latestValidOtp = await _otpRepo
+            .GetLatestValidOtpAsync(userId, otpType)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (latestValidOtp == null)
+        {
+            // No valid OTP exists - can resend
+            return (true, null);
+        }
+
+        // Check cooldown
+        var canResendResult = latestValidOtp.CanResend();
+
+        if (canResendResult.canResend)
+        {
+            return (true, null);
+        }
+        return (false, canResendResult.remaining!.Value);
+
+    }
+
+    #endregion
+
+    #region Helper Method(s)
     private ValidationOtpResuult _OtpValidationResult(Otp otp, string originalCode)
     {
         var validtionResult = new ValidationOtpResuult();
@@ -191,22 +193,18 @@ public class OtpService : IOtpService
         return validtionResult;
     }
 
-    #endregion
 
-    #region Helper Method(s)
-
-    private async Task _SaveOtpToDb(int UserID, string otp, enOtpType otpType, int minutesValidDuration, string? jti = null)
+    private async Task _SaveOtpToDb(int UserID, string otp, enOtpType otpType, int minutesValidDuration)
     {
         var validFor = TimeSpan.FromMinutes(minutesValidDuration);
         var hashedOtp = Helpers.HashString(otp);
-        var otpEntity = new Otp(hashedOtp, otpType, UserID, validFor, jti);
+        var otpEntity = new Otp(hashedOtp, otpType, UserID, validFor);
 
 
         await _otpRepo.AddAsync(otpEntity);
 
 
     }
-
 
     #endregion
 }

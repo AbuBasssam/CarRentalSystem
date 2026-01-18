@@ -21,8 +21,6 @@ public class Otp : IEntity<int>
     // NEW: Track last attempt time
     public DateTime? LastAttemptAt { get; private set; }
 
-    // NEW: Track associated JWT ID for password reset flow
-    public string? TokenJti { get; private set; }
 
     private byte MaxAttempts = 5;
     public bool IsUsed { get; private set; }
@@ -34,7 +32,7 @@ public class Otp : IEntity<int>
     public virtual User User { get; set; } = null!;
     protected Otp() { }
 
-    public Otp(string code, enOtpType type, int userId, TimeSpan validFor, string? tokenJti = null)
+    public Otp(string code, enOtpType type, int userId, TimeSpan validFor)
     {
         if (validFor <= TimeSpan.Zero)
             throw new ArgumentOutOfRangeException(nameof(validFor), "OTP validity duration must be positive");
@@ -46,7 +44,6 @@ public class Otp : IEntity<int>
         Code = code;
         Type = type;
         UserId = userId;
-        TokenJti = tokenJti;
         CreationTime = creationTime;
         ExpirationTime = creationTime.Add(compensatedValidity);
         AttemptsCount = 0;
@@ -90,13 +87,7 @@ public class Otp : IEntity<int>
 
 
 
-    /// <summary>
-    /// Update TokenJti when transitioning between reset password stages
-    /// </summary>
-    public void UpdateTokenJti(string newJti)
-    {
-        TokenJti = newJti;
-    }
+
     private TimeSpan _GetCooldownPeriod()
     {
         return Type switch
