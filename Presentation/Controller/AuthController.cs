@@ -210,24 +210,36 @@ public class AuthController : ApiController
     }
 
     /// <summary>
-    /// Resend password reset code (Token-based for security)
+    /// Resends password reset verification code to user's email
     /// </summary>
+    /// <param name="dto">Email address or user identifier</param>
     /// <remarks>
-    /// Requires valid reset token from previous send/resend.
+    /// Generates and sends a new password reset verification code.
     /// 
-    /// Security benefits:
-    /// - Token rotation (old token invalidated, new token issued)
-    /// - Cannot resend to different email (email from token only)
-    /// - Rate limiting on user level (not just IP)
-    /// - Cooldown period enforced (60 seconds)
+    /// Features:
+    /// - Rate limited to prevent abuse
+    /// - Previous codes are invalidated
+    /// - Code expires after configured duration 
+    /// - Sends code via email
     /// 
-    /// Similar to RefreshToken pattern:
-    /// - Must use valid token from previous step
-    /// - Old token becomes invalid after resend
-    /// - New token must be used for verification
+    /// Use cases:
+    /// - User didn't receive original reset code
+    /// - Reset code expired
+    /// - User accidentally deleted reset email
     /// </remarks>
+    /// <returns>Success confirmation</returns>
+    /// <response code="200">Reset code sent successfully</response>
+    /// <response code="400">Invalid email or user not found</response>
+    /// <response code="422">Validation error</response>
+    /// <response code="429">Too many reset attempts - rate limit exceeded</response>
+    /// <response code="500">Internal server error</response>
 
     [HttpPost(Router.AuthenticationRouter.ResendPasswordReset)]
+    [ProducesResponseType(typeof(Response<bool>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(Response<bool>), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(Response<bool>), StatusCodes.Status422UnprocessableEntity)]
+    [ProducesResponseType(typeof(Response<bool>), StatusCodes.Status429TooManyRequests)]
+    [ProducesResponseType(typeof(Response<bool>), StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> ResendResetCode(ResendCodeDTO dto)
     {
         var command = new ResendResetCodeCommand(dto);
@@ -237,4 +249,40 @@ public class AuthController : ApiController
          (Response<bool> response) => NewResult(response)
        );
     }
+
+
+    /// <summary>
+    /// Logs out the current user by revoking their authentication tokens
+    /// </summary>
+    /// <remarks>
+    /// Invalidates the current access and refresh tokens.
+    /// User must re-authenticate to obtain new tokens.
+    /// 
+    /// Security measures:
+    /// - Requires valid authentication token
+    /// - Validates token ownership
+    /// - Revokes tokens immediately
+    /// - Logs logout activity with IP and user agent
+    /// </remarks>
+    /// <returns>Success confirmation</returns>
+    /// <response code="200">Successfully logged out</response>
+    /// <response code="401">Invalid or missing authentication token</response>
+    /// <response code="400">Logout operation failed</response>
+
+    [HttpPost(Router.AuthenticationRouter.Logout)]
+    [ProducesResponseType(typeof(Response<bool>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(Response<bool>), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(Response<bool>), StatusCodes.Status400BadRequest)]
+    [Authorize(Policy = Policies.Logout)]
+
+    public async Task<IActionResult> Logout()
+    {
+        var command = new LogoutCommand();
+        return await CommandExecutor.Execute(
+          command,
+          Sender,
+          (Response<bool> response) => NewResult(response)
+        );
+    }
+
 }
