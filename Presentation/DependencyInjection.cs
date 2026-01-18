@@ -16,7 +16,6 @@ public static class DependencyInjection
 
         AutoRegisterServices(services);
 
-        services.AddScoped<IAuthorizationHandler, ResetPasswordHandler>();
 
         // add authorization policies
         _AddPolicies(services);
@@ -77,7 +76,15 @@ public static class DependencyInjection
         services.AddAuthorization(options =>
         {
             options.AddPolicy(Policies.ResetPassword, policy =>
-                policy.Requirements.Add(new ResetPasswordRequirement()));
+
+                policy.Requirements.Add(new ResetPasswordRequirement())
+            );
+
+            options.AddPolicy(Policies.Logout, policy =>
+
+                policy.Requirements.Add(new LogoutRequirement())
+            );
+
 
         });
 
@@ -90,5 +97,10 @@ public static class DependencyInjection
         services.AddSingleton<IAuthorizationHandler, PermissionAuthorizationHandler>();
 
         services.AddSingleton<IAuthorizationPolicyProvider, PermissionPolicyProvider>();
+
+        services.AddScoped<IAuthorizationHandler, ResetPasswordHandler>();
+
+        services.AddScoped<IAuthorizationHandler, LogoutHandler>();
+
     }
 }

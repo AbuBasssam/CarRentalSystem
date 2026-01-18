@@ -81,4 +81,15 @@ public class HttpRequestContext : IRequestContext
             return Context?.User.FindFirstValue(ClaimTypes.Email) ?? null;
         }
     }
+
+    public string? UserAgent
+    {
+        get
+        {
+            if (!IsAuthenticated)
+                return null;
+
+            return Context?.Request.Headers["User-Agent"].ToString() ?? "Unknown";
+        }
+    }
 }
