@@ -1,4 +1,5 @@
-﻿using Interfaces;
+﻿using Domain.Security;
+using Interfaces;
 using Microsoft.AspNetCore.Http;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
@@ -57,7 +58,7 @@ public class HttpRequestContext : IRequestContext
         }
     }
     public int? UserId =>
-        int.TryParse(Context?.User?.FindFirstValue(ClaimTypes.NameIdentifier), out var id)
+        int.TryParse(Context?.User?.FindFirstValue(nameof(UserClaimModel.Id)), out var id)
             ? id
             : null;
     public string? TokenJti

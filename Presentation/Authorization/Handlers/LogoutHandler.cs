@@ -13,21 +13,25 @@ namespace Presentation.Authorization.Handlers;
 public class LogoutHandler : AuthorizationHandler<LogoutRequirement>
 {
     #region Fields
+    private readonly ITokenValidationService _tokenValidation;
+
     private readonly IRequestContext _requestContext;
     private readonly IStringLocalizer<SharedResources> _localizer;
 
     #endregion
 
     #region Constructor
-    public LogoutHandler(IRequestContext requestContext, IStringLocalizer<SharedResources> localizer)
+    public LogoutHandler(ITokenValidationService tokenValidation, IRequestContext requestContext, IStringLocalizer<SharedResources> localizer)
     {
         _requestContext = requestContext;
+        _tokenValidation = tokenValidation;
+
         _localizer = localizer;
     }
     #endregion
 
     #region Authorization Handler
-    protected override Task HandleRequirementAsync(AuthorizationHandlerContext context, LogoutRequirement requirement)
+    protected override async Task HandleRequirementAsync(AuthorizationHandlerContext context, LogoutRequirement requirement)
     {
         // Step 1: Validate authentication token exists
         var token = _requestContext.AuthToken;
@@ -39,7 +43,7 @@ public class LogoutHandler : AuthorizationHandler<LogoutRequirement>
                 this,
                _localizer[SharedResourcesKeys.AccessDenied]
             ));
-            return Task.CompletedTask;
+            return;
         }
 
         // Step 2: Validate user ID
@@ -50,13 +54,24 @@ public class LogoutHandler : AuthorizationHandler<LogoutRequirement>
                 this,
                _localizer[SharedResourcesKeys.AccessDenied]
             ));
-            return Task.CompletedTask;
+            return;
+        }
+        // step 3: Validate token
+        var isValidToken = await _tokenValidation.ValidateTokenAsync(jti);
+        if (!isValidToken)
+        {
+            context.Fail(new AuthorizationFailureReason(
+                this,
+               _localizer[SharedResourcesKeys.AccessDenied]
+            ));
+            return;
         }
 
-        // Step 3: All validations passed
+
+        // Step 4: All validations passed
         context.Succeed(requirement);
 
-        return Task.CompletedTask;
+        return;
     }
     #endregion
 

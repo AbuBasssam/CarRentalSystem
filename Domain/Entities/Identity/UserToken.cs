@@ -24,7 +24,7 @@ public class UserToken : IEntity<int>
         Type = enTokenType.AuthToken;
         RefreshToken = refreshTokenHash;
         JwtId = jwtId;
-        IsUsed = true;
+        IsUsed = false;
         CreatedAt = DateTime.UtcNow;
         ExpiryDate = expiryDate;
 

@@ -16,7 +16,7 @@ namespace EntitiesConfigurations
 
             builder.Property(o => o.Code)
                 .HasColumnType("char")
-                .HasMaxLength(64)
+                .HasMaxLength(60)
                 .IsRequired();
 
 
