@@ -6,7 +6,6 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 
 namespace Interfaces;
-
 public interface IAuthService : IScopedService
 {
     Task<JwtAuthResult> GetJwtAuthForuser(User User);

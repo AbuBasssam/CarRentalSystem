@@ -11,15 +11,21 @@ public class LogoutCommandHandler : IRequestHandler<LogoutCommand, Response<bool
 {
     #region Fields
     private readonly IAuthService _authService;
+
     private readonly IRequestContext _requestContext;
+    private readonly IUnitOfWork _unitOfWork;
+
     private readonly IStringLocalizer<SharedResources> _localizer;
+
     private readonly ResponseHandler _responseHandler;
     #endregion
 
     #region Constructor
     public LogoutCommandHandler(
         IAuthService authService,
+        ITokenValidationService tokenValidation,
         IRequestContext requestContext,
+        IUnitOfWork unitOfWork,
         IStringLocalizer<SharedResources> localizer,
         ResponseHandler responseHandler)
     {
@@ -27,6 +33,7 @@ public class LogoutCommandHandler : IRequestHandler<LogoutCommand, Response<bool
         _requestContext = requestContext;
         _localizer = localizer;
         _responseHandler = responseHandler;
+        _unitOfWork = unitOfWork;
     }
     #endregion
 
@@ -56,6 +63,8 @@ public class LogoutCommandHandler : IRequestHandler<LogoutCommand, Response<bool
 
         // Step 3: Log successful logout activity
         _LogLogoutActivity(context);
+
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
 
         return _responseHandler.Success(
             true,

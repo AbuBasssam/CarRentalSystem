@@ -135,8 +135,7 @@ public class AuthService : IAuthService
         try
         {
             // Step 1: Find the token by JWT ID
-            var tokenEntity = await _refreshTokenRepo
-                .GetTableNoTracking()
+            var tokenEntity = await _refreshTokenRepo.GetTableAsTracking()
                 .Where(x =>
                     x.JwtId == jwtId &&
                     x.UserId == userId &&
@@ -162,8 +161,6 @@ public class AuthService : IAuthService
             // Step 3: Revoke the token
             _RevokeToken(tokenEntity);
 
-            // Step 4: Save changes
-            await _unitOfWork.SaveChangesAsync();
 
             Log.Information("User {UserId} logged out successfully. Token {JwtId} revoked.", userId, jwtId);
 
@@ -206,8 +203,6 @@ public class AuthService : IAuthService
                 _RevokeToken(token);
             }
 
-            // Step 3: Save changes
-            await _unitOfWork.SaveChangesAsync();
 
             Log.Information(
                 "User {UserId} logged out from all devices. {Count} tokens revoked.",
@@ -271,7 +266,7 @@ public class AuthService : IAuthService
             issuer: _jwtSettings.Issuer,
             audience: _jwtSettings.Audience,
             claims: claims,
-            expires: DateTime.UtcNow.AddDays(_jwtSettings.AccessTokenExpireDate),
+            expires: DateTime.UtcNow.AddMinutes(_jwtSettings.AccessTokenExpireDate),
             signingCredentials: new SigningCredentials(_signaturekey, _SecurityAlgorithm)
         );
     }
@@ -467,7 +462,7 @@ public class AuthService : IAuthService
         var claims = new List<Claim>
         {
             new Claim(SessionTokenClaims.IsResetToken, "true"),
-            new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+            new Claim(nameof(UserClaimModel.Id), user.Id.ToString()),
             new Claim(ClaimTypes.Email, user.Email!),
             new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
         };

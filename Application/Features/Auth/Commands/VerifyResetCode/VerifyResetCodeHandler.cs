@@ -123,7 +123,6 @@ public class VerifyResetCodeHandler : IRequestHandler<VerifyResetCodeCommand, Re
 
             if (dex.IsUniqueConstraintViolation())
             {
-                await transaction.RollbackAsync(cancellationToken);
 
                 Log.Warning(dex, $"duplicate transaction:{dex.Message}");
 

@@ -1,14 +1,12 @@
 ﻿using System.Security.Cryptography;
-using System.Text;
 
 namespace Application;
 internal static class Helpers
 {
-    // ============================================================
-    // SHA-256 
-    // ============================================================
+
     public static string HashString(string input)
     {
+        /* // way 1 fast hashing
         using SHA256 sha = SHA256.Create();
         byte[] bytes = Encoding.UTF8.GetBytes(input);
         byte[] hash = sha.ComputeHash(bytes);
@@ -17,8 +15,13 @@ internal static class Helpers
         var sb = new StringBuilder(hash.Length * 2);
         foreach (byte b in hash)
             sb.Append(b.ToString("x2"));
-
+        // return 64-hex string character    
         return sb.ToString();
+        */
+
+        // way 2 by BCrypt
+        // return 60-string character 
+        return BCrypt.Net.BCrypt.HashPassword(input);
 
     }
     public static string GenerateRandomString64Length()

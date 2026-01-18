@@ -91,6 +91,66 @@ public static class DependencyInjection
         option.SaveToken = true;
 
         option.TokenValidationParameters = validationParameters;
+        /* option.Events = new JwtBearerEvents
+         {
+             OnTokenValidated = async context =>
+             {
+                 // الحصول على Repository من DI
+                 var refreshTokenRepo = context.HttpContext
+                     .RequestServices
+                     .GetRequiredService<IRefreshTokenRepository>();
+
+                 // استخراج JTI من التوكن
+                 var jti = context.Principal?
+                     .FindFirst(JwtRegisteredClaimNames.Jti)?.Value;
+
+                 if (string.IsNullOrEmpty(jti))
+                 {
+                     context.Fail("Token missing JTI");
+                     return;
+                 }
+
+                 // التحقق من حالة التوكن في قاعدة البيانات
+                 var token = await refreshTokenRepo
+                     .GetTableNoTracking()
+                     .Where(x =>
+                         x.JwtId == jti &&
+                         x.Type == enTokenType.AuthToken
+                     )
+                     .FirstOrDefaultAsync();
+
+                 // إذا لم يوجد التوكن
+                 if (token == null)
+                 {
+                     context.Fail("Token not found");
+                     return;
+                 }
+
+                 // إذا كان التوكن مُبطل
+                 if (token.IsRevoked)
+                 {
+                     context.Fail("Token has been revoked");
+                     return;
+                 }
+
+                 // إذا كان التوكن مستخدم
+                 if (token.IsUsed)
+                 {
+                     context.Fail("Token has been used");
+                     return;
+                 }
+
+                 // إذا كان التوكن منتهي
+                 if (token.IsExpired())
+                 {
+                     context.Fail("Token has expired");
+                     return;
+                 }
+
+                 // التوكن صالح، يمكن المتابعة
+             }
+         }*/
+        ;
     }
 
     private static void _authenticationInfo(AuthenticationOptions option)
