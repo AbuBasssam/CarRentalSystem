@@ -243,7 +243,6 @@
   <data name="ResendCooldown" xml:space="preserve">
     <value>Please wait {0} seconds before requesting a new code</value>
   </data>
-  
   <data name="EmailNotVerified" xml:space="preserve">
     <value>Please verify your email address before signing in. Check your inbox</value>
   </data>
@@ -297,5 +296,8 @@
   </data>
   <data name="OtpCodeLength" xml:space="preserve">
     <value>Verification code must be exactly {0} digits</value>
+  </data>
+  <data name="AccessDenied" xml:space="preserve">
+    <value>Missing or invalid authentication token</value>
   </data>
 </root>

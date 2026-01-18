@@ -73,6 +73,7 @@ public class UserToken : IEntity<int>
 
     /// <summary>
     /// Force token to expire immediately
+    /// Sets ExpiryDate = Now and IsUsed = true
     /// </summary>
     public void ForceExpire()
     {

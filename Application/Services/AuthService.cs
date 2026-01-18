@@ -154,11 +154,13 @@ public class AuthService : IAuthService
             // Step 2: Check if already revoked
             if (tokenEntity.IsRevoked)
             {
+                Log.Information("User {UserId} attempted to logout with already revoked token {JwtId}", userId, jwtId);
+
                 return Result<bool>.Success(true); // Already logged out
             }
 
             // Step 3: Revoke the token
-            await _RevokeToken(tokenEntity);
+            _RevokeToken(tokenEntity);
 
             // Step 4: Save changes
             await _unitOfWork.SaveChangesAsync();
@@ -201,7 +203,7 @@ public class AuthService : IAuthService
             // Step 2: Revoke all tokens
             foreach (var token in activeTokens)
             {
-                await _RevokeToken(token);
+                _RevokeToken(token);
             }
 
             // Step 3: Save changes
@@ -586,25 +588,15 @@ public class AuthService : IAuthService
     /// <summary>
     /// Revokes a token entity
     /// </summary>
-    private async Task _RevokeToken(UserToken tokenEntity)
+    private void _RevokeToken(UserToken tokenEntity)
     {
         tokenEntity.Revoke();
+
+
         tokenEntity.ForceExpire();
 
-        _refreshTokenRepo.Update(tokenEntity);
 
-        // If using Redis cache, invalidate cache
-        await _InvalidateTokenCache(tokenEntity.JwtId!);
-    }
 
-    /// <summary>
-    /// Invalidates token cache (if using Redis)
-    /// </summary>
-    private async Task _InvalidateTokenCache(string jwtId)
-    {
-        // TODO: If you implement Redis caching later
-        // await _redis.KeyDeleteAsync($"token:{jwtId}");
-        await Task.CompletedTask;
     }
 
     #endregion

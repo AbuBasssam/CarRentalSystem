@@ -4,6 +4,7 @@ public interface IRequestContext : IScopedService
 {
     string? AuthToken { get; }
     string? ClientIP { get; }
+    string? UserAgent { get; }
     string? Language { get; }
     int? UserId { get; }
     string? TokenJti { get; }

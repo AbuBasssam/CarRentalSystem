@@ -256,7 +256,7 @@
     <value>يوجد تسجيل لهذا البريد الإلكتروني. يرجى التحقق من بريدك الإلكتروني أو الانتظار {0} ساعة للتسجيل مرة أخرى</value>
   </data>
   <data name="InvalidToken" xml:space="preserve">
-    <value>رمز التحقق غير صالح</value>
+    <value>رمز المصادقة غير صالح</value>
   </data>
   <data name="TokenNotFound" xml:space="preserve">
     <value>الرمز غير موجود أو منتهي الصلاحية</value>
@@ -296,5 +296,8 @@
   </data>
   <data name="OtpCodeLength" xml:space="preserve">
     <value>رمز التحقق يجب أن يكون {0} أرقام بالضبط</value>
+  </data>
+  <data name="AccessDenied" xml:space="preserve">
+    <value>رمز المصادقة مفقود أو غير صالح</value>
   </data>
 </root>

@@ -112,6 +112,7 @@
         public const string UnexpectedError = "UnexpectedError";
         public const string ErrorOccurred = "ErrorOccurred";
         public const string ResetSessionExpired = "ResetSessionExpired";
+        public const string AccessDenied = "AccessDenied";
         #endregion
     }
 }
