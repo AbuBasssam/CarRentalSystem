@@ -284,5 +284,41 @@ public class AuthController : ApiController
           (Response<bool> response) => NewResult(response)
         );
     }
+    /// <summary>
+    /// Refreshes authentication tokens using a valid refresh token
+    /// </summary>
+    /// <remarks>
+    /// Exchanges an expired access token and valid refresh token for new tokens.
+    /// 
+    /// Security features:
+    /// - One-time use: Each refresh token can only be used once
+    /// - Token pairing: Access and refresh tokens must match (JTI validation)
+    /// - Reuse detection: Attempting to reuse a token revokes all user sessions
+    /// - Account validation: Checks email verification and account lock status
+    /// 
+    /// Token reuse security:
+    /// If a refresh token is reused (indicating possible token theft),
+    /// ALL active tokens for the user are immediately revoked for security.
+    /// </remarks>
+    /// <returns>New JWT authentication result with fresh access and refresh tokens</returns>
+    /// <response code="200">Successfully refreshed tokens</response>
+    /// <response code="401">Invalid, expired, revoked, or reused token detected</response>
+    /// <response code="400">User account locked or email not verified</response>
+    /// <response code="422">Validation error - invalid token format</response>
+    [HttpPost(Router.AuthenticationRouter.RefreshToken)]
+    [ProducesResponseType(typeof(Response<JwtAuthResult>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(Response<JwtAuthResult>), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(Response<JwtAuthResult>), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(Response<JwtAuthResult>), StatusCodes.Status422UnprocessableEntity)]
+    [Authorize(Policy = Policies.ValidToken)]
+
+    public async Task<IActionResult> RefreshToken()
+    {
+        return await CommandExecutor.Execute(
+            new RefreshTokenCommand(),
+            Sender,
+            (Response<JwtAuthResult> response) => NewResult(response)
+        );
+    }
 
 }
