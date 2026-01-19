@@ -9,19 +9,20 @@ public class SensitiveRateLimitingMiddleware
     private readonly Timer _cleanupTimer;
 
     // Thread-safe in-memory store for request counts
-    private readonly ConcurrentDictionary<string, (int Count, DateTime ResetTime)> _requestCounts = new();
+    private readonly ConcurrentDictionary<string, (int Count, DateTime ResetTime, TimeSpan CurrentWindow)> _requestCounts = new();
 
     // Use route constants from Router class and normalize keys
     private readonly Dictionary<string, (int Limit, TimeSpan Window)> _endpointRateLimits = new()
     {
         { Normalize(Router.AuthenticationRouter.SignIn),(5, TimeSpan.FromMinutes(1)) },
         { Normalize(Router.AuthenticationRouter.SignUp),(2, TimeSpan.FromHours(1)) },
-        { Normalize( Router.AuthenticationRouter.EmailConfirmation), (5, TimeSpan.FromMinutes(3)) },
-        { Normalize( Router.AuthenticationRouter.PasswordReset), (5, TimeSpan.FromMinutes(3)) },
-        { Normalize( Router.AuthenticationRouter.PasswordResetVerification), (3, TimeSpan.FromMinutes(5)) },
-        { Normalize( Router.AuthenticationRouter.Password), (5, TimeSpan.FromMinutes(5)) },
+        { Normalize(Router.AuthenticationRouter.EmailConfirmation), (5, TimeSpan.FromMinutes(3)) },
+        { Normalize(Router.AuthenticationRouter.PasswordReset), (5, TimeSpan.FromMinutes(3)) },
+        { Normalize(Router.AuthenticationRouter.PasswordResetVerification), (3, TimeSpan.FromMinutes(5)) },
+        { Normalize(Router.AuthenticationRouter.Password), (5, TimeSpan.FromMinutes(5)) },
         { Normalize(Router.AuthenticationRouter.ResendVerification),(5, TimeSpan.FromHours(24)) },
-        { Normalize(Router.AuthenticationRouter.ResendPasswordReset),(5, TimeSpan.FromHours(24)) }
+        { Normalize(Router.AuthenticationRouter.ResendPasswordReset),(5, TimeSpan.FromHours(24)) },
+        { Normalize(Router.AuthenticationRouter.RefreshToken),(5, TimeSpan.FromMinutes(30)) }
 
     };
 
@@ -45,28 +46,40 @@ public class SensitiveRateLimitingMiddleware
 
             var entry = _requestCounts.AddOrUpdate(
                 key,
-                _ => (1, now.Add(rateLimit.Window)), // First request
+                _ => (1, now.Add(rateLimit.Window), rateLimit.Window),
                 (_, current) =>
                 {
+                    // 1.if window has expired, reset count
                     if (now > current.ResetTime)
-                        return (1, now.Add(rateLimit.Window)); // Reset if expired
+                        return (1, now.Add(rateLimit.Window), rateLimit.Window);
 
+                    // 2.If within limit, increment count
                     if (current.Count < rateLimit.Limit)
-                        return (current.Count + 1, current.ResetTime); // Increment if allowed
+                        return (current.Count + 1, current.ResetTime, current.CurrentWindow);
 
-                    return current; // Block if over limit
+                    // 3. Exceeds limit, apply penalty by increasing window
+                    // Doubling the window time up to a maximum of 24 hours
+                    var newWindow = current.CurrentWindow.TotalHours < 24
+                                    ? current.CurrentWindow.Multiply(2)
+                                    : current.CurrentWindow;
+
+                    return (current.Count + 1, now.Add(newWindow), newWindow);
                 });
 
-            if (entry.Count > rateLimit.Limit && now <= entry.ResetTime)
+            // Check if limit exceeded
+            if (entry.Count > rateLimit.Limit)
             {
+                var retryAfterSeconds = (int)Math.Max(0, (entry.ResetTime - now).TotalSeconds);
+
                 context.Response.StatusCode = StatusCodes.Status429TooManyRequests;
-                context.Response.Headers["Retry-After"] = ((int)(entry.ResetTime - now).TotalSeconds).ToString();
+                context.Response.Headers["Retry-After"] = retryAfterSeconds.ToString();
+
                 await context.Response.WriteAsJsonAsync(new
                 {
                     statusCode = 429,
                     succeeded = false,
-                    message = "Too many requests. Please try again later.",
-                    retryAfter = (int)(entry.ResetTime - now).TotalSeconds
+                    message = "Too many attempts. A penalty has been applied to your wait time.",
+                    retryAfter = retryAfterSeconds
                 });
                 return;
             }
@@ -108,10 +121,12 @@ public class SensitiveRateLimitingMiddleware
     private void CleanupExpiredEntries(object? state)
     {
         var now = DateTime.UtcNow;
-
         var expiredKeys = _requestCounts
-            .Where(kvp => now > kvp.Value.ResetTime.AddMinutes(5))
+            .Where(kvp => now > kvp.Value.ResetTime.AddMinutes(10))
             .Select(kvp => kvp.Key)
             .ToList();
+
+        foreach (var key in expiredKeys)
+            _requestCounts.TryRemove(key, out _);
     }
 }
