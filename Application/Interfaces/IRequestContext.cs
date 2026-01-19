@@ -9,5 +9,6 @@ public interface IRequestContext : IScopedService
     int? UserId { get; }
     string? TokenJti { get; }
     string? Email { get; }
+    string? RefreshToken { get; }
 
 }

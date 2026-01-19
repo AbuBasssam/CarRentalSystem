@@ -39,7 +39,7 @@ public static class Router
 
         public const string PasswordResetVerification = BASE + "/password-reset-verification";
 
-        public const string Password = BASE + "/password";
+        public const string Password = BASE + "/new-password";
 
         public const string ResendPasswordReset = BASE + "/password-reset/resend";
 
@@ -47,6 +47,8 @@ public static class Router
         public const string Token = BASE + "/token";
 
         public const string TokenValidation = BASE + "/token/validation";
+
+        public const string RefreshToken = BASE + "/refresh";
 
 
         public const string Logout = BASE + "/logout";

@@ -5,6 +5,7 @@ using Domain.Enums;
 using Domain.HelperClasses;
 using Domain.Security;
 using Interfaces;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Localization;
@@ -26,6 +27,7 @@ public class AuthService : IAuthService
 
     private readonly IUserService _userService;
     private readonly IOtpService _otpService;
+    private readonly IHttpContextAccessor _httpContextAccessor;
     private readonly IRefreshTokenRepository _refreshTokenRepo;
     private readonly IOtpRepository _otpRepo;
     private readonly IUnitOfWork _unitOfWork;
@@ -42,7 +44,7 @@ public class AuthService : IAuthService
     #region Constructor(s)
     public AuthService(JwtSettings jwtSettings, IRefreshTokenRepository refreshTokenRepo,
         IUserService userService, IOtpRepository otpRepo, UserManager<User> userManager,
-        IUnitOfWork unitOfWork, IOtpService otpService, IStringLocalizer<SharedResources> localizer)
+        IUnitOfWork unitOfWork, IOtpService otpService, IStringLocalizer<SharedResources> localizer, IHttpContextAccessor httpContextAccessor)
     {
         _jwtSettings = jwtSettings;
         _refreshTokenRepo = refreshTokenRepo;
@@ -53,30 +55,50 @@ public class AuthService : IAuthService
         _unitOfWork = unitOfWork;
         _otpService = otpService;
         _Localizer = localizer;
+        _httpContextAccessor = httpContextAccessor;
     }
     #endregion
 
     #region Methods
     public async Task<JwtAuthResult> GetJwtAuthForuser(User User)
     {
-        // 1) Generate jwtAccessTokon Object And String
+
+        // 1) Revoke Existing Token
+        await _RevokeActiveUserToken(User.Id, enTokenType.AuthToken);
+
+        // 2) Generate jwtAccessTokon Object And String
         var (jwtAccessTokenObj, jwtAccessTokenString) = await _GenerateAccessToken(User);
 
-        // 2) Generate TokenValidation Object
+        // 3) Generate TokenValidation Object
         var refreshTokenObj = _GenerateRefreshToken(User);
 
-        // 3) Generate the JwtAuth for the user
-        JwtAuthResult jwtAuthResult = _GetJwtAuthResult(jwtAccessTokenString, refreshTokenObj);
+        // 4) Generate the JwtAuth for the user
+        JwtAuthResult jwtAuthResult = _GetJwtAuthResult(jwtAccessTokenString, $"{User.FirstName} {User.LastName}");
 
-        // 4) Save AccessToken, TokenValidation In UserToken Table
+        // 5) Save AccessToken, TokenValidation In UserToken Table
         UserToken refreshTokenEntity = _GetUserRefreshToken(User, jwtAccessTokenObj, refreshTokenObj);
 
         var result = await _refreshTokenRepo.AddAsync(refreshTokenEntity);
+
+        SetRefreshTokenCookie(refreshTokenObj.Value, refreshTokenObj.ExpiresAt);
 
         await _unitOfWork.SaveChangesAsync();
 
         return jwtAuthResult;
     }
+    private async Task _RevokeActiveUserToken(int userId, enTokenType tokenType)
+    {
+        var existingTokens = await _refreshTokenRepo
+           .GetTableAsTracking().
+           FirstOrDefaultAsync(x => x.UserId == userId && !x.IsRevoked && x.Type == tokenType);
+
+        if (existingTokens != null)
+        {
+            existingTokens.Revoke();
+            existingTokens.ForceExpire();
+        }
+    }
+
 
     public bool IsValidAccessToken(string AccessTokenStr)
     {
@@ -220,6 +242,22 @@ public class AuthService : IAuthService
             ]);
         }
     }
+    public void SetRefreshTokenCookie(string refreshToken, DateTime refreshTokenExpires)
+    {
+        var cookieOptions = new CookieOptions
+        {
+            HttpOnly = true,
+            Secure = true,
+            SameSite = SameSiteMode.Strict,
+            Expires = refreshTokenExpires
+        };
+        _httpContextAccessor?.HttpContext?.Response.Cookies.Append("refreshToken", refreshToken, cookieOptions);
+    }
+
+    public void DeleteRefreshTokenCookie()
+    {
+        _httpContextAccessor?.HttpContext?.Response.Cookies.Delete("refreshToken");
+    }
 
     #endregion
 
@@ -359,25 +397,27 @@ public class AuthService : IAuthService
         };
     }
 
-    public async Task<(UserToken?, Exception?)> ValidateRefreshToken(int UserId, string RefreshTokenStr)
+    public async Task<(UserToken?, Exception?)> ValidateRefreshToken(int UserId, string refreshToken, string jwtId)
     {
-        var hashedRefreshTokenStr = Helpers.HashString(RefreshTokenStr);
 
         var refreshTokenEntity = await _refreshTokenRepo
-            .GetTableNoTracking()
+            .GetTableAsTracking()
             .FirstOrDefaultAsync(x =>
                 x.UserId == UserId &&
-                x.RefreshToken!.Equals(hashedRefreshTokenStr) &&
+                x.JwtId == jwtId &&
                 x.Type.Equals(enTokenType.AuthToken)
             );
 
         if (refreshTokenEntity == null)
             return (null, new SecurityTokenArgumentException(_Localizer[SharedResourcesKeys.NullRefreshToken]));
 
+
+        if (!BCrypt.Net.BCrypt.Verify(refreshToken, refreshTokenEntity.RefreshToken))
+            return (null, new SecurityTokenArgumentException(_Localizer[SharedResourcesKeys.InvalidToken]));
+
         if (refreshTokenEntity.ExpiryDate < DateTime.UtcNow)
         {
             refreshTokenEntity.Revoke();
-            _refreshTokenRepo.Update(refreshTokenEntity);
             return (null, new SecurityTokenArgumentException(_Localizer[SharedResourcesKeys.RevokedRefreshToken]));
         }
         // Check if already revoked
@@ -554,14 +594,15 @@ public class AuthService : IAuthService
 
     #region Sign in Methods
 
-    private static JwtAuthResult _GetJwtAuthResult(string jwtAccessTokenString, RefreshToken refreshTokenObj)
+    private static JwtAuthResult _GetJwtAuthResult(string jwtAccessTokenString, string fullName)//, RefreshToken refreshTokenObj
     {
 
 
         return new JwtAuthResult
         {
             AccessToken = jwtAccessTokenString,
-            RefreshToken = refreshTokenObj
+            FullName = fullName
+            //RefreshToken = refreshTokenObj
         };
     }
 

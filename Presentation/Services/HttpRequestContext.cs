@@ -39,10 +39,10 @@ public class HttpRequestContext : IRequestContext
     {
         get
         {
-            if (!IsAuthenticated)
-                return null;
 
-            return Context?.Connection.RemoteIpAddress?.ToString();
+
+            return Context?.Request.Headers["X-Forwarded-For"].FirstOrDefault() ??
+            Context?.Connection.RemoteIpAddress?.ToString();
         }
     }
 
@@ -83,14 +83,6 @@ public class HttpRequestContext : IRequestContext
         }
     }
 
-    public string? UserAgent
-    {
-        get
-        {
-            if (!IsAuthenticated)
-                return null;
-
-            return Context?.Request.Headers["User-Agent"].ToString() ?? "Unknown";
-        }
-    }
+    public string? UserAgent => Context?.Request.Headers["User-Agent"];
+    public string? RefreshToken => Context?.Request.Cookies["refreshToken"];
 }

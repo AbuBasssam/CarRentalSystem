@@ -61,15 +61,15 @@ public class LogoutCommandHandler : IRequestHandler<LogoutCommand, Response<bool
             );
         }
 
+        // Delete refresh token cookie
+        _authService.DeleteRefreshTokenCookie();
+
         // Step 3: Log successful logout activity
         _LogLogoutActivity(context);
 
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-        return _responseHandler.Success(
-            true,
-            _localizer[SharedResourcesKeys.LogoutSuccessful]
-        );
+        return _responseHandler.Success(true);
     }
     #endregion
 

@@ -16,10 +16,11 @@ public interface IAuthService : IScopedService
     bool IsValidAccessToken(string AccessTokenStr);
     (JwtSecurityToken?, Exception?) GetJwtAccessTokenObjFromAccessTokenString(string AccessToken);
     (ClaimsPrincipal?, Exception?) GetClaimsPrinciple(string AccessToken);
-    Task<(UserToken?, Exception?)> ValidateRefreshToken(int UserId, string RefreshTokenStr);
+    Task<(UserToken?, Exception?)> ValidateRefreshToken(int UserId, string refreshToken, string jwtId);
     (UserToken refreshToken, string AccessToken) GenerateVerificationToken(User user, int minutesValidDuration);
     (UserToken refreshToken, string AccessToken) GenerateResetToken(User user, int minutesValidDuration);
-
+    void SetRefreshTokenCookie(string refreshToken, DateTime refreshTokenExpires);
+    void DeleteRefreshTokenCookie();
 
     /// <summary>
     /// Logout user by revoking their tokens

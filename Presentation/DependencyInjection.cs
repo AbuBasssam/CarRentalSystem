@@ -37,7 +37,8 @@ public static class DependencyInjection
                 policy
                     .WithOrigins("https://localhost:7137", "http://localhost:5013")
                     .AllowAnyHeader()
-                    .AllowAnyMethod();
+                    .AllowAnyMethod()
+                    .AllowCredentials();
             });
         });
     }
@@ -84,6 +85,10 @@ public static class DependencyInjection
 
                 policy.Requirements.Add(new LogoutRequirement())
             );
+            options.AddPolicy(Policies.ValidToken, policy =>
+
+                policy.Requirements.Add(new ValidTokenRequirement())
+            );
 
 
         });
@@ -101,6 +106,8 @@ public static class DependencyInjection
         services.AddScoped<IAuthorizationHandler, ResetPasswordHandler>();
 
         services.AddScoped<IAuthorizationHandler, LogoutHandler>();
+
+        services.AddScoped<IAuthorizationHandler, ValidTokenHandler>();
 
     }
 }

@@ -4,7 +4,7 @@
     {
         public string AccessToken { get; set; } = null!;
 
-        public RefreshToken RefreshToken { get; set; } = null!;
+        public string FullName { get; set; } = null!;
 
     }
 }
