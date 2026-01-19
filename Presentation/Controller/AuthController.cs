@@ -14,18 +14,21 @@ public class AuthController : ApiController
     /// <summary>
     /// Authenticates user with email and password
     /// </summary>
+    /// <remarks>
+    /// Rate Limit: 5 requests per 15 Minutes/user 
+    /// </remarks>
     /// <param name="command">Sign in credentials</param>
     /// <returns>JWT authentication result with access and refresh tokens</returns>
     /// <response code="200">Successfully authenticated</response>
     /// <response code="400">Invalid credentials or account locked</response>
     /// <response code="422">Validation error</response>
     /// <response code="429">Too many login attempts</response>
+
     [HttpPost(Router.AuthenticationRouter.SignIn)]
     [ProducesResponseType(typeof(Response<JwtAuthResult>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(Response<JwtAuthResult>), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(Response<JwtAuthResult>), StatusCodes.Status422UnprocessableEntity)]
-    [ProducesResponseType(typeof(Response<JwtAuthResult>), StatusCodes.Status429TooManyRequests)]
-    //[ProducesResponseType(typeof(Response<JwtAuthResult>), StatusCodes.Status401Unauthorized)]//Locked account
+    [ProducesResponseType(StatusCodes.Status429TooManyRequests)]
     public async Task<IActionResult> SignIn([FromBody] SignInCommand command)
     {
 
@@ -40,18 +43,23 @@ public class AuthController : ApiController
     /// <summary>
     /// Registers a new user account
     /// </summary>
+    /// <remarks>
+    /// Rate Limit: 2 requests per hour/user 
+    /// </remarks>
     /// <param name="dto">User registration data</param>
     /// <response code="201">User successfully created</response>
     /// <response code="400">Email already exists or invalid data</response>
     /// <response code="422">Validation error</response>
     /// <response code="429">Too many registration attempts</response>
     /// <response code="500">Internal server error</response>
+
     [HttpPost(Router.AuthenticationRouter.SignUp)]
     [ProducesResponseType(typeof(Response<bool>), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(Response<bool>), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(Response<bool>), StatusCodes.Status422UnprocessableEntity)]
-    [ProducesResponseType(typeof(Response<bool>), StatusCodes.Status429TooManyRequests)]
     [ProducesResponseType(typeof(Response<bool>), StatusCodes.Status500InternalServerError)]
+    [ProducesResponseType(StatusCodes.Status429TooManyRequests)]
+
     public async Task<IActionResult> SignUp([FromBody] SignUpDTO dto)
     {
 
@@ -62,9 +70,13 @@ public class AuthController : ApiController
         );
     }
 
+
     /// <summary>
     /// Confirms user email with verification code
     /// </summary>
+    /// <remarks>
+    /// Rate Limit: 5 requests per 3 minutes/user 
+    /// </remarks>
     /// <param name="dto">Email confirmation data containing OTP code</param>
     /// <returns>Confirmation result</returns>
     /// <response code="200">Email successfully confirmed</response>
@@ -72,12 +84,13 @@ public class AuthController : ApiController
     /// <response code="422">Validation error</response>
     /// <response code="429">Too many verification attempts</response>
     /// <response code="500">Internal server error</response>
+
     [HttpPost(Router.AuthenticationRouter.EmailConfirmation)]
     [ProducesResponseType(typeof(Response<bool>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(Response<bool>), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(Response<bool>), StatusCodes.Status422UnprocessableEntity)]
-    [ProducesResponseType(typeof(Response<bool>), StatusCodes.Status429TooManyRequests)]
     [ProducesResponseType(typeof(Response<bool>), StatusCodes.Status500InternalServerError)]
+    [ProducesResponseType(StatusCodes.Status429TooManyRequests)]
     public async Task<IActionResult> ConfirmEmail([FromBody] VerificationDTO dto)
     {
 
@@ -87,30 +100,6 @@ public class AuthController : ApiController
                 Sender,
                 (Response<bool> response) => NewResult(response)
         );
-    }
-
-    /// <summary>
-    /// Validates and refreshes access token
-    /// </summary>
-    /// <param name="token">Refresh token</param>
-    /// <returns>New access token</returns>
-    /// <response code="200">Token successfully refreshed</response>
-    /// <response code="400">Invalid refresh token</response>
-    /// <response code="401">Token expired or revoked</response>
-    /// <response code="429">Too many token refresh requests</response>
-    [HttpPost(Router.AuthenticationRouter.Token)]
-    [ProducesResponseType(typeof(Response<string>), StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(Response<string>), StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(typeof(Response<string>), StatusCodes.Status401Unauthorized)]
-    [ProducesResponseType(typeof(Response<string>), StatusCodes.Status429TooManyRequests)]
-    public async Task<IActionResult> ValidateRefreshToken([FromRoute] string token)
-    {
-        return await CommandExecutor.Execute(
-            new AuthorizeUserQuery { AccessToken = token },
-            Sender,
-            (Response<string> response) => NewResult(response)
-        );
-
     }
 
 
@@ -123,7 +112,7 @@ public class AuthController : ApiController
     /// - They didn't receive the email
     /// - The cooldown period (2 minutes) has passed
     /// 
-    /// Rate Limit: 10 requests per hour
+    /// Rate Limit: 5 requests per 24 hours/user 
     /// </remarks>
     /// <response code="200">Verification code sent successfully</response>
     /// <response code="400">Bad request - user already verified or cooldown active</response>
@@ -133,8 +122,8 @@ public class AuthController : ApiController
     [HttpPost(Router.AuthenticationRouter.ResendVerification)]
     [ProducesResponseType(typeof(Response<string>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(Response<string>), StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(typeof(Response<string>), StatusCodes.Status429TooManyRequests)]
     [ProducesResponseType(typeof(Response<string>), StatusCodes.Status500InternalServerError)]
+    [ProducesResponseType(StatusCodes.Status429TooManyRequests)]
     public async Task<IActionResult> ResendVerificationCode([FromBody] ResendCodeDTO dto)
     {
         ResendVerificationCodeCommand command = new ResendVerificationCodeCommand(dto);
@@ -145,15 +134,33 @@ public class AuthController : ApiController
         );
     }
 
+
     /// <summary>
-    /// Send password reset code to email
+    /// Initiates password reset process by sending verification code
     /// </summary>
+    /// <param name="dto">Email address for password reset</param>
+    /// <remarks>
+    /// Starts the password reset flow:
+    /// 1. Validates user exists and email is verified
+    /// 2. Generates secure verification code
+    /// 3. Sends code to user's email
+    /// Security features:
+    /// - Rate limiting 5 requests per 15 minutes/user
+    /// - Short-lived verification codes
+    /// </remarks>
+    /// <returns>Session token for verification step</returns>
+    /// <response code="200">Reset code sent successfully</response>
+    /// <response code="400">User not found or email not verified</response>
+    /// <response code="422">Validation error</response>
+    /// <response code="429">Too many reset attempts</response>
+    /// <response code="500">Internal server error</response>
 
     [HttpPost(Router.AuthenticationRouter.PasswordReset)]
     [ProducesResponseType(typeof(Response<VerificationFlowResponse>), StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(Response<object>), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(Response<VerificationFlowResponse>), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(Response<VerificationFlowResponse>), StatusCodes.Status422UnprocessableEntity)]
+    [ProducesResponseType(typeof(Response<VerificationFlowResponse>), StatusCodes.Status500InternalServerError)]
     [ProducesResponseType(StatusCodes.Status429TooManyRequests)]
-
     public async Task<IActionResult> SendResetCode([FromBody] SendResetCodeDTO dto)
     {
         SendResetCodeCommand command = new SendResetCodeCommand(dto);
@@ -166,13 +173,32 @@ public class AuthController : ApiController
 
 
     /// <summary>
-    /// Step 2: Verify the reset code
+    /// Verifies password reset code and returns token for password change
     /// </summary>
+    /// <param name="dto">Session token and verification code</param>
+    /// <remarks>
+    /// Validates the verification code sent to user's email.
+    /// On success, returns a token that can be used to change password.
+    /// 
+    /// Flow:
+    /// 1. Verify OTP code matches
+    /// 2. Check code hasn't expired
+    /// 3. Return authorization token for ResetPassword step
+    /// Security features:
+    /// - Rate limiting 3 requests per 5 minutes/user
+    /// </remarks>
+    /// <returns>Authorization token for password reset</returns>
+    /// <response code="200">Code verified successfully</response>
+    /// <response code="400">Invalid or expired code</response>
+    /// <response code="422">Validation error</response>
+    /// <response code="429">Too many Verification attempts</response>
+    /// <response code="500">Internal server error</response>
+    /// 
 
     [HttpPost(Router.AuthenticationRouter.PasswordResetVerification)]
     [ProducesResponseType(typeof(Response<VerificationFlowResponse>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(Response<object>), StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(Response<object>), StatusCodes.Status500InternalServerError)]
     [ProducesResponseType(StatusCodes.Status429TooManyRequests)]
 
     public async Task<IActionResult> VerifyResetCode([FromBody] VerificationDTO dto)
@@ -187,19 +213,38 @@ public class AuthController : ApiController
 
 
     /// <summary>
-    /// Step 3: Reset password with new password
+    /// Completes password reset with new password
     /// </summary>
+    /// <param name="command">Reset token and new password</param>
     /// <remarks>
-    /// Requires valid reset token from Step 2 (Verified stage).
-    /// Updates user's password and invalidates all existing sessions.
+    /// Final step in password reset flow.
+    /// 
+    /// Requirements:
+    /// - Valid reset token (from VerifyResetCode step)
+    /// - New password must meet strength requirements
+    /// - Password must differ from previous password
+    /// 
+    /// On success:
+    /// - Password is updated
+    /// - All existing tokens are revoked
+    /// - User must sign in with new password
+    /// Security features:
+    /// - Rate limiting 5 requests per 5 minutes/user
     /// </remarks>
+    /// <returns>Success confirmation</returns>
+    /// <response code="200">Password reset successfully</response>
+    /// <response code="400">Invalid token or weak password</response>
+    /// <response code="422">Validation error</response>
+    /// <response code="500">Internal server error</response>
 
     [HttpPut(Router.AuthenticationRouter.PasswordReset)]
-    [Authorize(Policy = Policies.ResetPassword)]
     [ProducesResponseType(typeof(Response<bool>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(Response<object>), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(Response<object>), StatusCodes.Status500InternalServerError)]
     [ProducesResponseType(StatusCodes.Status429TooManyRequests)]
+    [Authorize(Policy = Policies.ResetPassword)]
+
     public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordCommand command)
     {
         return await CommandExecutor.Execute(
@@ -209,23 +254,21 @@ public class AuthController : ApiController
         );
     }
 
+
     /// <summary>
     /// Resends password reset verification code to user's email
     /// </summary>
     /// <param name="dto">Email address or user identifier</param>
     /// <remarks>
     /// Generates and sends a new password reset verification code.
-    /// 
-    /// Features:
-    /// - Rate limited to prevent abuse
-    /// - Previous codes are invalidated
-    /// - Code expires after configured duration 
-    /// - Sends code via email
-    /// 
     /// Use cases:
     /// - User didn't receive original reset code
     /// - Reset code expired
     /// - User accidentally deleted reset email
+    /// Security features:
+    /// - Rate limiting 5 requests per 24 hours/user
+    /// - Previous codes are invalidated
+    /// - Code expires after configured duration 
     /// </remarks>
     /// <returns>Success confirmation</returns>
     /// <response code="200">Reset code sent successfully</response>
@@ -238,8 +281,8 @@ public class AuthController : ApiController
     [ProducesResponseType(typeof(Response<bool>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(Response<bool>), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(Response<bool>), StatusCodes.Status422UnprocessableEntity)]
-    [ProducesResponseType(typeof(Response<bool>), StatusCodes.Status429TooManyRequests)]
     [ProducesResponseType(typeof(Response<bool>), StatusCodes.Status500InternalServerError)]
+    [ProducesResponseType(StatusCodes.Status429TooManyRequests)]
     public async Task<IActionResult> ResendResetCode(ResendCodeDTO dto)
     {
         var command = new ResendResetCodeCommand(dto);
@@ -274,7 +317,6 @@ public class AuthController : ApiController
     [ProducesResponseType(typeof(Response<bool>), StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(typeof(Response<bool>), StatusCodes.Status400BadRequest)]
     [Authorize(Policy = Policies.Logout)]
-
     public async Task<IActionResult> Logout()
     {
         var command = new LogoutCommand();
@@ -284,6 +326,8 @@ public class AuthController : ApiController
           (Response<bool> response) => NewResult(response)
         );
     }
+
+
     /// <summary>
     /// Refreshes authentication tokens using a valid refresh token
     /// </summary>
@@ -295,7 +339,7 @@ public class AuthController : ApiController
     /// - Token pairing: Access and refresh tokens must match (JTI validation)
     /// - Reuse detection: Attempting to reuse a token revokes all user sessions
     /// - Account validation: Checks email verification and account lock status
-    /// 
+    /// - Rate limiting 5 requests per 30 minutes/user
     /// Token reuse security:
     /// If a refresh token is reused (indicating possible token theft),
     /// ALL active tokens for the user are immediately revoked for security.
@@ -305,13 +349,13 @@ public class AuthController : ApiController
     /// <response code="401">Invalid, expired, revoked, or reused token detected</response>
     /// <response code="400">User account locked or email not verified</response>
     /// <response code="422">Validation error - invalid token format</response>
+
     [HttpPost(Router.AuthenticationRouter.RefreshToken)]
     [ProducesResponseType(typeof(Response<JwtAuthResult>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(Response<JwtAuthResult>), StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(typeof(Response<JwtAuthResult>), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(Response<JwtAuthResult>), StatusCodes.Status422UnprocessableEntity)]
     [Authorize(Policy = Policies.ValidToken)]
-
     public async Task<IActionResult> RefreshToken()
     {
         return await CommandExecutor.Execute(

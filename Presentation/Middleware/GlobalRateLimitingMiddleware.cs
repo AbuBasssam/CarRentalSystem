@@ -1,7 +1,7 @@
-﻿using Domain.HelperClasses;
-using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Caching.Memory;
 using Serilog;
+using System.Net;
 
 namespace PresentationLayer.Middleware;
 
@@ -16,7 +16,7 @@ public class GlobalRateLimitingMiddleware
 
     // Customize your limits here.
     private readonly int _maxRequestsPerPeriod = 100;
-    private readonly TimeSpan _period = TimeSpan.FromMinutes(1);
+    private readonly TimeSpan _window = TimeSpan.FromMinutes(1);
 
     public GlobalRateLimitingMiddleware(RequestDelegate next, IMemoryCache cache)
     {
@@ -36,16 +36,18 @@ public class GlobalRateLimitingMiddleware
         // Get or create a new rate limit entry for the client.
         var rateLimitEntry = _cache.GetOrCreate(cacheKey, entry =>
         {
-            entry.AbsoluteExpirationRelativeToNow = _period;
+            entry.AbsoluteExpirationRelativeToNow = _window;
+
+            entry.Priority = CacheItemPriority.Low;
+
             return new RateLimitEntry
             {
                 Count = 0,
-                ExpiresAt = DateTime.UtcNow.Add(_period)
+                ExpiresAt = DateTime.UtcNow.Add(_window)
             };
         });
 
-        // Increment the counter.
-        rateLimitEntry!.Count++;
+        Interlocked.Increment(ref rateLimitEntry!.Count);
 
         if (rateLimitEntry.Count > _maxRequestsPerPeriod)
         {
@@ -55,16 +57,19 @@ public class GlobalRateLimitingMiddleware
 
             await context.Response.WriteAsync("Too Many Requests. Please try again later.");
 
-            //context.Response.Headers["Retry-After"] = _period.TotalSeconds.ToString();
+            var retryAfter = (int)(rateLimitEntry.ExpiresAt - DateTime.UtcNow).TotalSeconds;
+            context.Response.Headers["Retry-After"] = retryAfter.ToString();
+            context.Response.StatusCode = (int)HttpStatusCode.TooManyRequests;
 
+            await context.Response.WriteAsJsonAsync(new
+            {
+                statusCode = 429,
+                message = "Too many requests. Please try again later.",
+                retryAfterSeconds = retryAfter
+            });
             return;
         }
 
-        //// Optionally, add headers to help the client understand its rate limit status.
-        //context.Response.Headers["X-RateLimit-Limit"] = _maxRequestsPerPeriod.ToString();
-        //context.Response.Headers["X-RateLimit-Remaining"] = (_maxRequestsPerPeriod - rateLimitEntry.Count).ToString();
-        //context.Response.Headers["X-RateLimit-Reset"] =
-        //    ((int)(rateLimitEntry.ExpiresAt - DateTime.UtcNow).TotalSeconds).ToString();
 
         // Allow the request to continue down the pipeline.
         await _next(context);
@@ -75,10 +80,8 @@ public class GlobalRateLimitingMiddleware
     /// </summary>
     private string GetClientIdentifier(HttpContext context)
     {
-        // If the user is authenticated, use their unique username or ID.
         if (context.User?.Identity?.IsAuthenticated == true)
         {
-            // For example, using the Name claim.
             return context.User.Identity.Name!;
         }
         else
@@ -89,4 +92,9 @@ public class GlobalRateLimitingMiddleware
             return $"{ip}:{userAgent}";
         }
     }
+}
+internal class RateLimitEntry
+{
+    public int Count;
+    public DateTime ExpiresAt { get; set; }
 }

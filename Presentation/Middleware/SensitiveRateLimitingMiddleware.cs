@@ -14,16 +14,20 @@ public class SensitiveRateLimitingMiddleware
     // Use route constants from Router class and normalize keys
     private readonly Dictionary<string, (int Limit, TimeSpan Window)> _endpointRateLimits = new()
     {
-        { Normalize(Router.AuthenticationRouter.SignIn),(5, TimeSpan.FromMinutes(1)) },
-        { Normalize(Router.AuthenticationRouter.SignUp),(2, TimeSpan.FromHours(1)) },
+
+        { Normalize(Router.AuthenticationRouter.SignIn), (5, TimeSpan.FromMinutes(15)) },
+
+        { Normalize(Router.AuthenticationRouter.SignUp), (2, TimeSpan.FromHours(1)) },
+
         { Normalize(Router.AuthenticationRouter.EmailConfirmation), (5, TimeSpan.FromMinutes(3)) },
-        { Normalize(Router.AuthenticationRouter.PasswordReset), (5, TimeSpan.FromMinutes(3)) },
+        { Normalize(Router.AuthenticationRouter.PasswordReset), (5, TimeSpan.FromMinutes(15)) },
         { Normalize(Router.AuthenticationRouter.PasswordResetVerification), (3, TimeSpan.FromMinutes(5)) },
         { Normalize(Router.AuthenticationRouter.Password), (5, TimeSpan.FromMinutes(5)) },
-        { Normalize(Router.AuthenticationRouter.ResendVerification),(5, TimeSpan.FromHours(24)) },
-        { Normalize(Router.AuthenticationRouter.ResendPasswordReset),(5, TimeSpan.FromHours(24)) },
-        { Normalize(Router.AuthenticationRouter.RefreshToken),(5, TimeSpan.FromMinutes(30)) }
 
+        { Normalize(Router.AuthenticationRouter.ResendVerification), (5, TimeSpan.FromHours(24)) },
+        { Normalize(Router.AuthenticationRouter.ResendPasswordReset), (5, TimeSpan.FromHours(24)) },
+
+        { Normalize(Router.AuthenticationRouter.RefreshToken), (5, TimeSpan.FromMinutes(30)) }
     };
 
     public SensitiveRateLimitingMiddleware(RequestDelegate next)
