@@ -12,5 +12,7 @@ public class UserTokenConfig : IEntityTypeConfiguration<UserToken>
                .HasDatabaseName("IX_UserTokens_UsedToken")
                .IsUnique()
                .HasFilter("[IsUsed] = 0");
+        builder.ToTable(t => t.HasCheckConstraint("CK_Token_Type", "Type > 0 AND Type < 3"));
+
     }
 }
