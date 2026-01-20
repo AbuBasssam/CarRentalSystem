@@ -1,4 +1,5 @@
-﻿using Infrastructure;
+﻿using Implementations;
+using Infrastructure;
 using Infrastructure.Repositories;
 using Interfaces;
 using Microsoft.EntityFrameworkCore;
@@ -16,6 +17,9 @@ public static class DependencyInjection
         ConfigureTokenCleanupService(services, configuration);
 
         ConfigurePasswordResetTokenCleanupService(services, configuration);
+
+        ConfigureUnverifiedUserCleanupService(services, configuration);
+
 
         ServicesRegistration(services, configuration);
 
@@ -41,6 +45,7 @@ public static class DependencyInjection
 
         services.AddSingleton(TokenCleanupOptions);
     }
+
     private static void ConfigurePasswordResetTokenCleanupService(IServiceCollection services, IConfiguration configuration)
     {
         var PasswordResetTokenCleanupSectionName = "BackgroundServices:PasswordResetTokenCleanup";
@@ -55,18 +60,36 @@ public static class DependencyInjection
 
         services.AddSingleton(passwordResetCleanupOptions);
     }
+
+    private static void ConfigureUnverifiedUserCleanupService(IServiceCollection services, IConfiguration configuration)
+    {
+        var unverifiedUserCleanupSection = configuration.GetSection("BackgroundServices:UnverifiedUserCleanup");
+        services.Configure<UnverifiedUserCleanupOptions>(unverifiedUserCleanupSection);
+
+        var unverifiedUserCleanupOptions = new UnverifiedUserCleanupOptions();
+        configuration.GetSection("BackgroundServices:UnverifiedUserCleanup").Bind(unverifiedUserCleanupOptions);
+
+        services.AddSingleton(unverifiedUserCleanupOptions);
+    }
+
     private static void BackgroundServicesRegistration(IServiceCollection services, IConfiguration configuration)
     {
         services.AddHostedService<AuthTokenCleanupService>();
         services.AddHostedService<PasswordResetTokenCleanupService>();
+        services.AddHostedService<UnverifiedUserCleanupService>();
+
 
     }
+
     private static void ServicesRegistration(IServiceCollection services, IConfiguration configuration)
     {
         services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
 
+        services.AddScoped<IUserRepository, UserRepository>();
+
         services.AddScoped<IUnitOfWork, UnitOfWork>();
     }
+
     private static void DbContextRegistration(IServiceCollection services, IConfiguration configuration)
     {
         services.AddDbContext<AppDbContext>(options =>
@@ -76,5 +99,7 @@ public static class DependencyInjection
         }, ServiceLifetime.Scoped
         );
 
+
     }
+
 }
