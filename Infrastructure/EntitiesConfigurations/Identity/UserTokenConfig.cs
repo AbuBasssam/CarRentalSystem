@@ -12,6 +12,13 @@ public class UserTokenConfig : IEntityTypeConfiguration<UserToken>
                .HasDatabaseName("IX_UserTokens_UsedToken")
                .IsUnique()
                .HasFilter("[IsUsed] = 0");
+
+        // Configure the foreign key relationship
+        builder.HasOne(o => o.User)
+            .WithMany(u => u.RefreshTokens)
+            .HasForeignKey(o => o.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+
         builder.ToTable(t => t.HasCheckConstraint("CK_Token_Type", "Type > 0 AND Type < 3"));
 
     }
