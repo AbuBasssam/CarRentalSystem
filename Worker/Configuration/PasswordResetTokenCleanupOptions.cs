@@ -21,9 +21,9 @@ public class PasswordResetTokenCleanupOptions
     /// <summary>
     /// Token validity period in minutes
     /// After this period, tokens will be auto-revoked
-    /// Default: 60 minutes (1 hour) - industry standard
+    /// Default: 15 minutes - balanced security approach
     /// </summary>
-    public int TokenValidityMinutes { get; set; } = 60;
+    public int TokenValidityMinutes { get; set; } = 15;
 
     /// <summary>
     /// How many days to keep revoked/expired tokens for audit purposes
