@@ -73,7 +73,7 @@ public static class DependencyInjection
         {
             var connectionstring = configuration.GetConnectionString("DefaultConnection");
             options.UseSqlServer(connectionstring);
-        }
+        }, ServiceLifetime.Scoped
         );
 
     }
