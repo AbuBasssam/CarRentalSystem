@@ -10,6 +10,7 @@ public static class DependencyInjection
 {
     public static IServiceCollection registerDependencies(this IServiceCollection services, IConfiguration configuration)
     {
+
         services.AddHostedService<AuthTokenCleanupService>();
 
         ConfigureTokenCleanupService(services, configuration);

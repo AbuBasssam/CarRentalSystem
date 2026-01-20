@@ -10,8 +10,6 @@ builder.Configuration.AddEnvironmentVariables();
 builder.Configuration["ConnectionStrings:DefaultConnection"] =
     Environment.GetEnvironmentVariable("DB_CONNECTION_STRING");
 
-builder.Services.AddHostedService<CarRentalWorker>();
-
 #region Serilog
 
 Log.Logger = new LoggerConfiguration().ReadFrom
@@ -30,9 +28,8 @@ builder.Services.registerDependencies(builder.Configuration);
 var host = builder.Build();
 
 // Log startup information
-var logger = host.Services.GetRequiredService<ILogger<Program>>();
-logger.LogInformation("Worker Service starting up...");
-logger.LogInformation("Environment: {Environment}", builder.Environment.EnvironmentName);
+Log.Information("Worker Service starting up...");
+Log.Information("Environment: {Environment}", builder.Environment.EnvironmentName);
 
 try
 {
@@ -40,11 +37,11 @@ try
 }
 catch (Exception ex)
 {
-    logger.LogCritical(ex, "Worker Service terminated unexpectedly");
+    Log.Error(ex, "Worker Service terminated unexpectedly");
     throw;
 }
 finally
 {
-    logger.LogInformation("Worker Service shut down complete");
+    Log.Information("Worker Service shut down complete");
     Log.CloseAndFlush();
 }
