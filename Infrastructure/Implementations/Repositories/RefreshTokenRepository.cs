@@ -76,4 +76,39 @@ public class RefreshTokenRepository : GenericRepository<UserToken, int>, IRefres
 
         return expiredTokens;
     }
+    /// <summary>
+    /// Gets password reset tokens that have exceeded their validity period but are not yet revoked
+    /// Used by PasswordResetTokenCleanupService Phase 1 (Auto-Revocation)
+    /// </summary>
+    public async Task<List<UserToken>> GetExpiredPasswordResetTokensAsync(int validityMinutes, int batchSize)
+    {
+        var cutoffTime = DateTime.UtcNow.AddMinutes(-validityMinutes);
+
+        return await _dbSet
+            .Where(t => t.Type == enTokenType.ResetPasswordToken && !t.IsRevoked && t.CreatedAt <= cutoffTime)
+            .OrderBy(t => t.CreatedAt)
+            .Take(batchSize)
+            .AsNoTracking()
+            .ToListAsync();
+    }
+
+    /// <summary>
+    /// Gets old password reset tokens that have exceeded the retention period for permanent deletion
+    /// Used by PasswordResetTokenCleanupService Phase 2 (Permanent Deletion)
+    /// </summary>
+    public async Task<List<UserToken>> GetOldPasswordResetTokensAsync(int retentionDays, int batchSize)
+    {
+        var cutoffDate = DateTime.UtcNow.AddDays(-retentionDays);
+
+        return await _dbSet
+            .Where(t =>
+                t.Type == enTokenType.ResetPasswordToken &&
+                t.CreatedAt <= cutoffDate &&
+                (t.IsRevoked || t.IsUsed || t.ExpiryDate <= DateTime.UtcNow)
+                )
+            .OrderBy(t => t.CreatedAt)
+            .Take(batchSize)
+            .AsNoTracking()
+            .ToListAsync();
+    }
 }
