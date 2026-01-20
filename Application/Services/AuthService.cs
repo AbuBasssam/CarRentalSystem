@@ -462,25 +462,25 @@ public class AuthService : IAuthService
         var accessToken = new JwtSecurityTokenHandler().WriteToken(token);
         return (token, accessToken);
     }
-    public (UserToken refreshToken, string AccessToken) GenerateVerificationToken(User user, int minutesValidDuration)
-    {
-        var claims = _GetVerificationClaims(user);
-        var (jwtAccessTokenObj, AccessToken) = _GenerateSessionToken(claims, minutesValidDuration);
-        var validFor = TimeSpan.FromMinutes(minutesValidDuration);
+    //public (UserToken refreshToken, string AccessToken) GenerateVerificationToken(User user, int minutesValidDuration)
+    //{
+    //    var claims = _GetVerificationClaims(user);
+    //    var (jwtAccessTokenObj, AccessToken) = _GenerateSessionToken(claims, minutesValidDuration);
+    //    var validFor = TimeSpan.FromMinutes(minutesValidDuration);
 
 
 
 
-        UserToken refreshToken = new UserToken(user.Id, enTokenType.VerificationToken, null, jwtAccessTokenObj.Id, validFor);
+    //    UserToken refreshToken = new UserToken(user.Id, enTokenType.VerificationToken, null, jwtAccessTokenObj.Id, validFor);
 
 
-        return (refreshToken, AccessToken);
+    //    return (refreshToken, AccessToken);
 
 
 
 
 
-    }
+    //}
     public (UserToken refreshToken, string AccessToken) GenerateResetToken(User user, int expiresInMinutes)
     {
         var claims = _GetResetClaims(user);

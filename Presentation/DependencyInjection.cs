@@ -97,7 +97,6 @@ public static class DependencyInjection
     }
     private static void AddHandlers(IServiceCollection services)
     {
-        services.AddScoped<IAuthorizationHandler, VerificationOnlyHandler>();
 
         services.AddSingleton<IAuthorizationHandler, PermissionAuthorizationHandler>();
 

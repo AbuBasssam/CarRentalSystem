@@ -11,4 +11,17 @@ public interface IRefreshTokenRepository : IGenericRepository<UserToken, int>
     Task<bool> RevokeUserTokenAsync(int userId, enTokenType type);
     Task<bool> RevokeUserTokenAsync(string jwtId);
 
+    /// <summary>
+    /// Gets expired auth tokens that have exceeded the retention period for cleanup
+    /// Returns tokens where:
+    /// - Type = AuthToken
+    /// - Token is expired 
+    /// - Retention period has passed: (Now - ExpiryDate) > retentionDays
+    /// </summary>
+    /// <param name="retentionDays">Number of days to keep expired tokens for audit purposes</param>
+    /// <param name="batchSize">Maximum number of tokens to return in one batch</param>
+    /// <returns>List of expired tokens ready for deletion</returns>
+    Task<List<UserToken>> GetExpiredAuthTokensForCleanupAsync(int retentionDays, int batchSize);
+
+
 }

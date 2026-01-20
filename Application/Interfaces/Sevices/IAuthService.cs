@@ -17,7 +17,7 @@ public interface IAuthService : IScopedService
     (JwtSecurityToken?, Exception?) GetJwtAccessTokenObjFromAccessTokenString(string AccessToken);
     (ClaimsPrincipal?, Exception?) GetClaimsPrinciple(string AccessToken);
     Task<(UserToken?, Exception?)> ValidateRefreshToken(int UserId, string refreshToken, string jwtId);
-    (UserToken refreshToken, string AccessToken) GenerateVerificationToken(User user, int minutesValidDuration);
+    //(UserToken refreshToken, string AccessToken) GenerateVerificationToken(User user, int minutesValidDuration);
     (UserToken refreshToken, string AccessToken) GenerateResetToken(User user, int minutesValidDuration);
     void SetRefreshTokenCookie(string refreshToken, DateTime refreshTokenExpires);
     void DeleteRefreshTokenCookie();

@@ -60,4 +60,20 @@ public class RefreshTokenRepository : GenericRepository<UserToken, int>, IRefres
         return affectedRows >= 0;
 
     }
+    /// <summary>
+    /// Gets expired auth tokens that have exceeded the retention period for cleanup
+    /// </summary>
+    public async Task<List<UserToken>> GetExpiredAuthTokensForCleanupAsync(int retentionDays, int batchSize)
+    {
+        var cutoffDate = DateTime.UtcNow.AddDays(-retentionDays);
+
+        var expiredTokens = await _dbSet
+            .Where(t => t.Type == enTokenType.AuthToken && t.ExpiryDate < cutoffDate && (t.IsUsed || t.IsRevoked))
+            .OrderBy(t => t.ExpiryDate)
+            .Take(batchSize)
+            .AsNoTracking()
+            .ToListAsync();
+
+        return expiredTokens;
+    }
 }
