@@ -11,27 +11,26 @@ public static class DependencyInjection
     public static IServiceCollection registerDependencies(this IServiceCollection services, IConfiguration configuration)
     {
 
-        services.AddHostedService<AuthTokenCleanupService>();
+        BackgroundServicesRegistration(services, configuration);
 
         ConfigureTokenCleanupService(services, configuration);
 
-        services.AddDbContext<AppDbContext>(options =>
-        {
-            var connectionstring = configuration.GetConnectionString("DefaultConnection");
-            options.UseSqlServer(connectionstring);
-        }
-        );
+        ConfigurePasswordResetTokenCleanupService(services, configuration);
 
-        services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
+        ServicesRegistration(services, configuration);
 
-        services.AddScoped<IUnitOfWork, UnitOfWork>();
+        DbContextRegistration(services, configuration);
+
         return services;
 
     }
 
     private static void ConfigureTokenCleanupService(IServiceCollection services, IConfiguration configuration)
     {
-        var TokenCleanupSection = configuration.GetSection("BackgroundServices:AuthTokenCleanup");
+        var TokenCleanupSectionName = "BackgroundServices:AuthTokenCleanup";
+
+        var TokenCleanupSection = configuration.GetSection(TokenCleanupSectionName);
+
         services.Configure<AuthTokenCleanupOptions>(TokenCleanupSection);
 
 
@@ -41,5 +40,41 @@ public static class DependencyInjection
         configuration.GetSection(nameof(TokenCleanupOptions)).Bind(TokenCleanupOptions);
 
         services.AddSingleton(TokenCleanupOptions);
+    }
+    private static void ConfigurePasswordResetTokenCleanupService(IServiceCollection services, IConfiguration configuration)
+    {
+        var PasswordResetTokenCleanupSectionName = "BackgroundServices:PasswordResetTokenCleanup";
+
+        var passwordResetCleanupSection = configuration.GetSection(PasswordResetTokenCleanupSectionName);
+
+        services.Configure<PasswordResetTokenCleanupOptions>(passwordResetCleanupSection);
+
+        var passwordResetCleanupOptions = new PasswordResetTokenCleanupOptions();
+
+        configuration.GetSection(PasswordResetTokenCleanupSectionName).Bind(passwordResetCleanupOptions);
+
+        services.AddSingleton(passwordResetCleanupOptions);
+    }
+    private static void BackgroundServicesRegistration(IServiceCollection services, IConfiguration configuration)
+    {
+        services.AddHostedService<AuthTokenCleanupService>();
+        services.AddHostedService<PasswordResetTokenCleanupService>();
+
+    }
+    private static void ServicesRegistration(IServiceCollection services, IConfiguration configuration)
+    {
+        services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
+
+        services.AddScoped<IUnitOfWork, UnitOfWork>();
+    }
+    private static void DbContextRegistration(IServiceCollection services, IConfiguration configuration)
+    {
+        services.AddDbContext<AppDbContext>(options =>
+        {
+            var connectionstring = configuration.GetConnectionString("DefaultConnection");
+            options.UseSqlServer(connectionstring);
+        }
+        );
+
     }
 }
