@@ -1,6 +1,5 @@
 ﻿using Application.Models;
 using Domain.Entities;
-using Domain.Enums;
 using Domain.HelperClasses;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
@@ -17,10 +16,7 @@ public interface IAuthService : IScopedService
     (JwtSecurityToken?, Exception?) GetJwtAccessTokenObjFromAccessTokenString(string AccessToken);
     (ClaimsPrincipal?, Exception?) GetClaimsPrinciple(string AccessToken);
     Task<(UserToken?, Exception?)> ValidateRefreshToken(int UserId, string refreshToken, string jwtId);
-    //(UserToken refreshToken, string AccessToken) GenerateVerificationToken(User user, int minutesValidDuration);
     (UserToken refreshToken, string AccessToken) GenerateResetToken(User user, int minutesValidDuration);
-    void SetRefreshTokenCookie(string refreshToken, DateTime refreshTokenExpires);
-    void DeleteRefreshTokenCookie();
 
     /// <summary>
     /// Logout user by revoking their tokens
@@ -36,6 +32,7 @@ public interface IAuthService : IScopedService
     /// <param name="userId">User ID</param>
     /// <returns>Result indicating success or failure</returns>
     Task<Result<bool>> LogoutFromAllDevices(int userId);
-    Task<bool> ValidateSessionToken(string sessionToken, enTokenType tokenType);
+    void SetRefreshTokenCookie(string refreshToken, DateTime refreshTokenExpires);
+    void DeleteRefreshTokenCookie();
 
 }
