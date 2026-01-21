@@ -9,7 +9,7 @@ using Serilog;
 
 namespace Application.Features.AuthFeature;
 
-public class RefreshTokenCommandHandler : IRequestHandler<RefreshTokenCommand, Response<JwtAuthResult>>
+public class RefreshTokenHandler : IRequestHandler<RefreshTokenCommand, Response<JwtAuthResult>>
 {
     #region Fields
     private readonly IAuthService _authService;
@@ -22,7 +22,7 @@ public class RefreshTokenCommandHandler : IRequestHandler<RefreshTokenCommand, R
     #endregion
 
     #region Constructor
-    public RefreshTokenCommandHandler(
+    public RefreshTokenHandler(
         IAuthService authService,
         IUserService userService,
         IRefreshTokenRepository refreshTokenRepo,
