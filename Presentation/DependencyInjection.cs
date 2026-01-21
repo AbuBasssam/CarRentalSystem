@@ -1,9 +1,9 @@
-﻿using Infrastructure.Security;
-using Interfaces;
+﻿using Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Presentation.Authorization.Handlers;
+using Presentation.Authorization.Providers;
 using Presentation.Authorization.Requirements;
 using Presentation.Constants;
 

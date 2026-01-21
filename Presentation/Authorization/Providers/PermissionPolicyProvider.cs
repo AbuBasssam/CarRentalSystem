@@ -1,8 +1,8 @@
-﻿using Domain.Security;
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.Options;
+using Presentation.Authorization.Requirements;
 
-namespace Infrastructure.Security;
+namespace Presentation.Authorization.Providers;
 
 public class PermissionPolicyProvider : DefaultAuthorizationPolicyProvider
 {
