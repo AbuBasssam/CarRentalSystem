@@ -53,11 +53,11 @@ public class OtpCleanupService : BackgroundService
         {
             try
             {
-                //var delay = CalculateNextRunDelay();
+                var delay = CalculateNextRunDelay();
 
-                //Log.Information("Next OTP cleanup scheduled in {Minutes} minutes",delay.TotalMinutes);
+                Log.Information("Next OTP cleanup scheduled in {Minutes} minutes", delay.TotalMinutes);
 
-                //await Task.Delay(delay, stoppingToken);
+                await Task.Delay(delay, stoppingToken);
 
                 if (stoppingToken.IsCancellationRequested)
                     break;
