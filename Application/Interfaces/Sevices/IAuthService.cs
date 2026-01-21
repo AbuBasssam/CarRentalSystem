@@ -37,6 +37,5 @@ public interface IAuthService : IScopedService
     /// <returns>Result indicating success or failure</returns>
     Task<Result<bool>> LogoutFromAllDevices(int userId);
     Task<bool> ValidateSessionToken(string sessionToken, enTokenType tokenType);
-    Task<bool> ValidateResetPasswordToken(string token, enResetPasswordStage requiredStage);
 
 }

@@ -434,19 +434,6 @@ public class AuthService : IAuthService
 
     #region Helpers
 
-
-    private List<Claim> _GetVerificationClaims(User user)
-    {
-        return new List<Claim>
-        {
-            new Claim(SessionTokenClaims.IsVerificationToken, "true"),
-            new Claim(nameof(UserClaimModel.Id), user.Id.ToString()),
-            new Claim(ClaimTypes.Email, user.Email !),
-            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
-
-        };
-    }
-
     private (JwtSecurityToken, string) _GenerateSessionToken(List<Claim> claims, int expiresInMinutes)
     {
         var creds = new SigningCredentials(_signaturekey, _SecurityAlgorithm);
@@ -462,25 +449,7 @@ public class AuthService : IAuthService
         var accessToken = new JwtSecurityTokenHandler().WriteToken(token);
         return (token, accessToken);
     }
-    //public (UserToken refreshToken, string AccessToken) GenerateVerificationToken(User user, int minutesValidDuration)
-    //{
-    //    var claims = _GetVerificationClaims(user);
-    //    var (jwtAccessTokenObj, AccessToken) = _GenerateSessionToken(claims, minutesValidDuration);
-    //    var validFor = TimeSpan.FromMinutes(minutesValidDuration);
 
-
-
-
-    //    UserToken refreshToken = new UserToken(user.Id, enTokenType.VerificationToken, null, jwtAccessTokenObj.Id, validFor);
-
-
-    //    return (refreshToken, AccessToken);
-
-
-
-
-
-    //}
     public (UserToken refreshToken, string AccessToken) GenerateResetToken(User user, int expiresInMinutes)
     {
         var claims = _GetResetClaims(user);
@@ -509,47 +478,7 @@ public class AuthService : IAuthService
         return claims;
 
     }
-    public async Task<bool> ValidateResetPasswordToken(string token, enResetPasswordStage requiredStage)
-    {
-        // 1. التحقق الأساسي من صحة التوكن (Signature, Expiry, etc.)
-        var (principal, exception) = GetClaimsPrinciple(token);
-        if (principal == null || exception != null)
-        {
-            return false;
-        }
 
-        // 2. التحقق من أن التوكن مخصص لعملية Reset Password حصراً
-        var isResetTokenClaim = principal.FindFirstValue(SessionTokenClaims.IsResetToken);
-        if (string.IsNullOrEmpty(isResetTokenClaim) || isResetTokenClaim != "true")
-        {
-            return false;
-        }
-
-        // 3. التحقق من المرحلة (Stage) - أهم خطوة أمنية
-        var stageClaim = principal.FindFirstValue(SessionTokenClaims.ResetTokenStage);
-        if (string.IsNullOrEmpty(stageClaim) || stageClaim != ((int)requiredStage).ToString())
-        {
-            return false;
-        }
-
-        // 4. استخراج الـ JTI للتحقق منه في قاعدة البيانات
-        var jti = principal.FindFirstValue(JwtRegisteredClaimNames.Jti);
-        if (string.IsNullOrEmpty(jti))
-        {
-            return false;
-        }
-
-        // 5. التحقق من وجود التوكن في قاعدة البيانات وصلاحيته (Blacklist check)
-        // نستخدم الدالة التي قدمتها ValidateSessionToken ولكن هنا نمرر نوع التوكن المناسب
-        var isValidInDb = await ValidateSessionToken(token, enTokenType.ResetPasswordToken);
-
-        if (!isValidInDb)
-        {
-            return false;
-        }
-
-        return true;
-    }
     #endregion
 
 
@@ -594,7 +523,7 @@ public class AuthService : IAuthService
 
     #region Sign in Methods
 
-    private static JwtAuthResult _GetJwtAuthResult(string jwtAccessTokenString, string fullName)//, RefreshToken refreshTokenObj
+    private static JwtAuthResult _GetJwtAuthResult(string jwtAccessTokenString, string fullName)
     {
 
 
@@ -602,7 +531,6 @@ public class AuthService : IAuthService
         {
             AccessToken = jwtAccessTokenString,
             FullName = fullName
-            //RefreshToken = refreshTokenObj
         };
     }
 
