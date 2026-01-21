@@ -103,7 +103,7 @@ public static class DependencyInjection
 
     private static void ServicesRegistration(IServiceCollection services, IConfiguration configuration)
     {
-        services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
+        services.AddScoped<IUserTokenRepository, UserTokenRepository>();
 
         services.AddScoped<IUserRepository, UserRepository>();
 

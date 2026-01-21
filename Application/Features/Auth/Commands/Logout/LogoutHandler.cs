@@ -7,7 +7,7 @@ using Serilog;
 
 namespace Application.Features.AuthFeature;
 
-public class LogoutCommandHandler : IRequestHandler<LogoutCommand, Response<bool>>
+public class LogoutHandler : IRequestHandler<LogoutCommand, Response<bool>>
 {
     #region Fields
     private readonly IAuthService _authService;
@@ -21,7 +21,7 @@ public class LogoutCommandHandler : IRequestHandler<LogoutCommand, Response<bool
     #endregion
 
     #region Constructor
-    public LogoutCommandHandler(
+    public LogoutHandler(
         IAuthService authService,
         ITokenValidationService tokenValidation,
         IRequestContext requestContext,

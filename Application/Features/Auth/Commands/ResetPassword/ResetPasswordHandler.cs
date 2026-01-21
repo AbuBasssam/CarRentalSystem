@@ -21,7 +21,7 @@ public class ResetPasswordHandler : IRequestHandler<ResetPasswordCommand, Respon
     private readonly UserManager<User> _userManager;
     private readonly IUserService _userService;
     private readonly IOtpRepository _otpRepo;
-    private readonly IRefreshTokenRepository _tokenRepo;
+    private readonly IUserTokenRepository _tokenRepo;
     private readonly IUnitOfWork _unitOfWork;
     private readonly IRequestContext _context;
     private readonly IStringLocalizer<SharedResources> _localizer;
@@ -37,7 +37,7 @@ public class ResetPasswordHandler : IRequestHandler<ResetPasswordCommand, Respon
     public ResetPasswordHandler(
         IUserService userSerivce,
         IOtpRepository otpRepo,
-        IRefreshTokenRepository tokenRepo,
+        IUserTokenRepository tokenRepo,
         IUnitOfWork unitOfWork,
         IRequestContext requestContext,
         IStringLocalizer<SharedResources> localizer,

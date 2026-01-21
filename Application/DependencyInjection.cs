@@ -98,7 +98,7 @@ public static class DependencyInjection
                  // الحصول على Repository من DI
                  var refreshTokenRepo = context.HttpContext
                      .RequestServices
-                     .GetRequiredService<IRefreshTokenRepository>();
+                     .GetRequiredService<IUserTokenRepository>();
 
                  // استخراج JTI من التوكن
                  var jti = context.Principal?

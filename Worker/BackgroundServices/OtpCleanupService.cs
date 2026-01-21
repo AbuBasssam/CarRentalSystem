@@ -53,7 +53,10 @@ public class OtpCleanupService : BackgroundService
         {
             try
             {
-                var delay = CalculateNextRunDelay();
+                var delay = Helpers.CalculateNextRunDelay(
+                    _options.RunAt,
+                    TimeSpan.FromMinutes(_options.IntervalMinutes)
+                );
 
                 Log.Information("Next OTP cleanup scheduled in {Minutes} minutes", delay.TotalMinutes);
 
@@ -177,32 +180,6 @@ public class OtpCleanupService : BackgroundService
 
             Log.Error(ex, "Error during OTP cleanup operation. Duration before failure: {Duration:mm\\:ss}", duration);
         }
-    }
-
-    /// <summary>
-    /// Calculates the delay until the next run
-    /// If RunAt time is specified, calculates delay to that time
-    /// Otherwise, uses the IntervalMinutes setting
-    /// </summary>
-    private TimeSpan CalculateNextRunDelay()
-    {
-        if (string.IsNullOrEmpty(_options.RunAt))
-        {
-            return TimeSpan.FromMinutes(_options.IntervalMinutes);
-        }
-
-        var now = DateTime.UtcNow;
-        var scheduledTime = TimeOnly.Parse(_options.RunAt);
-        var todayScheduled = now.Date.Add(scheduledTime.ToTimeSpan());
-
-        // If today's scheduled time has passed, schedule for tomorrow
-        var nextRun = todayScheduled > now
-            ? todayScheduled
-            : todayScheduled.AddDays(1);
-
-        var delay = nextRun - now;
-
-        return delay > TimeSpan.Zero ? delay : TimeSpan.FromMinutes(_options.IntervalMinutes);
     }
 
     public override async Task StopAsync(CancellationToken cancellationToken)

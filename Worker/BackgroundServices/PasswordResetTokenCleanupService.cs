@@ -47,7 +47,10 @@ public class PasswordResetTokenCleanupService : BackgroundService
         {
             try
             {
-                var delay = CalculateNextRunDelay();
+                var delay = Helpers.CalculateNextRunDelay(
+                    _options.RunAt,
+                    TimeSpan.FromMinutes(_options.IntervalHours)
+                );
 
                 Log.Information(
                     "Next Password Reset Token cleanup scheduled in {Hours} hours and {Minutes} minutes",
@@ -93,7 +96,7 @@ public class PasswordResetTokenCleanupService : BackgroundService
         try
         {
             using var scope = _serviceScopeFactory.CreateScope();
-            var tokenRepository = scope.ServiceProvider.GetRequiredService<IRefreshTokenRepository>();
+            var tokenRepository = scope.ServiceProvider.GetRequiredService<IUserTokenRepository>();
             var unitOfWork = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
 
             // Phase 1: Auto-revoke expired tokens
@@ -140,7 +143,7 @@ public class PasswordResetTokenCleanupService : BackgroundService
     /// Phase 1: Revokes tokens that have exceeded their validity period
     /// Tokens are revoked (not deleted) to maintain audit trail
     /// </summary>
-    private async Task<int> RevokeExpiredTokensAsync(IRefreshTokenRepository tokenRepository, IUnitOfWork unitOfWork, CancellationToken cancellationToken)
+    private async Task<int> RevokeExpiredTokensAsync(IUserTokenRepository tokenRepository, IUnitOfWork unitOfWork, CancellationToken cancellationToken)
     {
         Log.Information("Phase 1: Starting auto-revocation of expired password reset tokens");
 
@@ -213,7 +216,7 @@ public class PasswordResetTokenCleanupService : BackgroundService
     /// Phase 2: Permanently deletes revoked tokens that exceeded retention period
     /// This cleans up old audit data to save database space
     /// </summary>
-    private async Task<int> DeleteOldTokensAsync(IRefreshTokenRepository tokenRepository, IUnitOfWork unitOfWork, CancellationToken cancellationToken)
+    private async Task<int> DeleteOldTokensAsync(IUserTokenRepository tokenRepository, IUnitOfWork unitOfWork, CancellationToken cancellationToken)
     {
         Log.Information("Phase 2: Starting deletion of old password reset tokens");
 
@@ -274,32 +277,6 @@ public class PasswordResetTokenCleanupService : BackgroundService
         Log.Information("Phase 2 completed: Total deleted {TotalDeleted} tokens", totalDeleted);
 
         return totalDeleted;
-    }
-
-    /// <summary>
-    /// Calculates the delay until the next run
-    /// If RunAt time is specified, calculates delay to that time
-    /// Otherwise, uses the IntervalHours setting
-    /// </summary>
-    private TimeSpan CalculateNextRunDelay()
-    {
-        if (string.IsNullOrEmpty(_options.RunAt))
-        {
-            return TimeSpan.FromHours(_options.IntervalHours);
-        }
-
-        var now = DateTime.UtcNow;
-        var scheduledTime = TimeOnly.Parse(_options.RunAt);
-        var todayScheduled = now.Date.Add(scheduledTime.ToTimeSpan());
-
-        // If today's scheduled time has passed, schedule for tomorrow
-        var nextRun = todayScheduled > now
-            ? todayScheduled
-            : todayScheduled.AddDays(1);
-
-        var delay = nextRun - now;
-
-        return delay > TimeSpan.Zero ? delay : TimeSpan.FromHours(_options.IntervalHours);
     }
 
     public override async Task StopAsync(CancellationToken cancellationToken)

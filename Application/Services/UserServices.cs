@@ -11,11 +11,11 @@ public class UserService : IUserService
     private readonly UserManager<User> _userManager;
     private readonly SignInManager<User> _signInManager;
     private readonly IGenericRepository<User, int> _userRepository;
-    private readonly IRefreshTokenRepository _refreshTokenRepo;
+    private readonly IUserTokenRepository _refreshTokenRepo;
     private readonly IUnitOfWork _unitOfWork;
     #endregion
 
-    public UserService(IGenericRepository<User, int> userRepository, IUnitOfWork unitOfWork, UserManager<User> userManager, SignInManager<User> signInManager, IRefreshTokenRepository refreshTokenRepo)
+    public UserService(IGenericRepository<User, int> userRepository, IUnitOfWork unitOfWork, UserManager<User> userManager, SignInManager<User> signInManager, IUserTokenRepository refreshTokenRepo)
     {
         _userRepository = userRepository;
         _unitOfWork = unitOfWork;

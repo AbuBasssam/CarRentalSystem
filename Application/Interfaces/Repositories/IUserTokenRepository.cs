@@ -3,12 +3,35 @@ using Domain.Enums;
 
 namespace Interfaces;
 
-public interface IRefreshTokenRepository : IGenericRepository<UserToken, int>
+/// <summary>
+/// Repository interface for Refresh Token and User Token operations.
+/// Handles lifecycle management of authentication and reset tokens.
+/// </summary>
+public interface IUserTokenRepository : IGenericRepository<UserToken, int>
 {
+    /// <summary>
+    /// Retrieves the active session token for a specific user.
+    /// </summary>
     IQueryable<UserToken> GetActiveSessionTokenByUserId(int userId, enTokenType type);
+
+    /// <summary>
+    /// Finds a specific token using its unique JTI (JWT ID).
+    /// </summary>
     IQueryable<UserToken> GetTokenByJti(string jti);
+
+    /// <summary>
+    /// Checks if a token with the given JTI is expired.
+    /// </summary>
     Task<bool> IsTokenExpired(string jwtId);
+
+    /// <summary>
+    /// Revokes all tokens of a specific type for a user.
+    /// </summary>
     Task<bool> RevokeUserTokenAsync(int userId, enTokenType type);
+
+    /// <summary>
+    /// Revokes a specific token by its JTI.
+    /// </summary>
     Task<bool> RevokeUserTokenAsync(string jwtId);
 
     /// <summary>

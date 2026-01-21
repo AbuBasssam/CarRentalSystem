@@ -44,12 +44,17 @@ public class UnverifiedUserCleanupService : BackgroundService
         {
             try
             {
-                var delay = CalculateNextRunDelay();
+
+                var delay = Helpers.CalculateNextRunDelay(
+                    _options.RunAt,
+                    TimeSpan.FromMinutes(_options.IntervalHours)
+                );
 
                 Log.Information(
                     "Next Unverified User cleanup scheduled in {Hours} hours and {Minutes} minutes",
                     delay.Hours,
-                    delay.Minutes);
+                    delay.Minutes
+                );
 
                 await Task.Delay(delay, stoppingToken);
 
@@ -175,32 +180,6 @@ public class UnverifiedUserCleanupService : BackgroundService
                 "Duration before failure: {Duration:mm\\:ss}",
                 duration);
         }
-    }
-
-    /// <summary>
-    /// Calculates the delay until the next run
-    /// If RunAt time is specified, calculates delay to that time
-    /// Otherwise, uses the IntervalHours setting
-    /// </summary>
-    private TimeSpan CalculateNextRunDelay()
-    {
-        if (string.IsNullOrEmpty(_options.RunAt))
-        {
-            return TimeSpan.FromHours(_options.IntervalHours);
-        }
-
-        var now = DateTime.UtcNow;
-        var scheduledTime = TimeOnly.Parse(_options.RunAt);
-        var todayScheduled = now.Date.Add(scheduledTime.ToTimeSpan());
-
-        // If today's scheduled time has passed, schedule for tomorrow
-        var nextRun = todayScheduled > now
-            ? todayScheduled
-            : todayScheduled.AddDays(1);
-
-        var delay = nextRun - now;
-
-        return delay > TimeSpan.Zero ? delay : TimeSpan.FromHours(_options.IntervalHours);
     }
 
     public override async Task StopAsync(CancellationToken cancellationToken)

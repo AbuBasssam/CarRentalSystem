@@ -21,14 +21,14 @@ namespace Application.Services;
 
 public class AuthService : IAuthService
 {
-    #region Fields
+    #region Field(s)
     private readonly JwtSettings _jwtSettings;
     private readonly UserManager<User> _userManager;
 
     private readonly IUserService _userService;
     private readonly IOtpService _otpService;
     private readonly IHttpContextAccessor _httpContextAccessor;
-    private readonly IRefreshTokenRepository _refreshTokenRepo;
+    private readonly IUserTokenRepository _refreshTokenRepo;
     private readonly IOtpRepository _otpRepo;
     private readonly IUnitOfWork _unitOfWork;
     private readonly IStringLocalizer<SharedResources> _Localizer;
@@ -42,7 +42,7 @@ public class AuthService : IAuthService
     #endregion
 
     #region Constructor(s)
-    public AuthService(JwtSettings jwtSettings, IRefreshTokenRepository refreshTokenRepo,
+    public AuthService(JwtSettings jwtSettings, IUserTokenRepository refreshTokenRepo,
         IUserService userService, IOtpRepository otpRepo, UserManager<User> userManager,
         IUnitOfWork unitOfWork, IOtpService otpService, IStringLocalizer<SharedResources> localizer, IHttpContextAccessor httpContextAccessor)
     {
@@ -59,7 +59,7 @@ public class AuthService : IAuthService
     }
     #endregion
 
-    #region Methods
+    #region Method(s)
     public async Task<JwtAuthResult> GetJwtAuthForuser(User User)
     {
 
@@ -86,19 +86,92 @@ public class AuthService : IAuthService
 
         return jwtAuthResult;
     }
-    private async Task _RevokeActiveUserToken(int userId, enTokenType tokenType)
-    {
-        var existingTokens = await _refreshTokenRepo
-           .GetTableAsTracking().
-           FirstOrDefaultAsync(x => x.UserId == userId && !x.IsRevoked && x.Type == tokenType);
 
-        if (existingTokens != null)
+    public Result<string> GetEmailFromSessionToken(string sessionToken)
+    {
+        (JwtSecurityToken? jwtAccessTokenObj, Exception? exception) = GetJwtAccessTokenObjFromAccessTokenString(sessionToken);
+
+        if (jwtAccessTokenObj == null)
+            return Result<string>.Failure([_Localizer[SharedResourcesKeys.InvalidToken]]);
+
+        (string email, Exception? emailException) = _GetUserEmailFromJwtAccessTokenObj(jwtAccessTokenObj);
+        if (string.IsNullOrEmpty(email)) return Result<string>.Failure([_Localizer[SharedResourcesKeys.FailedExtractEmail]]);
+
+        return Result<string>.Success(email);
+    }
+
+    public Result<int> GetUserIdFromSessionToken(string sessionToken)
+    {
+        (JwtSecurityToken? jwtAccessTokenObj, Exception? exception) =
+            GetJwtAccessTokenObjFromAccessTokenString(sessionToken);
+
+        if (jwtAccessTokenObj == null)
+            return Result<int>.Failure([
+                _Localizer[SharedResourcesKeys.InvalidToken]
+            ]);
+
+        (int userId, Exception? userIdException) =
+            GetUserIdFromJwtAccessTokenObj(jwtAccessTokenObj);
+
+        if (userId == 0)
+            return Result<int>.Failure([
+                //_Localizer[SharedResourcesKeys.FailedExtractUserId]
+               string.Empty
+            ]);
+
+        return Result<int>.Success(userId);
+    }
+
+    public (JwtSecurityToken?, Exception?) GetJwtAccessTokenObjFromAccessTokenString(string AccessToken)
+    {
+        try
         {
-            existingTokens.Revoke();
-            existingTokens.ForceExpire();
+            return ((JwtSecurityToken)_tokenHandler.ReadToken(AccessToken), null);
+        }
+        catch (Exception ex)
+        {
+            return (null, ex);
         }
     }
 
+    public (ClaimsPrincipal?, Exception?) GetClaimsPrinciple(string AccessToken)
+    {
+        var parameters = _GetTokenValidationParameters();
+
+        try
+        {
+            var principal = _tokenHandler.ValidateToken(AccessToken, parameters, out SecurityToken validationToken);
+
+            if (validationToken is JwtSecurityToken jwtToken && jwtToken.Header.Alg.Equals(_SecurityAlgorithm))
+                return (principal, null);
+
+            return (null, new ArgumentNullException(_Localizer[SharedResourcesKeys.ClaimsPrincipleIsNull]));
+        }
+        catch (Exception ex)
+        {
+            return (null, ex);
+        }
+    }
+
+    public (int, Exception?) GetUserIdFromJwtAccessTokenObj(JwtSecurityToken jwtAccessTokenObj)
+    {
+        if (!int.TryParse(jwtAccessTokenObj.Claims.FirstOrDefault(x => x.Type == nameof(UserClaimModel.Id))?.Value, out int UserId))
+            return (0, new ArgumentNullException(_Localizer[SharedResourcesKeys.InvalidUserId]));
+
+        return (UserId, null);
+    }
+
+    public string? GetJtiFromAccessTokenString(string accessToken)
+    {
+        var (principal, error) = GetClaimsPrinciple(accessToken);
+
+        if (principal == null || error != null)
+            return null;
+
+        var jtiClaim = principal.FindFirst(JwtRegisteredClaimNames.Jti);
+
+        return jtiClaim?.Value;
+    }
 
     public bool IsValidAccessToken(string AccessTokenStr)
     {
@@ -122,30 +195,38 @@ public class AuthService : IAuthService
         }
     }
 
-    public async Task<bool> ValidateSessionToken(string sessionToken, enTokenType tokenType)
+    public async Task<(UserToken?, Exception?)> ValidateRefreshToken(int UserId, string refreshToken, string jwtId)
     {
 
+        var refreshTokenEntity = await _refreshTokenRepo
+            .GetTableAsTracking()
+            .FirstOrDefaultAsync(x =>
+                x.UserId == UserId &&
+                x.JwtId == jwtId &&
+                x.Type.Equals(enTokenType.AuthToken)
+            );
 
-        var (jwtObj, exception) = GetJwtAccessTokenObjFromAccessTokenString(sessionToken);
+        if (refreshTokenEntity == null)
+            return (null, new SecurityTokenArgumentException(_Localizer[SharedResourcesKeys.NullRefreshToken]));
 
-        if (jwtObj == null)
+
+        if (!BCrypt.Net.BCrypt.Verify(refreshToken, refreshTokenEntity.RefreshToken))
+            return (null, new SecurityTokenArgumentException(_Localizer[SharedResourcesKeys.InvalidToken]));
+
+        if (refreshTokenEntity.ExpiryDate < DateTime.UtcNow)
         {
-            return false;
+            refreshTokenEntity.Revoke();
+            return (null, new SecurityTokenArgumentException(_Localizer[SharedResourcesKeys.RevokedRefreshToken]));
+        }
+        // Check if already revoked
+        if (refreshTokenEntity.IsRevoked)
+        {
+            return (null, new SecurityTokenArgumentException(
+                _Localizer[SharedResourcesKeys.RevokedRefreshToken]
+            ));
         }
 
-        // 2. Check in database
-        var tokenEntity = await _refreshTokenRepo
-            .GetTableNoTracking()
-            .Where(x => x.JwtId == jwtObj.Id && x.Type == tokenType)
-            .FirstOrDefaultAsync();
-
-        if (tokenEntity == null || !tokenEntity.IsValid())
-        {
-            return false;
-        }
-
-        return true;
-
+        return (refreshTokenEntity, null);
     }
 
 
@@ -242,6 +323,21 @@ public class AuthService : IAuthService
             ]);
         }
     }
+
+    public (UserToken refreshToken, string AccessToken) GenerateResetToken(User user, int expiresInMinutes)
+    {
+        var claims = _GetResetClaims(user);
+
+        var (jwtAccessTokenObj, AccessToken) = _GenerateSessionToken(claims, expiresInMinutes);
+
+        var validFor = TimeSpan.FromMinutes(expiresInMinutes);
+
+        UserToken refreshToken = new UserToken(user.Id, enTokenType.ResetPasswordToken, null, jwtAccessTokenObj.Id, validFor);
+
+        return (refreshToken, AccessToken);
+
+    }
+
     public void SetRefreshTokenCookie(string refreshToken, DateTime refreshTokenExpires)
     {
         var cookieOptions = new CookieOptions
@@ -260,8 +356,6 @@ public class AuthService : IAuthService
     }
 
     #endregion
-
-
 
     #region AccessToken Methods
     private List<Claim> _GenerateUserClaims(User User, List<string> Roles)
@@ -309,37 +403,6 @@ public class AuthService : IAuthService
         );
     }
 
-    public (JwtSecurityToken?, Exception?) GetJwtAccessTokenObjFromAccessTokenString(string AccessToken)
-    {
-        try
-        {
-            return ((JwtSecurityToken)_tokenHandler.ReadToken(AccessToken), null);
-        }
-        catch (Exception ex)
-        {
-            return (null, ex);
-        }
-    }
-
-    public (ClaimsPrincipal?, Exception?) GetClaimsPrinciple(string AccessToken)
-    {
-        var parameters = _GetTokenValidationParameters();
-
-        try
-        {
-            var principal = _tokenHandler.ValidateToken(AccessToken, parameters, out SecurityToken validationToken);
-
-            if (validationToken is JwtSecurityToken jwtToken && jwtToken.Header.Alg.Equals(_SecurityAlgorithm))
-                return (principal, null);
-
-            return (null, new ArgumentNullException(_Localizer[SharedResourcesKeys.ClaimsPrincipleIsNull]));
-        }
-        catch (Exception ex)
-        {
-            return (null, ex);
-        }
-    }
-
     private TokenValidationParameters _GetTokenValidationParameters()
     {
         return new TokenValidationParameters
@@ -358,32 +421,13 @@ public class AuthService : IAuthService
         };
     }
 
-    public (int, Exception?) GetUserIdFromJwtAccessTokenObj(JwtSecurityToken jwtAccessTokenObj)
-    {
-        if (!int.TryParse(jwtAccessTokenObj.Claims.FirstOrDefault(x => x.Type == nameof(UserClaimModel.Id))?.Value, out int UserId))
-            return (0, new ArgumentNullException(_Localizer[SharedResourcesKeys.InvalidUserId]));
-
-        return (UserId, null);
-    }
-
-    public (string, Exception?) GetUserEmailFromJwtAccessTokenObj(JwtSecurityToken jwtAccessTokenObj)
+    private (string, Exception?) _GetUserEmailFromJwtAccessTokenObj(JwtSecurityToken jwtAccessTokenObj)
     {
         var emailClaim = jwtAccessTokenObj.Claims.FirstOrDefault(x => x.Type == ClaimTypes.Email)?.Value;
         return string.IsNullOrEmpty(emailClaim) ?
             ("", new ArgumentNullException(_Localizer[SharedResourcesKeys.InvalidEmailClaim])) : (emailClaim, null);
     }
 
-    public string? GetJtiFromAccessTokenString(string accessToken)
-    {
-        var (principal, error) = GetClaimsPrinciple(accessToken);
-
-        if (principal == null || error != null)
-            return null;
-
-        var jtiClaim = principal.FindFirst(JwtRegisteredClaimNames.Jti);
-
-        return jtiClaim?.Value;
-    }
     #endregion
 
     #region RefreshToken Methods
@@ -397,55 +441,9 @@ public class AuthService : IAuthService
         };
     }
 
-    public async Task<(UserToken?, Exception?)> ValidateRefreshToken(int UserId, string refreshToken, string jwtId)
-    {
-
-        var refreshTokenEntity = await _refreshTokenRepo
-            .GetTableAsTracking()
-            .FirstOrDefaultAsync(x =>
-                x.UserId == UserId &&
-                x.JwtId == jwtId &&
-                x.Type.Equals(enTokenType.AuthToken)
-            );
-
-        if (refreshTokenEntity == null)
-            return (null, new SecurityTokenArgumentException(_Localizer[SharedResourcesKeys.NullRefreshToken]));
-
-
-        if (!BCrypt.Net.BCrypt.Verify(refreshToken, refreshTokenEntity.RefreshToken))
-            return (null, new SecurityTokenArgumentException(_Localizer[SharedResourcesKeys.InvalidToken]));
-
-        if (refreshTokenEntity.ExpiryDate < DateTime.UtcNow)
-        {
-            refreshTokenEntity.Revoke();
-            return (null, new SecurityTokenArgumentException(_Localizer[SharedResourcesKeys.RevokedRefreshToken]));
-        }
-        // Check if already revoked
-        if (refreshTokenEntity.IsRevoked)
-        {
-            return (null, new SecurityTokenArgumentException(
-                _Localizer[SharedResourcesKeys.RevokedRefreshToken]
-            ));
-        }
-
-        return (refreshTokenEntity, null);
-    }
     #endregion
 
     #region Helpers
-
-
-    private List<Claim> _GetVerificationClaims(User user)
-    {
-        return new List<Claim>
-        {
-            new Claim(SessionTokenClaims.IsVerificationToken, "true"),
-            new Claim(nameof(UserClaimModel.Id), user.Id.ToString()),
-            new Claim(ClaimTypes.Email, user.Email !),
-            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
-
-        };
-    }
 
     private (JwtSecurityToken, string) _GenerateSessionToken(List<Claim> claims, int expiresInMinutes)
     {
@@ -462,41 +460,7 @@ public class AuthService : IAuthService
         var accessToken = new JwtSecurityTokenHandler().WriteToken(token);
         return (token, accessToken);
     }
-    //public (UserToken refreshToken, string AccessToken) GenerateVerificationToken(User user, int minutesValidDuration)
-    //{
-    //    var claims = _GetVerificationClaims(user);
-    //    var (jwtAccessTokenObj, AccessToken) = _GenerateSessionToken(claims, minutesValidDuration);
-    //    var validFor = TimeSpan.FromMinutes(minutesValidDuration);
 
-
-
-
-    //    UserToken refreshToken = new UserToken(user.Id, enTokenType.VerificationToken, null, jwtAccessTokenObj.Id, validFor);
-
-
-    //    return (refreshToken, AccessToken);
-
-
-
-
-
-    //}
-    public (UserToken refreshToken, string AccessToken) GenerateResetToken(User user, int expiresInMinutes)
-    {
-        var claims = _GetResetClaims(user);
-        var (jwtAccessTokenObj, AccessToken) = _GenerateSessionToken(claims, expiresInMinutes);
-        var validFor = TimeSpan.FromMinutes(expiresInMinutes);
-
-
-
-
-        UserToken refreshToken = new UserToken(user.Id, enTokenType.ResetPasswordToken, null, jwtAccessTokenObj.Id, validFor);
-
-
-        return (refreshToken, AccessToken);
-
-
-    }
     private List<Claim> _GetResetClaims(User user)
     {
         var claims = new List<Claim>
@@ -509,92 +473,21 @@ public class AuthService : IAuthService
         return claims;
 
     }
-    public async Task<bool> ValidateResetPasswordToken(string token, enResetPasswordStage requiredStage)
+
+    private async Task _RevokeActiveUserToken(int userId, enTokenType tokenType)
     {
-        // 1. التحقق الأساسي من صحة التوكن (Signature, Expiry, etc.)
-        var (principal, exception) = GetClaimsPrinciple(token);
-        if (principal == null || exception != null)
+        var existingTokens = await _refreshTokenRepo
+           .GetTableAsTracking().
+           FirstOrDefaultAsync(x => x.UserId == userId && !x.IsRevoked && x.Type == tokenType);
+
+        if (existingTokens != null)
         {
-            return false;
+            existingTokens.Revoke();
+            existingTokens.ForceExpire();
         }
-
-        // 2. التحقق من أن التوكن مخصص لعملية Reset Password حصراً
-        var isResetTokenClaim = principal.FindFirstValue(SessionTokenClaims.IsResetToken);
-        if (string.IsNullOrEmpty(isResetTokenClaim) || isResetTokenClaim != "true")
-        {
-            return false;
-        }
-
-        // 3. التحقق من المرحلة (Stage) - أهم خطوة أمنية
-        var stageClaim = principal.FindFirstValue(SessionTokenClaims.ResetTokenStage);
-        if (string.IsNullOrEmpty(stageClaim) || stageClaim != ((int)requiredStage).ToString())
-        {
-            return false;
-        }
-
-        // 4. استخراج الـ JTI للتحقق منه في قاعدة البيانات
-        var jti = principal.FindFirstValue(JwtRegisteredClaimNames.Jti);
-        if (string.IsNullOrEmpty(jti))
-        {
-            return false;
-        }
-
-        // 5. التحقق من وجود التوكن في قاعدة البيانات وصلاحيته (Blacklist check)
-        // نستخدم الدالة التي قدمتها ValidateSessionToken ولكن هنا نمرر نوع التوكن المناسب
-        var isValidInDb = await ValidateSessionToken(token, enTokenType.ResetPasswordToken);
-
-        if (!isValidInDb)
-        {
-            return false;
-        }
-
-        return true;
-    }
-    #endregion
-
-
-
-    #region Confirm Email Methods
-
-    public Result<string> GetEmailFromSessionToken(string sessionToken)
-    {
-        (JwtSecurityToken? jwtAccessTokenObj, Exception? exception) = GetJwtAccessTokenObjFromAccessTokenString(sessionToken);
-
-        if (jwtAccessTokenObj == null)
-            return Result<string>.Failure([_Localizer[SharedResourcesKeys.InvalidToken]]);
-
-        (string email, Exception? emailException) = GetUserEmailFromJwtAccessTokenObj(jwtAccessTokenObj);
-        if (string.IsNullOrEmpty(email)) return Result<string>.Failure([_Localizer[SharedResourcesKeys.FailedExtractEmail]]);
-
-        return Result<string>.Success(email);
-    }
-    public Result<int> GetUserIdFromSessionToken(string sessionToken)
-    {
-        (JwtSecurityToken? jwtAccessTokenObj, Exception? exception) =
-            GetJwtAccessTokenObjFromAccessTokenString(sessionToken);
-
-        if (jwtAccessTokenObj == null)
-            return Result<int>.Failure([
-                _Localizer[SharedResourcesKeys.InvalidToken]
-            ]);
-
-        (int userId, Exception? userIdException) =
-            GetUserIdFromJwtAccessTokenObj(jwtAccessTokenObj);
-
-        if (userId == 0)
-            return Result<int>.Failure([
-                //_Localizer[SharedResourcesKeys.FailedExtractUserId]
-               string.Empty
-            ]);
-
-        return Result<int>.Success(userId);
     }
 
-    #endregion
-
-    #region Sign in Methods
-
-    private static JwtAuthResult _GetJwtAuthResult(string jwtAccessTokenString, string fullName)//, RefreshToken refreshTokenObj
+    private static JwtAuthResult _GetJwtAuthResult(string jwtAccessTokenString, string fullName)
     {
 
 
@@ -602,7 +495,6 @@ public class AuthService : IAuthService
         {
             AccessToken = jwtAccessTokenString,
             FullName = fullName
-            //RefreshToken = refreshTokenObj
         };
     }
 
@@ -615,12 +507,6 @@ public class AuthService : IAuthService
 
     }
 
-    #endregion
-
-
-    #region Logout Methods
-
-
     /// <summary>
     /// Revokes a token entity
     /// </summary>
@@ -628,10 +514,7 @@ public class AuthService : IAuthService
     {
         tokenEntity.Revoke();
 
-
         tokenEntity.ForceExpire();
-
-
 
     }
 

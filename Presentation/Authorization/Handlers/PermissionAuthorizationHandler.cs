@@ -1,6 +1,6 @@
 ﻿using Domain.AppMetaData;
-using Domain.Security;
 using Microsoft.AspNetCore.Authorization;
+using Presentation.Authorization.Requirements;
 
 namespace Presentation.Authorization.Handlers;
 
