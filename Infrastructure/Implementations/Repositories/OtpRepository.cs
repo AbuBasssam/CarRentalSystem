@@ -61,5 +61,43 @@ public class OtpRepository : GenericRepository<Otp, int>, IOtpRepository
                 .SetProperty(o => o.IsUsed, true)
             );
     }
+
+    /// <summary>
+    /// Gets expired OTPs for cleanup based on retention policy
+    /// 
+    /// Cleanup Logic:
+    /// 1. Used OTPs (IsUsed=1): delete after retention period
+    /// 2. Expired OTPs: delete after retention period from expiration
+    /// 3. Very old OTPs: delete after max age regardless of status (safety)
+    /// 
+    /// This ensures:
+    /// - Audit trail is preserved for the retention period
+    /// - No OTP stays in database longer than max age
+    /// - Database stays clean and performant
+    /// </summary>
+    public async Task<List<Otp>> GetExpiredOtpsForCleanupAsync(int retentionHours, int maxAgeHours, int batchSize)
+    {
+        var now = DateTime.UtcNow;
+        var retentionCutoff = now.AddHours(-retentionHours);
+        var maxAgeCutoff = now.AddHours(-maxAgeHours);
+
+        var expiredOtps = await _dbSet
+            .Where(o =>
+                // Condition 1: Used OTPs older than retention period
+                (o.IsUsed && o.CreationTime < retentionCutoff) ||
+
+                // Condition 2: Expired OTPs older than retention period
+                (o.ExpirationTime < retentionCutoff) ||
+
+                // Condition 3: Any OTP older than max age (safety fallback)
+                (o.CreationTime < maxAgeCutoff)
+            )
+            .OrderBy(o => o.CreationTime)
+            .Take(batchSize)
+            .AsNoTracking()
+            .ToListAsync();
+
+        return expiredOtps;
+    }
 }
 
