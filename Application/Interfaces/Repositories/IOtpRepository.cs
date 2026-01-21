@@ -3,6 +3,11 @@ using Domain.Enums;
 
 namespace Interfaces;
 
+
+/// <summary>
+/// Repository interface for Otp operations.
+/// Handles lifecycle management of otp codes.
+/// </summary>
 public interface IOtpRepository : IGenericRepository<Otp, int>
 {
     /// <summary>

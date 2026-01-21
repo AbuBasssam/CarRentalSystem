@@ -17,10 +17,10 @@ namespace Presentation.Authorization.Handlers;
 /// </summary>
 public class ResetPasswordHandler : AuthorizationHandler<ResetPasswordRequirement>
 {
-    private readonly IRefreshTokenRepository _refreshTokenRepo;
+    private readonly IUserTokenRepository _refreshTokenRepo;
     private readonly IRequestContext _context;
     private const string Error_Message = "Missing or invalid authentication token";
-    public ResetPasswordHandler(IRefreshTokenRepository authService, IRequestContext context)
+    public ResetPasswordHandler(IUserTokenRepository authService, IRequestContext context)
     {
         _refreshTokenRepo = authService;
         _context = context;

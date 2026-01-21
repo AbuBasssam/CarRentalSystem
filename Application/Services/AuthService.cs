@@ -28,7 +28,7 @@ public class AuthService : IAuthService
     private readonly IUserService _userService;
     private readonly IOtpService _otpService;
     private readonly IHttpContextAccessor _httpContextAccessor;
-    private readonly IRefreshTokenRepository _refreshTokenRepo;
+    private readonly IUserTokenRepository _refreshTokenRepo;
     private readonly IOtpRepository _otpRepo;
     private readonly IUnitOfWork _unitOfWork;
     private readonly IStringLocalizer<SharedResources> _Localizer;
@@ -42,7 +42,7 @@ public class AuthService : IAuthService
     #endregion
 
     #region Constructor(s)
-    public AuthService(JwtSettings jwtSettings, IRefreshTokenRepository refreshTokenRepo,
+    public AuthService(JwtSettings jwtSettings, IUserTokenRepository refreshTokenRepo,
         IUserService userService, IOtpRepository otpRepo, UserManager<User> userManager,
         IUnitOfWork unitOfWork, IOtpService otpService, IStringLocalizer<SharedResources> localizer, IHttpContextAccessor httpContextAccessor)
     {

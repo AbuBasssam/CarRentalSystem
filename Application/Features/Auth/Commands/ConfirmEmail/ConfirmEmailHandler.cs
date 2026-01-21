@@ -16,7 +16,7 @@ public class ConfirmEmailCommandHandler : IRequestHandler<ConfirmEmailCommand, R
     private readonly IAuthService _authService;
     private readonly IOtpService _otpService;
     private readonly IOtpRepository _otpRepo;
-    private readonly IRefreshTokenRepository _refreshTokenRepo;
+    private readonly IUserTokenRepository _refreshTokenRepo;
     private readonly IUnitOfWork _unitOfWork;
     private readonly ResponseHandler _responseHandler;
     private readonly IStringLocalizer<SharedResources> _localizer;
@@ -26,7 +26,7 @@ public class ConfirmEmailCommandHandler : IRequestHandler<ConfirmEmailCommand, R
     #region Constructor(s)
     public ConfirmEmailCommandHandler(
     IUserService userService, IAuthService authService, IOtpService otpService,
-    IOtpRepository otpRepo, IRefreshTokenRepository refreshTokenRepo, IUnitOfWork unitOfWork,
+    IOtpRepository otpRepo, IUserTokenRepository refreshTokenRepo, IUnitOfWork unitOfWork,
     IStringLocalizer<SharedResources> localizer, ResponseHandler responseHandler
     )
     {

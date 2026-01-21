@@ -19,7 +19,7 @@ public class TokenValidationService : ITokenValidationService
 {
     #region Fields
 
-    private readonly IRefreshTokenRepository _refreshTokenRepo;
+    private readonly IUserTokenRepository _refreshTokenRepo;
 
     #endregion
 
@@ -29,7 +29,7 @@ public class TokenValidationService : ITokenValidationService
     /// Initializes a new instance of TokenValidationService
     /// </summary>
     /// <param name="refreshTokenRepo">Repository for accessing token data</param>
-    public TokenValidationService(IRefreshTokenRepository refreshTokenRepo)
+    public TokenValidationService(IUserTokenRepository refreshTokenRepo)
     {
         _refreshTokenRepo = refreshTokenRepo;
     }

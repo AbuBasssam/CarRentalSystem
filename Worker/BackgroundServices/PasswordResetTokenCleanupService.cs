@@ -96,7 +96,7 @@ public class PasswordResetTokenCleanupService : BackgroundService
         try
         {
             using var scope = _serviceScopeFactory.CreateScope();
-            var tokenRepository = scope.ServiceProvider.GetRequiredService<IRefreshTokenRepository>();
+            var tokenRepository = scope.ServiceProvider.GetRequiredService<IUserTokenRepository>();
             var unitOfWork = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
 
             // Phase 1: Auto-revoke expired tokens
@@ -143,7 +143,7 @@ public class PasswordResetTokenCleanupService : BackgroundService
     /// Phase 1: Revokes tokens that have exceeded their validity period
     /// Tokens are revoked (not deleted) to maintain audit trail
     /// </summary>
-    private async Task<int> RevokeExpiredTokensAsync(IRefreshTokenRepository tokenRepository, IUnitOfWork unitOfWork, CancellationToken cancellationToken)
+    private async Task<int> RevokeExpiredTokensAsync(IUserTokenRepository tokenRepository, IUnitOfWork unitOfWork, CancellationToken cancellationToken)
     {
         Log.Information("Phase 1: Starting auto-revocation of expired password reset tokens");
 
@@ -216,7 +216,7 @@ public class PasswordResetTokenCleanupService : BackgroundService
     /// Phase 2: Permanently deletes revoked tokens that exceeded retention period
     /// This cleans up old audit data to save database space
     /// </summary>
-    private async Task<int> DeleteOldTokensAsync(IRefreshTokenRepository tokenRepository, IUnitOfWork unitOfWork, CancellationToken cancellationToken)
+    private async Task<int> DeleteOldTokensAsync(IUserTokenRepository tokenRepository, IUnitOfWork unitOfWork, CancellationToken cancellationToken)
     {
         Log.Information("Phase 2: Starting deletion of old password reset tokens");
 

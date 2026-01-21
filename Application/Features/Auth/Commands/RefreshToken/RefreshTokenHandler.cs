@@ -15,7 +15,7 @@ public class RefreshTokenHandler : IRequestHandler<RefreshTokenCommand, Response
     private readonly IAuthService _authService;
     private readonly IUserService _userService;
     private readonly IRequestContext _requestContext;
-    private readonly IRefreshTokenRepository _refreshTokenRepo;
+    private readonly IUserTokenRepository _refreshTokenRepo;
     private readonly IUnitOfWork _unitOfWork;
     private readonly ResponseHandler _responseHandler;
     private readonly IStringLocalizer<SharedResources> _localizer;
@@ -25,7 +25,7 @@ public class RefreshTokenHandler : IRequestHandler<RefreshTokenCommand, Response
     public RefreshTokenHandler(
         IAuthService authService,
         IUserService userService,
-        IRefreshTokenRepository refreshTokenRepo,
+        IUserTokenRepository refreshTokenRepo,
         IUnitOfWork unitOfWork,
         ResponseHandler responseHandler,
         IStringLocalizer<SharedResources> localizer,

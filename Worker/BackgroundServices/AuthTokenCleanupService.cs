@@ -91,7 +91,7 @@ public class AuthTokenCleanupService : BackgroundService
         try
         {
             using var scope = _serviceScopeFactory.CreateScope();
-            var tokenRepository = scope.ServiceProvider.GetRequiredService<IRefreshTokenRepository>();
+            var tokenRepository = scope.ServiceProvider.GetRequiredService<IUserTokenRepository>();
             var unitOfWork = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
 
             var totalDeleted = 0;

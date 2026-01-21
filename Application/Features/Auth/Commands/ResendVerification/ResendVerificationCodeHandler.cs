@@ -13,7 +13,7 @@ public class ResendVerificationCodeHandler : IRequestHandler<ResendVerificationC
 {
     #region Field(s)
     private readonly IAuthService _authService;
-    private readonly IRefreshTokenRepository _refreshTokenRepo;
+    private readonly IUserTokenRepository _refreshTokenRepo;
     private readonly IUserService _userService;
     private readonly IOtpService _otpService;
     private readonly IEmailService _emailService;
@@ -29,7 +29,7 @@ public class ResendVerificationCodeHandler : IRequestHandler<ResendVerificationC
 
     #region Constructor(s)
     public ResendVerificationCodeHandler(
-    IAuthService authService, IRefreshTokenRepository refreshTokenRepository, IUserService userService,
+    IAuthService authService, IUserTokenRepository refreshTokenRepository, IUserService userService,
     IOtpService otpService, IEmailService emailService, IOtpRepository otpRepo,
     IUnitOfWork unitOfWork, IStringLocalizer<SharedResources> localizer, ResponseHandler responseHandler
     )

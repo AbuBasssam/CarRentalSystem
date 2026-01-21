@@ -21,7 +21,7 @@ public class VerifyResetCodeHandler : IRequestHandler<VerifyResetCodeCommand, Re
     private readonly IAuthService _authService;
     private readonly IOtpService _otpService;
 
-    private readonly IRefreshTokenRepository _refreshTokenRepo;
+    private readonly IUserTokenRepository _refreshTokenRepo;
     private readonly IOtpRepository _otpRepo;
     private readonly IUnitOfWork _unitOfWork;
     private readonly IStringLocalizer<SharedResources> _localizer;
@@ -36,7 +36,7 @@ public class VerifyResetCodeHandler : IRequestHandler<VerifyResetCodeCommand, Re
     /// Initializes a new instance of VerifyResetCodeHandler
     /// </summary>
     public VerifyResetCodeHandler(IUserService userService, IAuthService authService, IOtpService otpService,
-  IRefreshTokenRepository refreshTokenRepo, IOtpRepository otpRepo, IUnitOfWork unitOfWork,
+  IUserTokenRepository refreshTokenRepo, IOtpRepository otpRepo, IUnitOfWork unitOfWork,
   IStringLocalizer<SharedResources> localizer, ResponseHandler responseHandler)
     {
 

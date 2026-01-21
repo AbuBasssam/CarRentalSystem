@@ -21,7 +21,7 @@ public class SignUpHandler : IRequestHandler<SignUpCommand, Response<bool>>
     private readonly IOtpService _otpService;
     private readonly IEmailService _emailService;
 
-    private readonly IRefreshTokenRepository _refreshTokenRepo;
+    private readonly IUserTokenRepository _refreshTokenRepo;
     private readonly IUnitOfWork _unitOfWork;
 
     private readonly IMapper _mapper;
@@ -33,7 +33,7 @@ public class SignUpHandler : IRequestHandler<SignUpCommand, Response<bool>>
 
     #region Constructure(s)
 
-    public SignUpHandler(IUserService userService, IAuthService authService, IMapper mapper, ResponseHandler responseHandler, IStringLocalizer<SharedResources> localizer, IRefreshTokenRepository refreshTokenRepo, IUnitOfWork unitOfWork, IOtpService otpService, IEmailService emailService)
+    public SignUpHandler(IUserService userService, IAuthService authService, IMapper mapper, ResponseHandler responseHandler, IStringLocalizer<SharedResources> localizer, IUserTokenRepository refreshTokenRepo, IUnitOfWork unitOfWork, IOtpService otpService, IEmailService emailService)
     {
         _userService = userService;
         _authService = authService;
