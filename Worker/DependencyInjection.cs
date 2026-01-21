@@ -20,6 +20,7 @@ public static class DependencyInjection
 
         ConfigureUnverifiedUserCleanupService(services, configuration);
 
+        ConfigureOtpCleanupService(services, configuration);
 
         ServicesRegistration(services, configuration);
 
@@ -72,12 +73,31 @@ public static class DependencyInjection
         services.AddSingleton(unverifiedUserCleanupOptions);
     }
 
+    private static void ConfigureOtpCleanupService(IServiceCollection services, IConfiguration configuration)
+    {
+        var OtpCleanupSectionName = "BackgroundServices:OtpCleanup";
+
+
+        var OtpCleanupSection = configuration.GetSection(OtpCleanupSectionName);
+
+        services.Configure<OtpCleanupOptions>(OtpCleanupSection);
+
+        var OtpCleanupOptions = new OtpCleanupOptions();
+
+        configuration.GetSection(OtpCleanupSectionName).Bind(OtpCleanupOptions);
+
+        services.AddSingleton(OtpCleanupOptions);
+    }
+
     private static void BackgroundServicesRegistration(IServiceCollection services, IConfiguration configuration)
     {
         services.AddHostedService<AuthTokenCleanupService>();
+
         services.AddHostedService<PasswordResetTokenCleanupService>();
+
         services.AddHostedService<UnverifiedUserCleanupService>();
 
+        services.AddHostedService<OtpCleanupService>();
 
     }
 
@@ -86,6 +106,8 @@ public static class DependencyInjection
         services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
 
         services.AddScoped<IUserRepository, UserRepository>();
+
+        services.AddScoped<IOtpRepository, OtpRepository>();
 
         services.AddScoped<IUnitOfWork, UnitOfWork>();
     }
