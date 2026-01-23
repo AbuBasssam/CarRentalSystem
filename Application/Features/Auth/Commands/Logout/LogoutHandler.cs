@@ -12,6 +12,7 @@ public class LogoutHandler : IRequestHandler<LogoutCommand, Response<bool>>
     #region Fields
     private readonly IAuthService _authService;
 
+
     private readonly IRequestContext _requestContext;
     private readonly IUnitOfWork _unitOfWork;
 
@@ -30,10 +31,14 @@ public class LogoutHandler : IRequestHandler<LogoutCommand, Response<bool>>
         ResponseHandler responseHandler)
     {
         _authService = authService;
+
         _requestContext = requestContext;
-        _localizer = localizer;
-        _responseHandler = responseHandler;
+
         _unitOfWork = unitOfWork;
+
+        _localizer = localizer;
+
+        _responseHandler = responseHandler;
     }
     #endregion
 
@@ -60,9 +65,6 @@ public class LogoutHandler : IRequestHandler<LogoutCommand, Response<bool>>
                 string.Join('\n', logoutResult.Errors)
             );
         }
-
-        // Delete refresh token cookie
-        _authService.DeleteRefreshTokenCookie();
 
         // Step 3: Log successful logout activity
         _LogLogoutActivity(context);

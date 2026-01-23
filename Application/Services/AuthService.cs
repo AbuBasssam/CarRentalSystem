@@ -26,6 +26,7 @@ public class AuthService : IAuthService
     private readonly UserManager<User> _userManager;
 
     private readonly IUserService _userService;
+    private readonly ITokenService _tokenService;
     private readonly IOtpService _otpService;
     private readonly IHttpContextAccessor _httpContextAccessor;
     private readonly IUserTokenRepository _refreshTokenRepo;
@@ -42,14 +43,15 @@ public class AuthService : IAuthService
     #endregion
 
     #region Constructor(s)
-    public AuthService(JwtSettings jwtSettings, IUserTokenRepository refreshTokenRepo,
-        IUserService userService, IOtpRepository otpRepo, UserManager<User> userManager,
-        IUnitOfWork unitOfWork, IOtpService otpService, IStringLocalizer<SharedResources> localizer, IHttpContextAccessor httpContextAccessor)
+    public AuthService(IUserService userService, ITokenService tokenService, IOtpService otpService,
+        IUserTokenRepository refreshTokenRepo, IOtpRepository otpRepo,
+        IUnitOfWork unitOfWork, IStringLocalizer<SharedResources> localizer)
     {
         _jwtSettings = jwtSettings;
         _refreshTokenRepo = refreshTokenRepo;
         _signaturekey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(_jwtSettings.Secret!));
         _userService = userService;
+        _tokenService = tokenService;
         _otpRepo = otpRepo;
         _userManager = userManager;
         _unitOfWork = unitOfWork;
@@ -266,6 +268,8 @@ public class AuthService : IAuthService
 
 
             Log.Information("User {UserId} logged out successfully. Token {JwtId} revoked.", userId, jwtId);
+
+            _tokenService.ClearTokenCookies();
 
             return Result<bool>.Success(true);
         }
