@@ -50,6 +50,8 @@ public static class Router
 
         public const string RefreshToken = BASE + "/refresh";
 
+        public const string CSRF_Token = BASE + "/csrf-token";
+
 
         public const string Logout = BASE + "/logout";
 

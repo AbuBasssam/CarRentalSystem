@@ -30,9 +30,6 @@ public class TokenService : ITokenService
     private static string _SecurityAlgorithm = SecurityAlgorithms.HmacSha256Signature;
     private static JwtSecurityTokenHandler _tokenHandler = new JwtSecurityTokenHandler();
 
-    private const string Access_Token_Key = "accessToken";
-    private const string Refresh_Token_Key = "refreshToken";
-
     #endregion
 
     #region Constructor(s)
@@ -142,7 +139,7 @@ public class TokenService : ITokenService
 
         // Access Value Cookie
         _httpContextAccessor?.HttpContext?.Response.Cookies.Append(
-            Access_Token_Key, tokenInfo.Value,
+            Keys.Access_Token_Key, tokenInfo.Value,
             new CookieOptions
             {
                 HttpOnly = true,
@@ -156,7 +153,7 @@ public class TokenService : ITokenService
 
         // Refresh Value Cookie
         _httpContextAccessor?.HttpContext?.Response.Cookies.Append(
-            Refresh_Token_Key, refreshInfo.Value,
+            Keys.Refresh_Token_Key, refreshInfo.Value,
             new CookieOptions
             {
                 HttpOnly = true,
@@ -181,7 +178,7 @@ public class TokenService : ITokenService
             SameSite = SameSiteMode.Strict,
             Path = "/"
         };
-        _httpContextAccessor?.HttpContext?.Response.Cookies.Delete(Access_Token_Key, accessTokenCookieOption);
+        _httpContextAccessor?.HttpContext?.Response.Cookies.Delete(Keys.Access_Token_Key, accessTokenCookieOption);
 
         var refreshTokenCookieOption = new CookieOptions
         {
@@ -191,7 +188,7 @@ public class TokenService : ITokenService
             Path = Router.AuthenticationRouter.RefreshToken,
         };
 
-        _httpContextAccessor?.HttpContext?.Response.Cookies.Delete(Refresh_Token_Key, refreshTokenCookieOption);
+        _httpContextAccessor?.HttpContext?.Response.Cookies.Delete(Keys.Refresh_Token_Key, refreshTokenCookieOption);
 
 
     }

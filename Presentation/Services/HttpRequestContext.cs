@@ -1,4 +1,5 @@
-﻿using Domain.Security;
+﻿using Domain.AppMetaData;
+using Domain.Security;
 using Interfaces;
 using Microsoft.AspNetCore.Http;
 using System.IdentityModel.Tokens.Jwt;
@@ -84,5 +85,5 @@ public class HttpRequestContext : IRequestContext
     }
 
     public string? UserAgent => Context?.Request.Headers["User-Agent"];
-    public string? RefreshToken => Context?.Request.Cookies["refreshToken"];
+    public string? RefreshToken => Context?.Request.Cookies[Keys.Refresh_Token_Key];
 }

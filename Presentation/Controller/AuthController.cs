@@ -5,7 +5,6 @@ using Domain.HelperClasses;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Presentation.Constants;
 using Presentation.Helpers;
 
 namespace Presentation.Controller;
@@ -29,6 +28,7 @@ public class AuthController : ApiController
     [ProducesResponseType(typeof(Response<JwtAuthResult>), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(Response<JwtAuthResult>), StatusCodes.Status422UnprocessableEntity)]
     [ProducesResponseType(StatusCodes.Status429TooManyRequests)]
+    [ValidateAntiForgeryToken]  // CSRF Protection
     public async Task<IActionResult> SignIn([FromBody] SignInCommand command)
     {
 
