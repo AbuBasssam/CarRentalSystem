@@ -1,11 +1,11 @@
-﻿using Interfaces;
+﻿using Domain.AppMetaData;
+using Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Presentation.Authorization.Handlers;
 using Presentation.Authorization.Providers;
 using Presentation.Authorization.Requirements;
-using Presentation.Constants;
 
 namespace Presentation;
 public static class DependencyInjection

@@ -1,4 +1,5 @@
-﻿namespace Presentation.Constants;
+﻿namespace Domain.AppMetaData;
+
 public static class Policies
 {
 
