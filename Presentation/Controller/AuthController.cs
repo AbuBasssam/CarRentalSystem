@@ -59,6 +59,8 @@ public class AuthController : ApiController
     [ProducesResponseType(typeof(Response<bool>), StatusCodes.Status422UnprocessableEntity)]
     [ProducesResponseType(typeof(Response<bool>), StatusCodes.Status500InternalServerError)]
     [ProducesResponseType(StatusCodes.Status429TooManyRequests)]
+    [ValidateAntiForgeryToken]  // CSRF Protection
+
 
     public async Task<IActionResult> SignUp([FromBody] SignUpDTO dto)
     {
@@ -91,6 +93,8 @@ public class AuthController : ApiController
     [ProducesResponseType(typeof(Response<bool>), StatusCodes.Status422UnprocessableEntity)]
     [ProducesResponseType(typeof(Response<bool>), StatusCodes.Status500InternalServerError)]
     [ProducesResponseType(StatusCodes.Status429TooManyRequests)]
+    [ValidateAntiForgeryToken]  // CSRF Protection
+
     public async Task<IActionResult> ConfirmEmail([FromBody] VerificationDTO dto)
     {
 
@@ -124,6 +128,7 @@ public class AuthController : ApiController
     [ProducesResponseType(typeof(Response<string>), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(Response<string>), StatusCodes.Status500InternalServerError)]
     [ProducesResponseType(StatusCodes.Status429TooManyRequests)]
+    [ValidateAntiForgeryToken]  // CSRF Protection
     public async Task<IActionResult> ResendVerificationCode([FromBody] ResendCodeDTO dto)
     {
         ResendVerificationCodeCommand command = new ResendVerificationCodeCommand(dto);
@@ -161,6 +166,8 @@ public class AuthController : ApiController
     [ProducesResponseType(typeof(Response<VerificationFlowResponse>), StatusCodes.Status422UnprocessableEntity)]
     [ProducesResponseType(typeof(Response<VerificationFlowResponse>), StatusCodes.Status500InternalServerError)]
     [ProducesResponseType(StatusCodes.Status429TooManyRequests)]
+    [ValidateAntiForgeryToken]  // CSRF Protection
+
     public async Task<IActionResult> SendResetCode([FromBody] SendResetCodeDTO dto)
     {
         SendResetCodeCommand command = new SendResetCodeCommand(dto);
@@ -200,6 +207,7 @@ public class AuthController : ApiController
     [ProducesResponseType(typeof(Response<object>), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(Response<object>), StatusCodes.Status500InternalServerError)]
     [ProducesResponseType(StatusCodes.Status429TooManyRequests)]
+    [ValidateAntiForgeryToken]  // CSRF Protection
 
     public async Task<IActionResult> VerifyResetCode([FromBody] VerificationDTO dto)
     {
@@ -283,6 +291,8 @@ public class AuthController : ApiController
     [ProducesResponseType(typeof(Response<bool>), StatusCodes.Status422UnprocessableEntity)]
     [ProducesResponseType(typeof(Response<bool>), StatusCodes.Status500InternalServerError)]
     [ProducesResponseType(StatusCodes.Status429TooManyRequests)]
+    [ValidateAntiForgeryToken]  // CSRF Protection
+
     public async Task<IActionResult> ResendResetCode(ResendCodeDTO dto)
     {
         var command = new ResendResetCodeCommand(dto);
@@ -364,5 +374,22 @@ public class AuthController : ApiController
             (Response<JwtAuthResult> response) => NewResult(response)
         );
     }
+
+    /// <summary>
+    /// Generates and returns CSRF token for form submissions
+    /// </summary>
+    /// <returns>CSRF token for API requests</returns>
+    /// <response code="200">CSRF token generated successfully</response>
+    /// <response code="429">Too many reset attempts - rate limit exceeded</response>
+
+    [HttpGet(Router.AuthenticationRouter.CSRF_Token)]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status429TooManyRequests)]
+
+    public IActionResult GetCsrfToken()
+    {
+        return Ok(new { message = "CSRF token set in cookie" });
+    }
+
 
 }
