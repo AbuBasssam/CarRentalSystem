@@ -13,6 +13,7 @@ using System.Globalization;
 var builder = WebApplication.CreateBuilder(args);
 
 
+#region ENV Variables
 
 // 1. ÊÍãíá .env ÃæáÇð
 DotNetEnv.Env.Load(@"C:/Users/Hp/source/repos/CarRentalSystem/.env");
@@ -41,6 +42,28 @@ builder.Configuration["EmailSettings:FromEmail"] =
 
 builder.Configuration["EmailSettings:password"] =
     Environment.GetEnvironmentVariable("SMTP_PASSWORD");
+
+#endregion
+
+#region CSRF Protection
+builder.Services.AddAntiforgery(options =>
+{
+    // Name of the header to be used by Frontend
+    options.HeaderName = "X-XSRF-TOKEN";
+
+    // Name of the cookie
+    options.Cookie.Name = "XSRF-TOKEN";
+
+    // CSRF protection for cross-site requests
+    options.Cookie.SameSite = SameSiteMode.Strict;
+
+    // HTTPS only
+    options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+
+    // Readable by JavaScript
+    options.Cookie.HttpOnly = false;
+});
+#endregion
 
 // Add services to the container.
 builder.Services.AddControllers();
@@ -101,7 +124,15 @@ builder.Services.Configure<RequestLocalizationOptions>(options =>
 
 #endregion
 
-
+if (!builder.Environment.IsDevelopment())
+{
+    builder.Services.AddHsts(options =>
+    {
+        options.Preload = true;
+        options.IncludeSubDomains = true;
+        options.MaxAge = TimeSpan.FromDays(365);
+    });
+}
 
 var app = builder.Build();
 
@@ -141,9 +172,12 @@ if (app.Environment.IsDevelopment())
 }
 
 
+
 app.UseHttpsRedirection();
 
 app.UseCors(Policies.CORS);
+
+app.UseCsrfToken();
 
 app.UseAuthentication();
 
