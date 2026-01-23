@@ -19,6 +19,7 @@ public class VerifyResetCodeHandler : IRequestHandler<VerifyResetCodeCommand, Re
 
     private readonly IUserService _userService;
     private readonly IAuthService _authService;
+    private readonly ITokenService _tokenService;
     private readonly IOtpService _otpService;
 
     private readonly IUserTokenRepository _refreshTokenRepo;
@@ -36,15 +37,16 @@ public class VerifyResetCodeHandler : IRequestHandler<VerifyResetCodeCommand, Re
     /// Initializes a new instance of VerifyResetCodeHandler
     /// </summary>
     public VerifyResetCodeHandler(IUserService userService, IAuthService authService, IOtpService otpService,
-  IUserTokenRepository refreshTokenRepo, IOtpRepository otpRepo, IUnitOfWork unitOfWork,
-  IStringLocalizer<SharedResources> localizer, ResponseHandler responseHandler)
+        ITokenService tokenService, IUserTokenRepository refreshTokenRepo, IOtpRepository otpRepo,
+        IUnitOfWork unitOfWork, IStringLocalizer<SharedResources> localizer, ResponseHandler responseHandler)
     {
 
         _userService = userService;
         _authService = authService;
         _otpService = otpService;
-        _refreshTokenRepo = refreshTokenRepo;
+        _tokenService = tokenService;
 
+        _refreshTokenRepo = refreshTokenRepo;
         _otpRepo = otpRepo;
         _unitOfWork = unitOfWork;
 
@@ -99,7 +101,7 @@ public class VerifyResetCodeHandler : IRequestHandler<VerifyResetCodeCommand, Re
 
 
             // Generate reset token
-            var newToken = _authService.GenerateResetToken(user, TOKEN_VALIDITY_MINUTES);
+            var newToken = _tokenService.GenerateResetToken(user, TOKEN_VALIDITY_MINUTES);
 
             await _refreshTokenRepo.AddAsync(newToken.refreshToken);
 
