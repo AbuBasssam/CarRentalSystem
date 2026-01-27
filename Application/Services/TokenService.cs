@@ -190,6 +190,16 @@ public class TokenService : ITokenService
 
         _httpContextAccessor?.HttpContext?.Response.Cookies.Delete(Keys.Refresh_Token_Key, refreshTokenCookieOption);
 
+        var CsrfTokenCookieOption = new CookieOptions
+        {
+            HttpOnly = false,
+            Secure = true,
+            SameSite = SameSiteMode.Strict,
+            Path = "/",
+        };
+
+        _httpContextAccessor?.HttpContext?.Response.Cookies.Delete(Keys.CSRF_Token_Key, CsrfTokenCookieOption);
+
 
     }
 

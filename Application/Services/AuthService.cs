@@ -58,7 +58,10 @@ public class AuthService : IAuthService
         var refreshTokenObj = _tokenService.GenerateRefreshToken();
 
         // 4) Generate the JwtAuth for the user
-        JwtAuthResult jwtAuthResult = _GetJwtAuthResult(jwtAccessTokenString, $"{User.FirstName} {User.LastName}");
+        JwtAuthResult jwtAuthResult = new JwtAuthResult
+        {
+            FullName = $"{User.FirstName} {User.LastName}"
+        };
 
         // 5) Save AccessToken, TokenValidation In UserToken Table
         UserToken refreshTokenEntity = _GetUserRefreshToken(User, jwtAccessTokenObj, refreshTokenObj);
@@ -232,16 +235,7 @@ public class AuthService : IAuthService
         }
     }
 
-    private static JwtAuthResult _GetJwtAuthResult(string jwtAccessTokenString, string fullName)
-    {
 
-
-        return new JwtAuthResult
-        {
-            AccessToken = jwtAccessTokenString,
-            FullName = fullName
-        };
-    }
 
     private UserToken _GetUserRefreshToken(User User, JwtSecurityToken jwtAccessTokenObj, TokenInfo refreshTokenInfo)
     {

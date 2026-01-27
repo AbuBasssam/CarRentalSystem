@@ -1,6 +1,7 @@
 ﻿using Application.Behaviors;
 using Application.Models;
 using ApplicationLayer.Resources;
+using Domain.AppMetaData;
 using Domain.HelperClasses;
 using FluentValidation;
 using Interfaces;
@@ -90,7 +91,33 @@ public static class DependencyInjection
         option.RequireHttpsMetadata = false;
         option.SaveToken = true;
 
+
         option.TokenValidationParameters = validationParameters;
+        option.Events = new JwtBearerEvents
+        {
+            OnMessageReceived = context =>
+            {
+                // أولاً: حاول قراءة من Authorization Header (للتوافق مع Swagger)
+                var token = context.Request.Headers["Authorization"]
+                    .FirstOrDefault()?
+                    .Replace("Bearer ", "", StringComparison.OrdinalIgnoreCase);
+
+                // ثانياً: إذا لم يوجد، اقرأ من Cookie
+                if (string.IsNullOrEmpty(token))
+                {
+                    token = context.Request.Cookies[Keys.Access_Token_Key];
+                }
+
+                // ضع الـ token في الـ context
+                if (!string.IsNullOrEmpty(token))
+                {
+                    context.Token = token;
+                }
+
+                return Task.CompletedTask;
+            }
+        };
+
         /* option.Events = new JwtBearerEvents
          {
              OnTokenValidated = async context =>
@@ -240,6 +267,30 @@ public static class DependencyInjection
     {
         option.SwaggerDoc("v1", new OpenApiInfo { Title = "CarRentalSystem", Version = "v1" });
         option.EnableAnnotations();
+
+        option.AddSecurityDefinition("CSRF", new OpenApiSecurityScheme
+        {
+            Description = "CSRF Token from cookie (X-XSRF-TOKEN header)",
+            Name = "X-XSRF-TOKEN",
+            In = ParameterLocation.Header,
+            Type = SecuritySchemeType.ApiKey,
+            Scheme = "CSRF"
+        });
+        option.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "CSRF"
+                }
+            },
+            Array.Empty<string>()
+        }
+    });
+
 
         option.AddSecurityDefinition(JwtBearerDefaults.AuthenticationScheme, new OpenApiSecurityScheme
         {

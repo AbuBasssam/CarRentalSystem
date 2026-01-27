@@ -49,19 +49,18 @@ builder.Configuration["EmailSettings:password"] =
 builder.Services.AddAntiforgery(options =>
 {
     // Name of the header to be used by Frontend
-    options.HeaderName = "X-XSRF-TOKEN";
+    options.HeaderName = Keys.CSRF_Token_Header_Key;
 
     // Name of the cookie
-    options.Cookie.Name = "XSRF-TOKEN";
+    options.Cookie.Name = Keys.CSRF_Token_Key;
 
     // CSRF protection for cross-site requests
-    options.Cookie.SameSite = SameSiteMode.Strict;
+    options.Cookie.SameSite = SameSiteMode.Lax;
 
-    // HTTPS only
+    // HTTPS only 
     options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
 
-    // Readable by JavaScript
-    options.Cookie.HttpOnly = false;
+    options.Cookie.HttpOnly = true;
 });
 #endregion
 

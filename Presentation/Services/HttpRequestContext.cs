@@ -1,5 +1,4 @@
 ﻿using Domain.AppMetaData;
-using Domain.Security;
 using Interfaces;
 using Microsoft.AspNetCore.Http;
 using System.IdentityModel.Tokens.Jwt;
@@ -30,11 +29,23 @@ public class HttpRequestContext : IRequestContext
         }
     }
 
-    public string? AuthToken =>
-        Context?.Request.Headers["Authorization"]
-            .FirstOrDefault()?
-            .Replace("Bearer ", "", StringComparison.OrdinalIgnoreCase)
-            .Trim();
+    public string? AuthToken
+    {
+        get
+        {
+            /*
+
+            // Extract Bearer token from Authorization header
+            return Context?.Request.Headers["Authorization"]
+                .FirstOrDefault()?
+                .Replace("Bearer ", "", StringComparison.OrdinalIgnoreCase)
+                .Trim();
+            */
+            // Extract token from Cookies
+            return Context?.Request.Cookies[Keys.Access_Token_Key];
+
+        }
+    }
 
     public string? ClientIP
     {
@@ -59,7 +70,7 @@ public class HttpRequestContext : IRequestContext
         }
     }
     public int? UserId =>
-        int.TryParse(Context?.User?.FindFirstValue(nameof(UserClaimModel.Id)), out var id)
+        int.TryParse(Context?.User?.FindFirstValue(ClaimTypes.NameIdentifier), out var id)
             ? id
             : null;
     public string? TokenJti
