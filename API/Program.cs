@@ -157,11 +157,7 @@ app.UseRequestLocalization(options!.Value);
 
 #endregion
 
-app.UseMiddleware<GlobalRateLimitingMiddleware>();
 
-app.UseMiddleware<SensitiveRateLimitingMiddleware>();
-
-app.UseMiddleware<ErrorHandlerMiddleware>();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
@@ -175,6 +171,12 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 
 app.UseCors(Policies.CORS);
+
+app.UseMiddleware<ErrorHandlerMiddleware>();
+
+app.UseMiddleware<GlobalRateLimitingMiddleware>();
+
+app.UseMiddleware<SensitiveRateLimitingMiddleware>();
 
 app.UseCsrfToken();
 
