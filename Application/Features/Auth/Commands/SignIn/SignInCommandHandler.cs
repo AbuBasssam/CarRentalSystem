@@ -45,7 +45,7 @@ public class SignInCommandHandler : IRequestHandler<SignInCommand, Response<JwtA
         var passwordToCheck = userNotExists ? "dummy_password" : request.Password;
 
         // Always call CheckPasswordAsync (critical for timing attack protection)
-        var confirmedUser = await _IsConfirmedPassword(user!, request.Password);
+        var confirmedUser = await _IsConfirmedPassword(user!, passwordToCheck);
         var isValid = !userNotExists && confirmedUser.Succeeded;
 
         return isValid ?

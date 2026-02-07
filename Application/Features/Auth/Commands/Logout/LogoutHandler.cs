@@ -49,9 +49,7 @@ public class LogoutHandler : IRequestHandler<LogoutCommand, Response<bool>>
 
         if (!contextResult.IsSuccess)
         {
-            return _responseHandler.Unauthorized<bool>(
-                string.Join('\n', contextResult.Errors)
-            );
+            return _responseHandler.Unauthorized<bool>();
         }
 
         var context = contextResult.Data;

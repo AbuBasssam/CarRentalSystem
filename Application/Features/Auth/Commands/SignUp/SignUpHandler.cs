@@ -138,7 +138,7 @@ public class SignUpHandler : IRequestHandler<SignUpCommand, Response<bool>>
             }
 
             Log.Error(dex, "Database error during sign-up");
-            return _responseHandler.BadRequest<bool>(
+            return _responseHandler.InternalServerError<bool>(
                 _localizer[SharedResourcesKeys.UnexpectedError]);
         }
         catch (Exception ex)
