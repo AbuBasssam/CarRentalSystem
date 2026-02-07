@@ -21,12 +21,14 @@ public class AuthController : ApiController
     /// <returns>JWT authentication result with access and refresh tokens</returns>
     /// <response code="200">Successfully authenticated</response>
     /// <response code="400">Invalid credentials or account locked</response>
+    /// <response code="403">Invalid CSRF token</response>
     /// <response code="422">Validation error</response>
     /// <response code="429">Too many login attempts</response>
 
     [HttpPost(Router.AuthenticationRouter.SignIn)]
     [ProducesResponseType(typeof(Response<JwtAuthResult>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(Response<JwtAuthResult>), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(Response<JwtAuthResult>), StatusCodes.Status403Forbidden)]
     [ProducesResponseType(typeof(Response<JwtAuthResult>), StatusCodes.Status422UnprocessableEntity)]
     [ProducesResponseType(StatusCodes.Status429TooManyRequests)]
     [ValidateCsrfToken]
@@ -50,6 +52,7 @@ public class AuthController : ApiController
     /// <param name="dto">User registration data</param>
     /// <response code="201">User successfully created</response>
     /// <response code="400">Email already exists or invalid data</response>
+    /// <response code="403">Invalid CSRF token</response>
     /// <response code="422">Validation error</response>
     /// <response code="429">Too many registration attempts</response>
     /// <response code="500">Internal server error</response>
@@ -57,6 +60,7 @@ public class AuthController : ApiController
     [HttpPost(Router.AuthenticationRouter.SignUp)]
     [ProducesResponseType(typeof(Response<bool>), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(Response<bool>), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(Response<bool>), StatusCodes.Status403Forbidden)]
     [ProducesResponseType(typeof(Response<bool>), StatusCodes.Status422UnprocessableEntity)]
     [ProducesResponseType(typeof(Response<bool>), StatusCodes.Status500InternalServerError)]
     [ProducesResponseType(StatusCodes.Status429TooManyRequests)]
@@ -84,6 +88,7 @@ public class AuthController : ApiController
     /// <returns>Confirmation result</returns>
     /// <response code="200">Email successfully confirmed</response>
     /// <response code="400">Invalid or expired code</response>
+    /// <response code="403">Invalid CSRF token</response>
     /// <response code="422">Validation error</response>
     /// <response code="429">Too many verification attempts</response>
     /// <response code="500">Internal server error</response>
@@ -91,6 +96,9 @@ public class AuthController : ApiController
     [HttpPost(Router.AuthenticationRouter.EmailConfirmation)]
     [ProducesResponseType(typeof(Response<bool>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(Response<bool>), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(Response<bool>), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(Response<bool>), StatusCodes.Status410Gone)]
+
     [ProducesResponseType(typeof(Response<bool>), StatusCodes.Status422UnprocessableEntity)]
     [ProducesResponseType(typeof(Response<bool>), StatusCodes.Status500InternalServerError)]
     [ProducesResponseType(StatusCodes.Status429TooManyRequests)]
@@ -121,12 +129,15 @@ public class AuthController : ApiController
     /// </remarks>
     /// <response code="200">Verification code sent successfully</response>
     /// <response code="400">Bad request - user already verified or cooldown active</response>
+    /// <response code="403">Invalid CSRF token</response>
+    /// <response code="410">Too many verification attempts </response>
     /// <response code="429">Too many requests - rate limit exceeded</response>
     /// <response code="500">Internal server error</response>
 
     [HttpPost(Router.AuthenticationRouter.ResendVerification)]
     [ProducesResponseType(typeof(Response<string>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(Response<string>), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(Response<string>), StatusCodes.Status403Forbidden)]
     [ProducesResponseType(typeof(Response<string>), StatusCodes.Status500InternalServerError)]
     [ProducesResponseType(StatusCodes.Status429TooManyRequests)]
     [ValidateCsrfToken]  // CSRF Protection
@@ -157,15 +168,17 @@ public class AuthController : ApiController
     /// <returns>Session token for verification step</returns>
     /// <response code="200">Reset code sent successfully</response>
     /// <response code="400">User not found or email not verified</response>
+    /// <response code="403">Invalid CSRF token</response>
     /// <response code="422">Validation error</response>
     /// <response code="429">Too many reset attempts</response>
     /// <response code="500">Internal server error</response>
 
     [HttpPost(Router.AuthenticationRouter.PasswordReset)]
-    [ProducesResponseType(typeof(Response<VerificationFlowResponse>), StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(Response<VerificationFlowResponse>), StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(typeof(Response<VerificationFlowResponse>), StatusCodes.Status422UnprocessableEntity)]
-    [ProducesResponseType(typeof(Response<VerificationFlowResponse>), StatusCodes.Status500InternalServerError)]
+    [ProducesResponseType(typeof(Response<bool>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(Response<bool>), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(Response<bool>), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(Response<bool>), StatusCodes.Status422UnprocessableEntity)]
+    [ProducesResponseType(typeof(Response<bool>), StatusCodes.Status500InternalServerError)]
     [ProducesResponseType(StatusCodes.Status429TooManyRequests)]
     [ValidateCsrfToken]  // CSRF Protection
 
@@ -198,15 +211,18 @@ public class AuthController : ApiController
     /// <returns>Authorization token for password reset</returns>
     /// <response code="200">Code verified successfully</response>
     /// <response code="400">Invalid or expired code</response>
+    /// <response code="403">Invalid CSRF token</response>
+    /// <response code="410">Too many verification attempts </response>
     /// <response code="422">Validation error</response>
     /// <response code="429">Too many Verification attempts</response>
     /// <response code="500">Internal server error</response>
-    /// 
 
     [HttpPost(Router.AuthenticationRouter.PasswordResetVerification)]
     [ProducesResponseType(typeof(Response<VerificationFlowResponse>), StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(Response<object>), StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(typeof(Response<object>), StatusCodes.Status500InternalServerError)]
+    [ProducesResponseType(typeof(Response<VerificationFlowResponse>), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(Response<VerificationFlowResponse>), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(Response<VerificationFlowResponse>), StatusCodes.Status410Gone)]
+    [ProducesResponseType(typeof(Response<VerificationFlowResponse>), StatusCodes.Status500InternalServerError)]
     [ProducesResponseType(StatusCodes.Status429TooManyRequests)]
     [ValidateCsrfToken]  // CSRF Protection
 
@@ -243,6 +259,7 @@ public class AuthController : ApiController
     /// <returns>Success confirmation</returns>
     /// <response code="200">Password reset successfully</response>
     /// <response code="400">Invalid token or weak password</response>
+    /// <response code="403">Invalid CSRF token</response>
     /// <response code="422">Validation error</response>
     /// <response code="500">Internal server error</response>
 
@@ -250,6 +267,7 @@ public class AuthController : ApiController
     [ProducesResponseType(typeof(Response<bool>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(Response<object>), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(typeof(Response<object>), StatusCodes.Status500InternalServerError)]
     [ProducesResponseType(StatusCodes.Status429TooManyRequests)]
     [Authorize(Policy = Policies.ResetPassword)]
@@ -282,6 +300,7 @@ public class AuthController : ApiController
     /// <returns>Success confirmation</returns>
     /// <response code="200">Reset code sent successfully</response>
     /// <response code="400">Invalid email or user not found</response>
+    /// <response code="403">Invalid CSRF token</response>
     /// <response code="422">Validation error</response>
     /// <response code="429">Too many reset attempts - rate limit exceeded</response>
     /// <response code="500">Internal server error</response>
@@ -289,12 +308,13 @@ public class AuthController : ApiController
     [HttpPost(Router.AuthenticationRouter.ResendPasswordReset)]
     [ProducesResponseType(typeof(Response<bool>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(Response<bool>), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(typeof(Response<bool>), StatusCodes.Status422UnprocessableEntity)]
     [ProducesResponseType(typeof(Response<bool>), StatusCodes.Status500InternalServerError)]
     [ProducesResponseType(StatusCodes.Status429TooManyRequests)]
     [ValidateCsrfToken]  // CSRF Protection
 
-    public async Task<IActionResult> ResendResetCode(ResendCodeDTO dto)
+    public async Task<IActionResult> ResendResetCode([FromBody] ResendCodeDTO dto)
     {
         var command = new ResendResetCodeCommand(dto);
         return await CommandExecutor.Execute(
@@ -390,6 +410,48 @@ public class AuthController : ApiController
     public IActionResult GetCsrfToken()
     {
         return Ok(new { message = "CSRF token set in cookie" });
+    }
+
+
+    /// <summary>
+    /// Validates current authentication token and returns user data
+    /// </summary>
+    /// <remarks>
+    /// This endpoint is used for:
+    /// - Initial app load verification
+    /// - Checking if user session is still valid
+    /// - Getting current user data (FirstName, LastName, ImagePath)
+    /// 
+    /// Note: Email, UserId, and Roles are already in JWT claims - 
+    /// frontend can extract them without calling this endpoint.
+    /// 
+    /// Authentication required via access token in httpOnly cookie.
+    /// 
+    /// Rate Limit: 20 requests per 5 minutes/user
+    /// (Higher limit since called on every app load)
+    /// 
+    /// Returns minimal user data if token is valid, otherwise returns 401.
+    /// </remarks>
+    /// <returns>User information not available in JWT claims</returns>
+    /// <response code="200">Token valid - returns user data</response>
+    /// <response code="401">Token invalid, expired, or missing</response>
+    /// <response code="429">Too many validation requests</response>
+    /// <response code="500">Internal server error</response>
+
+    [HttpGet(Router.AuthenticationRouter.TokenValidation)]
+    [ProducesResponseType(typeof(Response<TokenValidationResponseDTO>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(Response<TokenValidationResponseDTO>), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status429TooManyRequests)]
+    [ProducesResponseType(typeof(Response<TokenValidationResponseDTO>), StatusCodes.Status500InternalServerError)]
+    [Authorize(Policy = Policies.ValidToken)]
+    public async Task<IActionResult> ValidateToken()
+    {
+        var query = new ValidateTokenQuery();
+        return await CommandExecutor.Execute(
+            query,
+            Sender,
+            (Response<TokenValidationResponseDTO> response) => NewResult(response)
+        );
     }
 
 

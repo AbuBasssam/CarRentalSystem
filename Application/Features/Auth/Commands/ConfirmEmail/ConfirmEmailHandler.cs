@@ -75,16 +75,27 @@ public class ConfirmEmailCommandHandler : IRequestHandler<ConfirmEmailCommand, R
 
 
             // ========= 3. Validate OTP =========
-            var otpValidation = await _otpService.ValidateOtp(user.Id, request.dto.OtpCode, enOtpType.ConfirmEmail, cancellationToken);
-
-            if (!otpValidation.IsValid)
+            var otpValidationResult = await _otpService.ValidateOtp(user.Id, request.dto.OtpCode, enOtpType.ConfirmEmail, cancellationToken);
+            if (!otpValidationResult.IsValid)
             {
+                if (otpValidationResult.IsExceededMaxAttempts)
+                {
+                    await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-                await _unitOfWork.SaveChangesAsync(cancellationToken);
+                    await transaction.CommitAsync(cancellationToken);
+                    return _responseHandler.Gone<bool>(_localizer[SharedResourcesKeys.MaxAttemptsExceeded]);
 
-                await transaction.CommitAsync(cancellationToken);
+                }
+                else
+                {
 
-                return _responseHandler.BadRequest<bool>(_localizer[SharedResourcesKeys.InvalidExpiredCode]);
+                    await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+                    await transaction.CommitAsync(cancellationToken);
+
+                    return _responseHandler.BadRequest<bool>(_localizer[SharedResourcesKeys.InvalidExpiredCode]);
+
+                }
             }
 
             // ========= 4. Confirm Email =========
@@ -95,7 +106,7 @@ public class ConfirmEmailCommandHandler : IRequestHandler<ConfirmEmailCommand, R
 
 
             // ========= 5. Consume OTP =========
-            var otp = otpValidation.Otp!;
+            var otp = otpValidationResult.Otp!;
 
             otp.ForceExpire();
 

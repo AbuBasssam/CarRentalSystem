@@ -89,11 +89,24 @@ public class VerifyResetCodeHandler : IRequestHandler<VerifyResetCodeCommand, Re
 
             if (!otpValidationResult.IsValid)
             {
-                await _unitOfWork.SaveChangesAsync(cancellationToken);
+                if (otpValidationResult.IsExceededMaxAttempts)
+                {
+                    await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-                await transaction.CommitAsync(cancellationToken);
+                    await transaction.CommitAsync(cancellationToken);
+                    return _responseHandler.Gone<VerificationFlowResponse>(_localizer[SharedResourcesKeys.MaxAttemptsExceeded]);
 
-                return _responseHandler.BadRequest<VerificationFlowResponse>(_localizer[SharedResourcesKeys.InvalidExpiredCode]);
+                }
+                else
+                {
+
+                    await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+                    await transaction.CommitAsync(cancellationToken);
+
+                    return _responseHandler.BadRequest<VerificationFlowResponse>(_localizer[SharedResourcesKeys.InvalidExpiredCode]);
+
+                }
             }
 
 

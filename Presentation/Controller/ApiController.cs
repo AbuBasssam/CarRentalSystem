@@ -29,6 +29,7 @@ public abstract class ApiController : ControllerBase
             System.Net.HttpStatusCode.NotFound => new NotFoundObjectResult(response),
             System.Net.HttpStatusCode.Accepted => new AcceptedResult(string.Empty, response),
             System.Net.HttpStatusCode.UnprocessableEntity => new UnprocessableEntityObjectResult(response),
+            System.Net.HttpStatusCode.Gone => StatusCode(StatusCodes.Status410Gone, response),
             _ => new BadRequestObjectResult(response),
         };
     }
