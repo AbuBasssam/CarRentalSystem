@@ -1,9 +1,11 @@
-﻿using Microsoft.AspNetCore.Antiforgery;
+﻿using Application.Models;
+using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.Extensions.DependencyInjection;
 using Serilog;
+using System.Net;
 
 namespace Presentation.Filters;
 
@@ -35,24 +37,46 @@ public class ValidateCsrfTokenAttribute : Attribute, IAsyncActionFilter
             // Log the error for debugging assistance
             LogCsrfError(httpContext, ex);
 
-            // Return 403 Forbidden
-            context.Result =
-                new ObjectResult
-                (
-                    new
-                    {
-                        error = "Invalid CSRF token",
-                        message = ex.Message
-                    }
-                )
+            // Create unified error response
+            var responseModel = new Response<string>
+            {
+                Succeeded = false,
+                StatusCode = HttpStatusCode.Forbidden,
+                Message = "Invalid or missing CSRF token",
+                Errors = new List<string>
                 {
-                    StatusCode = StatusCodes.Status403Forbidden
-                };
+                    "CSRF token validation failed",
+                    ex.Message
+                }
+            };
+
+            // Set the result with proper status code
+            context.Result = new ObjectResult(responseModel)
+            {
+                StatusCode = StatusCodes.Status403Forbidden
+            };
+
         }
         catch (Exception e)
         {
 
             Log.Warning("[CSRF Validation Failed] {@ErrorDetails}", e.Message);
+            var responseModel = new Response<string>
+            {
+                Succeeded = false,
+                StatusCode = HttpStatusCode.Forbidden,
+                Message = "CSRF token validation error",
+                Errors = new List<string>
+                {
+                    "An error occurred while validating CSRF token"
+                }
+            };
+
+            context.Result = new ObjectResult(responseModel)
+            {
+                StatusCode = StatusCodes.Status403Forbidden
+            };
+
 
         }
     }

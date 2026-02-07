@@ -50,6 +50,7 @@ public class Otp : IEntity<int>
         LastAttemptAt = null;
     }
     public bool IsExpired() => DateTime.UtcNow >= ExpirationTime;
+    public void MarkAsUsed() => IsUsed = true;
     public void UpdateLastAttempt() => LastAttemptAt = DateTime.UtcNow;
 
     /// <summary>

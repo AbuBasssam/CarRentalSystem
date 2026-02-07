@@ -1,7 +1,8 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Application.Models;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Caching.Memory;
-using Serilog;
 using System.Net;
+using System.Text.Json;
 
 namespace PresentationLayer.Middleware;
 
@@ -51,22 +52,33 @@ public class GlobalRateLimitingMiddleware
 
         if (rateLimitEntry.Count > _maxRequestsPerPeriod)
         {
-            Log.Warning("Rate limit exceeded for {Identifier}.", identifier);
+            var retryAfterSeconds = (int)(rateLimitEntry.ExpiresAt - DateTime.UtcNow).TotalSeconds;
 
-            context.Response.StatusCode = StatusCodes.Status429TooManyRequests;
-
-            await context.Response.WriteAsync("Too Many Requests. Please try again later.");
-
-            var retryAfter = (int)(rateLimitEntry.ExpiresAt - DateTime.UtcNow).TotalSeconds;
-            context.Response.Headers["Retry-After"] = retryAfter.ToString();
-            context.Response.StatusCode = (int)HttpStatusCode.TooManyRequests;
-
-            await context.Response.WriteAsJsonAsync(new
+            // Create ApiResponse directly without ResponseHandler
+            var responseModel = new Response<string>
             {
-                statusCode = 429,
-                message = "Too many requests. Please try again later.",
-                retryAfterSeconds = retryAfter
-            });
+                StatusCode = HttpStatusCode.TooManyRequests,
+                Succeeded = false,
+                Message = "Too many requests. Please try again later.",
+                Errors = new List<string> { "Too many requests. Please try again later." },
+                Meta = new { retryAfterSeconds }
+            };
+
+            context.Response.StatusCode = (int)HttpStatusCode.TooManyRequests;
+            context.Response.Headers["Retry-After"] = retryAfterSeconds.ToString();
+            context.Response.ContentType = "application/json";
+
+            // Serialize with camelCase
+            var options = new JsonSerializerOptions
+            {
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                WriteIndented = false,
+                DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
+            };
+
+            var json = JsonSerializer.Serialize(responseModel, options);
+            await context.Response.WriteAsync(json);
+
             return;
         }
 

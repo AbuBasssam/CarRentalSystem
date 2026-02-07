@@ -59,9 +59,17 @@ public class OtpService : IOtpService
                 .GetLatestOtp(userId, otpType)
                 .FirstOrDefaultAsync(cancellationToken);
 
-            if (latestOtp == null || latestOtp.IsExpired())
+            if (latestOtp == null) return true;
+
+            if (latestOtp.IsExpired() && !latestOtp.IsUsed) // OTP is already expired but still marked as unused  
+            {
+
+                latestOtp.MarkAsUsed();
+                Log.Information($"Marked expired OTP as used for user {userId}, type {otpType}");
+
                 return true;
 
+            }
             // Expire and mark as used
             latestOtp.ForceExpire();
 

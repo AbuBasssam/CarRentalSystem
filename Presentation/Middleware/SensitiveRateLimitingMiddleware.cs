@@ -1,6 +1,9 @@
-﻿using Domain.AppMetaData;
+﻿using Application.Models;
+using Domain.AppMetaData;
 using Microsoft.AspNetCore.Http;
 using System.Collections.Concurrent;
+using System.Net;
+using System.Text.Json;
 using Timer = System.Threading.Timer;
 
 public class SensitiveRateLimitingMiddleware
@@ -19,16 +22,17 @@ public class SensitiveRateLimitingMiddleware
 
         { Normalize(Router.AuthenticationRouter.SignUp), (2, TimeSpan.FromHours(1)) },
 
-        { Normalize(Router.AuthenticationRouter.EmailConfirmation), (5, TimeSpan.FromMinutes(3)) },
+        { Normalize(Router.AuthenticationRouter.EmailConfirmation), (5, TimeSpan.FromMinutes(10)) },
         { Normalize(Router.AuthenticationRouter.PasswordReset), (5, TimeSpan.FromMinutes(15)) },
-        { Normalize(Router.AuthenticationRouter.PasswordResetVerification), (3, TimeSpan.FromMinutes(5)) },
+        { Normalize(Router.AuthenticationRouter.PasswordResetVerification), (5, TimeSpan.FromMinutes(10)) },
         { Normalize(Router.AuthenticationRouter.Password), (5, TimeSpan.FromMinutes(5)) },
 
         { Normalize(Router.AuthenticationRouter.ResendVerification), (5, TimeSpan.FromHours(24)) },
         { Normalize(Router.AuthenticationRouter.ResendPasswordReset), (5, TimeSpan.FromHours(24)) },
 
         { Normalize(Router.AuthenticationRouter.RefreshToken), (5, TimeSpan.FromMinutes(30)) },
-        { Normalize(Router.AuthenticationRouter.CSRF_Token), (20, TimeSpan.FromMinutes(5)) }
+        { Normalize(Router.AuthenticationRouter.CSRF_Token), (20, TimeSpan.FromMinutes(5)) },
+        { Normalize(Router.AuthenticationRouter.TokenValidation), (20, TimeSpan.FromMinutes(5)) }
 
     };
 
@@ -77,17 +81,36 @@ public class SensitiveRateLimitingMiddleware
             {
                 var retryAfterSeconds = (int)Math.Max(0, (entry.ResetTime - now).TotalSeconds);
 
+                // Create ApiResponse directly without ResponseHandler
+                var responseModel = new Response<string>
+                {
+                    StatusCode = HttpStatusCode.TooManyRequests,
+                    Succeeded = false,
+                    Message = "Too many attempts. A penalty has been applied to your wait time.",
+                    Errors = new List<string>
+                    {
+                        "Too many attempts. A penalty has been applied to your wait time."
+                    },
+                    Meta = new { retryAfterSeconds }
+                };
+
                 context.Response.StatusCode = StatusCodes.Status429TooManyRequests;
                 context.Response.Headers["Retry-After"] = retryAfterSeconds.ToString();
+                context.Response.ContentType = "application/json";
 
-                await context.Response.WriteAsJsonAsync(new
+                // Serialize with camelCase
+                var options = new JsonSerializerOptions
                 {
-                    statusCode = 429,
-                    succeeded = false,
-                    message = "Too many attempts. A penalty has been applied to your wait time.",
-                    retryAfter = retryAfterSeconds
-                });
+                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                    WriteIndented = false,
+                    DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
+                };
+
+                var json = JsonSerializer.Serialize(responseModel, options);
+                await context.Response.WriteAsync(json);
+
                 return;
+
             }
         }
 

@@ -33,18 +33,23 @@ public class HttpRequestContext : IRequestContext
     {
         get
         {
-            /*
+            string? headertoken = HeaderToken();
 
-            // Extract Bearer token from Authorization header
-            return Context?.Request.Headers["Authorization"]
-                .FirstOrDefault()?
-                .Replace("Bearer ", "", StringComparison.OrdinalIgnoreCase)
-                .Trim();
-            */
             // Extract token from Cookies
-            return Context?.Request.Cookies[Keys.Access_Token_Key];
+            return !string.IsNullOrEmpty(headertoken) ? headertoken : Context?.Request.Cookies[Keys.Access_Token_Key];
 
         }
+    }
+
+    private string? HeaderToken()
+    {
+
+
+        // Extract Bearer token from Authorization header
+        return Context?.Request.Headers["Authorization"]
+            .FirstOrDefault()?
+            .Replace("Bearer ", "", StringComparison.OrdinalIgnoreCase)
+            .Trim();
     }
 
     public string? ClientIP
