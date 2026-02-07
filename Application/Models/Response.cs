@@ -9,6 +9,12 @@ public class Response<T>
     public bool Succeeded { get; set; }
     public string? Message { get; set; }
     public List<string> Errors { get; set; } = null!;
+
+    /// <summary>
+    /// Field-specific validation errors
+    /// Key: field name, Value: error message
+    /// </summary>
+    public Dictionary<string, string>? ValidationErrors { get; set; }
     public T Data { get; set; } = default!;
 
 

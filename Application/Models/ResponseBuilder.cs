@@ -47,6 +47,11 @@ public class ResponseBuilder<T>
         _response.Errors = errors;
         return this;
     }
+    public ResponseBuilder<T> WithValidationErrors(Dictionary<string, string>? validationErrors)
+    {
+        _response.ValidationErrors = validationErrors;
+        return this;
+    }
 
     public Response<T> Build()
     {
