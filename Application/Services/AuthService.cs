@@ -60,7 +60,9 @@ public class AuthService : IAuthService
         // 4) Generate the JwtAuth for the user
         JwtAuthResult jwtAuthResult = new JwtAuthResult
         {
-            FullName = $"{User.FirstName} {User.LastName}"
+            FirstName = User.FirstName,
+            LastName = User.LastName,
+
         };
 
         // 5) Save AccessToken, TokenValidation In UserToken Table
