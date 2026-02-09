@@ -9,13 +9,17 @@ using Serilog;
 
 namespace Application.Features.AuthFeature;
 
+/// <summary>
+/// Handles token refresh requests with comprehensive security validations
+/// </summary>
 public class RefreshTokenHandler : IRequestHandler<RefreshTokenCommand, Response<JwtAuthResult>>
 {
     #region Fields
     private readonly IAuthService _authService;
     private readonly IUserService _userService;
     private readonly IRequestContext _requestContext;
-    private readonly IUserTokenRepository _refreshTokenRepo;
+    //private readonly IUserTokenRepository _refreshTokenRepo;
+    private readonly ITokenService _tokenService;
     private readonly IUnitOfWork _unitOfWork;
     private readonly ResponseHandler _responseHandler;
     private readonly IStringLocalizer<SharedResources> _localizer;
@@ -25,7 +29,7 @@ public class RefreshTokenHandler : IRequestHandler<RefreshTokenCommand, Response
     public RefreshTokenHandler(
         IAuthService authService,
         IUserService userService,
-        IUserTokenRepository refreshTokenRepo,
+        ITokenService tokenService,
         IUnitOfWork unitOfWork,
         ResponseHandler responseHandler,
         IStringLocalizer<SharedResources> localizer,
@@ -33,11 +37,11 @@ public class RefreshTokenHandler : IRequestHandler<RefreshTokenCommand, Response
     {
         _authService = authService;
         _userService = userService;
-        _refreshTokenRepo = refreshTokenRepo;
+        _tokenService = tokenService;
         _unitOfWork = unitOfWork;
         _responseHandler = responseHandler;
         _localizer = localizer;
-        this._requestContext = requestContext;
+        _requestContext = requestContext;
     }
     #endregion
 
@@ -46,53 +50,113 @@ public class RefreshTokenHandler : IRequestHandler<RefreshTokenCommand, Response
         RefreshTokenCommand request,
         CancellationToken cancellationToken)
     {
-        var userId = _requestContext.UserId!;
-        // Validate Refresh Token in database
+        //var userId = _requestContext.UserId;
         var refreshToken = _requestContext.RefreshToken;
+        //var jwtId = _requestContext.TokenJti;
 
+        // ===== Step 1: Validate Cookie Presence =====
         if (string.IsNullOrEmpty(refreshToken))
         {
-            Log.Warning("No refresh token provided in request for user {UserId}", userId);
+            Log.Warning(
+                "Refresh token missing in cookies for user with Email {email}",
+                request.Email
+            );
+            _tokenService.ClearTokenCookies();
+            return _responseHandler.Unauthorized<JwtAuthResult>(
+            );
+        }
+
+        // ===== Step 2: Validate User exists =====
+
+        var user = await _userService.GetUserByEmailAsync(request.Email).FirstOrDefaultAsync();
+
+        if (user == null)
+        {
+            await Task.Delay(Random.Shared.Next(100, 300));
+
+            _tokenService.ClearTokenCookies();
+
+            Log.Warning($"Refresh tokenattempted for non-existent email: {request.Email}");
             return _responseHandler.Unauthorized<JwtAuthResult>();
         }
+
+
+
+        // ===== Step 3: Database Token Validation =====
         var (refreshTokenEntity, validateException) = await _authService
-            .ValidateRefreshToken(userId.Value, refreshToken, _requestContext.TokenJti!);
+            .ValidateRefreshToken(user.Id, refreshToken);
 
         if (refreshTokenEntity == null)
         {
             Log.Warning(
                 "Invalid refresh token for user {UserId}: {Error}",
-                userId,
-                validateException?.Message
+                user.Id,
+                validateException?.Message ?? "Unknown error"
             );
+            _tokenService.ClearTokenCookies();
+            return _responseHandler.Unauthorized<JwtAuthResult>(
+                _localizer[SharedResourcesKeys.InvalidToken]
+            );
+        }
+
+        // ===== Step 4: 🚨 TOKEN REUSE DETECTION =====
+        if (refreshTokenEntity.IsUsed)
+        {
+            Log.Error(
+                "🚨 SECURITY ALERT: Token reuse detected! " +
+                "User: {UserId}, " +
+                "Originally used at: {UsedAt}, " +
+                "Reuse attempt at: {Now}",
+                user.Id,
+                refreshTokenEntity.RevokedAt ?? refreshTokenEntity.ExpiryDate,
+                DateTime.UtcNow
+            );
+
+            // Revoke ALL active sessions for this user
+            await _authService.LogoutFromAllDevices(user.Id);
+
+            _tokenService.ClearTokenCookies();
 
             return _responseHandler.Unauthorized<JwtAuthResult>();
         }
+
+
+
+
+        // ===== Step 4: Email Verification Check =====
+        if (!user.EmailConfirmed)
+        {
+            Log.Warning(
+                "Token refresh attempt for unverified email - User: {UserId}, Email: {Email}",
+                user.Id,
+                user.Email
+            );
+            _tokenService.ClearTokenCookies();
+            return _responseHandler.BadRequest<JwtAuthResult>(
+                _localizer[SharedResourcesKeys.EmailNotVerified]
+            );
+        }
+
+
+        // ===== Step 5: Token Rotation Mark old token as used and revoked =====
+
         refreshTokenEntity.Revoke();
         refreshTokenEntity.ForceExpire();
 
+        // ===== Step 6: Generate New Token Pair =====
+        var newJwtAuth = await _authService.GetJwtAuthForuser(user);
 
-
-
-
-        var user = await _userService.GetUserByIdAsync(userId.Value).FirstOrDefaultAsync();
-
-        // Step 11: Generate new token pair
-        var newJwtAuth = await _authService.GetJwtAuthForuser(user!);
-
-        // Step 12: Save changes
-        await _unitOfWork.SaveChangesAsync();
+        // ===== Step 7: Persist Changes =====
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
 
         Log.Information(
-            "Token refresh successful for user {UserId}. " +
-            "Old token {OldJti} revoked, new token generated.",
-            userId,
-            _requestContext.TokenJti
+            "Token refresh successful - " +
+            "User: {UserId}, Email: {Email}",
+            user.Id,
+            user.Email
         );
 
         return _responseHandler.Success(newJwtAuth);
     }
     #endregion
-
-
 }

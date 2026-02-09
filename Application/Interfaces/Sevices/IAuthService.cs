@@ -18,7 +18,7 @@ public interface IAuthService : IScopedService
     /// <summary>
     /// Validates a refresh token against the stored version in the database.
     /// </summary>
-    Task<(UserToken?, Exception?)> ValidateRefreshToken(int UserId, string refreshToken, string jwtId);
+    Task<(UserToken?, Exception?)> ValidateRefreshToken(int UserId, string refreshToken);
 
     /// <summary>
     /// Logout user by revoking their tokens

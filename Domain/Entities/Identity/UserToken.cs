@@ -16,6 +16,8 @@ public class UserToken : IEntity<int>
     public DateTime? ExpiryDate { get; private set; }
     public bool IsUsed { get; private set; }
     public bool IsRevoked { get; private set; }
+    public DateTime? RevokedAt { get; private set; }
+
 
     protected UserToken() { }
     private UserToken(int userId, string? refreshTokenHash, string jwtId, DateTime expiryDate)
@@ -67,9 +69,15 @@ public class UserToken : IEntity<int>
     public void MarkAsUsed() => IsUsed = true;
 
     /// <summary>
-    /// Revoke token explicitly (logout, security breach)
+    /// Revoke token explicitly with timestamp
+    /// Used for logout, security breach, or token rotation
     /// </summary>
-    public void Revoke() => IsRevoked = true;
+    public void Revoke()
+    {
+        IsRevoked = true;
+        RevokedAt = DateTime.UtcNow;
+
+    }
 
     /// <summary>
     /// Force token to expire immediately

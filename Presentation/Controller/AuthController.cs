@@ -380,13 +380,14 @@ public class AuthController : ApiController
     /// <response code="401">Invalid, expired, revoked, or reused token detected</response>
     /// <response code="400">User account locked or email not verified</response>
     /// <response code="422">Validation error - invalid token format</response>
+    /// <response code="403">Invalid CSRF token</response>
 
     [HttpPost(Router.AuthenticationRouter.RefreshToken)]
     [ProducesResponseType(typeof(Response<JwtAuthResult>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(Response<JwtAuthResult>), StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(typeof(Response<JwtAuthResult>), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(Response<JwtAuthResult>), StatusCodes.Status422UnprocessableEntity)]
-    [Authorize(Policy = Policies.ValidToken)]
+    [ValidateCsrfToken]
     public async Task<IActionResult> RefreshToken()
     {
         return await CommandExecutor.Execute(

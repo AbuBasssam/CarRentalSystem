@@ -89,40 +89,39 @@ public class AuthService : IAuthService
         return jwtAuthResult;
     }
 
-    public async Task<(UserToken?, Exception?)> ValidateRefreshToken(int UserId, string refreshToken, string jwtId)
+    public async Task<(UserToken?, Exception?)> ValidateRefreshToken(
+     int userId, string refreshToken)
     {
-
         var refreshTokenEntity = await _refreshTokenRepo
-            .GetTableAsTracking()
-            .FirstOrDefaultAsync(x =>
-                x.UserId == UserId &&
-                x.JwtId == jwtId &&
-                x.Type.Equals(enTokenType.AuthToken)
-            );
+            .GetActiveSessionTokenByUserId(userId, enTokenType.AuthToken)
+            .FirstOrDefaultAsync();
+
+
 
         if (refreshTokenEntity == null)
-            return (null, new SecurityTokenArgumentException(_Localizer[SharedResourcesKeys.NullRefreshToken]));
+            return (null, new SecurityTokenArgumentException(
+                _Localizer[SharedResourcesKeys.NullRefreshToken]));
 
 
         if (!BCrypt.Net.BCrypt.Verify(refreshToken, refreshTokenEntity.RefreshToken))
-            return (null, new SecurityTokenArgumentException(_Localizer[SharedResourcesKeys.InvalidToken]));
+            return (null, new SecurityTokenArgumentException(
+                _Localizer[SharedResourcesKeys.InvalidToken]));
 
-        if (refreshTokenEntity.ExpiryDate < DateTime.UtcNow)
+        //double-check
+        if (!refreshTokenEntity.IsExpired())
         {
             refreshTokenEntity.Revoke();
-            return (null, new SecurityTokenArgumentException(_Localizer[SharedResourcesKeys.RevokedRefreshToken]));
-        }
-        // Check if already revoked
-        if (refreshTokenEntity.IsRevoked)
-        {
             return (null, new SecurityTokenArgumentException(
-                _Localizer[SharedResourcesKeys.RevokedRefreshToken]
-            ));
+                _Localizer[SharedResourcesKeys.RevokedRefreshToken]));
         }
+
+        //double-check
+        if (refreshTokenEntity.IsRevoked)
+            return (null, new SecurityTokenArgumentException(
+                _Localizer[SharedResourcesKeys.RevokedRefreshToken]));
 
         return (refreshTokenEntity, null);
     }
-
 
     /// <summary>
     /// Logout user by revoking their access and refresh tokens
