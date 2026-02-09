@@ -103,7 +103,7 @@ public class ResponseHandler : ITransientService
             .Build();
     }
 
-    public Response<T> Gone<T>(string? message = null)
+    public Response<T> Gone<T>(string? message = null, object? meta = null)
     {
         var errorMessages = _ParseErrorMessages(message);
         var defaultMessage = _stringLocalizer[SharedResourcesKeys.NotFound];
@@ -113,6 +113,7 @@ public class ResponseHandler : ITransientService
             .WithSuccess(false)
             .WithMessage(errorMessages.Any() ? string.Join(", ", errorMessages) : defaultMessage)
             .WithErrors(errorMessages.Any() ? errorMessages : new List<string> { defaultMessage })
+            .WithMeta(meta)
             .Build();
     }
 

@@ -83,7 +83,9 @@ public class ConfirmEmailCommandHandler : IRequestHandler<ConfirmEmailCommand, R
                     await _unitOfWork.SaveChangesAsync(cancellationToken);
 
                     await transaction.CommitAsync(cancellationToken);
-                    return _responseHandler.Gone<bool>(_localizer[SharedResourcesKeys.MaxAttemptsExceeded]);
+                    var cooldownSeconds = (int)TimeSpan.FromMinutes(3).TotalSeconds;
+
+                    return _responseHandler.Gone<bool>(_localizer[SharedResourcesKeys.MaxAttemptsExceeded], new { cooldownSeconds });
 
                 }
                 else
