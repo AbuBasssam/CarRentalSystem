@@ -388,10 +388,10 @@ public class AuthController : ApiController
     [ProducesResponseType(typeof(Response<JwtAuthResult>), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(Response<JwtAuthResult>), StatusCodes.Status422UnprocessableEntity)]
     [ValidateCsrfToken]
-    public async Task<IActionResult> RefreshToken()
+    public async Task<IActionResult> RefreshToken([FromBody] RefreshTokenCommand command)
     {
         return await CommandExecutor.Execute(
-            new RefreshTokenCommand(),
+            command,
             Sender,
             (Response<JwtAuthResult> response) => NewResult(response)
         );

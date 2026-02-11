@@ -94,7 +94,7 @@ public class SensitiveRateLimitingMiddleware
                     Meta = new { retryAfterSeconds }
                 };
 
-                context.Response.StatusCode = StatusCodes.Status429TooManyRequests;
+                context.Response.StatusCode = (int)HttpStatusCode.TooManyRequests;
                 context.Response.Headers["Retry-After"] = retryAfterSeconds.ToString();
                 context.Response.ContentType = "application/json";
 
@@ -103,7 +103,6 @@ public class SensitiveRateLimitingMiddleware
                 {
                     PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
                     WriteIndented = false,
-                    DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
                 };
 
                 var json = JsonSerializer.Serialize(responseModel, options);

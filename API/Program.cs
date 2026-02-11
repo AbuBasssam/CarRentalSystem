@@ -85,7 +85,7 @@ builder.Services
 
 builder.Services
 .registerInfrastructureDependencies(builder.Configuration)
-.registerApplicationDependencies(builder.Configuration)
+.registerApplicationDependencies(builder.Configuration, builder.Environment.IsDevelopment())
 .registerPresentationDependencies(builder.Configuration);
 
 

@@ -29,11 +29,11 @@ public class ErrorHandlerMiddleware
         {
             await _next(context);
 
-            // Handle 403 Forbidden responses by converting to 401 Unauthorized
-            if (context.Response.StatusCode == (int)HttpStatusCode.Forbidden)
-            {
-                await HandleForbiddenResponse(context);
-            }
+            //// Handle 403 Forbidden responses by converting to 401 Unauthorized
+            //if (context.Response.StatusCode == (int)HttpStatusCode.Forbidden)
+            //{
+            //    await HandleForbiddenResponse(context);
+            //}
         }
         catch (Exception error)
         {

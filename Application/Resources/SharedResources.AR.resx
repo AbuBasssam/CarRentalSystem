@@ -303,4 +303,10 @@
   <data name="MaxAttemptsExceeded" xml:space="preserve">
     <value>تم تجاوز عدد المحاولات المسموح بها. الرجاء طلب رمز جديد.</value>
   </data>
+  <data name="Forbidden" xml:space="preserve">
+    <value>محظور</value>
+  </data>
+  <data name="MissingToken" xml:space="preserve">
+    <value>لم يتم توفير رمز المصادقة</value>
+  </data>
 </root>

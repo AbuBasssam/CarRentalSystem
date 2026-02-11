@@ -1,5 +1,6 @@
 ﻿using Application.Models;
 using ApplicationLayer.Resources;
+using Domain.Enums;
 using Interfaces;
 using MediatR;
 using Microsoft.Extensions.Localization;
@@ -49,7 +50,11 @@ public class LogoutHandler : IRequestHandler<LogoutCommand, Response<bool>>
 
         if (!contextResult.IsSuccess)
         {
-            return _responseHandler.Unauthorized<bool>();
+            return _responseHandler.Unauthorized<bool>(meta: new
+            {
+                errorCode = enErrorCode.InvalidToken.ToString(),
+                isRecoverable = false
+            });
         }
 
         var context = contextResult.Data;

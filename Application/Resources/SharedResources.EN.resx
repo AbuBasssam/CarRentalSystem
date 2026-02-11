@@ -303,4 +303,10 @@
   <data name="MaxAttemptsExceeded" xml:space="preserve">
     <value>Maximum verification attempts exceeded. Please request a new code.</value>
   </data>
+  <data name="Forbidden" xml:space="preserve">
+    <value>Forbidden</value>
+  </data>
+  <data name="MissingToken" xml:space="preserve">
+    <value>No authentication token provided</value>
+  </data>
 </root>

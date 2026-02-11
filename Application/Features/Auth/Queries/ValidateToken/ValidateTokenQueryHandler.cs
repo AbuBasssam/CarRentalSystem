@@ -1,5 +1,6 @@
 ﻿using Application.Models;
 using Domain.Entities;
+using Domain.Enums;
 using Interfaces;
 using MediatR;
 using Microsoft.AspNetCore.Identity;
@@ -73,7 +74,12 @@ public class ValidateTokenQueryHandler : IRequestHandler<ValidateTokenQuery, Res
 
                 Log.Warning("Token valid but user not found. UserId: {UserId}", userId);
 
-                return _responseHandler.Unauthorized<TokenValidationResponseDTO>();
+                return _responseHandler.Unauthorized<TokenValidationResponseDTO>(meta: new
+                {
+                    errorCode = enErrorCode.InvalidToken.ToString(),
+                    isRecoverable = false
+                });
+
             }
 
             // Build minimal response - frontend extracts other data from JWT

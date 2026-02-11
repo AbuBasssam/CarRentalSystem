@@ -1,5 +1,6 @@
 ﻿using Application.Models;
 using ApplicationLayer.Resources;
+using Domain.Enums;
 using Domain.HelperClasses;
 using Interfaces;
 using MediatR;
@@ -18,7 +19,6 @@ public class RefreshTokenHandler : IRequestHandler<RefreshTokenCommand, Response
     private readonly IAuthService _authService;
     private readonly IUserService _userService;
     private readonly IRequestContext _requestContext;
-    //private readonly IUserTokenRepository _refreshTokenRepo;
     private readonly ITokenService _tokenService;
     private readonly IUnitOfWork _unitOfWork;
     private readonly ResponseHandler _responseHandler;
@@ -26,14 +26,9 @@ public class RefreshTokenHandler : IRequestHandler<RefreshTokenCommand, Response
     #endregion
 
     #region Constructor
-    public RefreshTokenHandler(
-        IAuthService authService,
-        IUserService userService,
-        ITokenService tokenService,
-        IUnitOfWork unitOfWork,
-        ResponseHandler responseHandler,
-        IStringLocalizer<SharedResources> localizer,
-        IRequestContext requestContext)
+    public RefreshTokenHandler(IAuthService authService, IUserService userService, ITokenService tokenService,
+        IUnitOfWork unitOfWork, ResponseHandler responseHandler,
+        IStringLocalizer<SharedResources> localizer, IRequestContext requestContext)
     {
         _authService = authService;
         _userService = userService;
@@ -50,9 +45,7 @@ public class RefreshTokenHandler : IRequestHandler<RefreshTokenCommand, Response
         RefreshTokenCommand request,
         CancellationToken cancellationToken)
     {
-        //var userId = _requestContext.UserId;
         var refreshToken = _requestContext.RefreshToken;
-        //var jwtId = _requestContext.TokenJti;
 
         // ===== Step 1: Validate Cookie Presence =====
         if (string.IsNullOrEmpty(refreshToken))
@@ -62,7 +55,11 @@ public class RefreshTokenHandler : IRequestHandler<RefreshTokenCommand, Response
                 request.Email
             );
             _tokenService.ClearTokenCookies();
-            return _responseHandler.Unauthorized<JwtAuthResult>(
+            return _responseHandler.Unauthorized<JwtAuthResult>(meta: new
+            {
+                errorCode = enErrorCode.MissingToken.ToString(),
+                isRecoverable = false
+            }
             );
         }
 
@@ -77,7 +74,11 @@ public class RefreshTokenHandler : IRequestHandler<RefreshTokenCommand, Response
             _tokenService.ClearTokenCookies();
 
             Log.Warning($"Refresh tokenattempted for non-existent email: {request.Email}");
-            return _responseHandler.Unauthorized<JwtAuthResult>();
+            return _responseHandler.Unauthorized<JwtAuthResult>(meta: new
+            {
+                errorCode = enErrorCode.InvalidToken.ToString(),
+                isRecoverable = false
+            });
         }
 
 
@@ -95,7 +96,12 @@ public class RefreshTokenHandler : IRequestHandler<RefreshTokenCommand, Response
             );
             _tokenService.ClearTokenCookies();
             return _responseHandler.Unauthorized<JwtAuthResult>(
-                _localizer[SharedResourcesKeys.InvalidToken]
+                _localizer[SharedResourcesKeys.InvalidToken],
+                meta: new
+                {
+                    errorCode = enErrorCode.SessionExpired.ToString(),
+                    isRecoverable = false
+                }
             );
         }
 
@@ -117,7 +123,11 @@ public class RefreshTokenHandler : IRequestHandler<RefreshTokenCommand, Response
 
             _tokenService.ClearTokenCookies();
 
-            return _responseHandler.Unauthorized<JwtAuthResult>();
+            return _responseHandler.Unauthorized<JwtAuthResult>(meta: new
+            {
+                errorCode = enErrorCode.AccessDenied.ToString(),
+                isRecoverable = false
+            });
         }
 
 

@@ -2,6 +2,7 @@
 using Application.Models;
 using ApplicationLayer.Resources;
 using Domain.AppMetaData;
+using Domain.Enums;
 using Domain.HelperClasses;
 using FluentValidation;
 using Interfaces;
@@ -22,10 +23,10 @@ namespace Application;
 
 public static class DependencyInjection
 {
-    public static IServiceCollection registerApplicationDependencies(this IServiceCollection services, IConfiguration configuration)
+    public static IServiceCollection registerApplicationDependencies(this IServiceCollection services, IConfiguration configuration, bool isDevelopment)
     {
 
-        JWTAuthentication(services, configuration);
+        JWTAuthentication(services, configuration, isDevelopment);
 
         //ServicesRegisteration(services);
 
@@ -56,7 +57,7 @@ public static class DependencyInjection
         return services;
     }
 
-    private static void JWTAuthentication(IServiceCollection services, IConfiguration configuration)
+    private static void JWTAuthentication(IServiceCollection services, IConfiguration configuration, bool isDevelopment)
     {
         //JWT Authentication
         var jwtSection = configuration.GetSection("JwtSettings");
@@ -72,10 +73,10 @@ public static class DependencyInjection
 
         services
             .AddAuthentication(_authenticationInfo)
-            .AddJwtBearer(option => { _JwtBearerInfo(option, JwtSettings); });
+            .AddJwtBearer(option => { _JwtBearerInfo(option, JwtSettings, isDevelopment); });
     }
 
-    private static void _JwtBearerInfo(JwtBearerOptions option, JwtSettings JwtSettings)
+    private static void _JwtBearerInfo(JwtBearerOptions option, JwtSettings JwtSettings, bool isDevelopment)
     {
         var validationParameters = new TokenValidationParameters
         {
@@ -93,22 +94,103 @@ public static class DependencyInjection
 
 
         option.TokenValidationParameters = validationParameters;
-        option.Events = new JwtBearerEvents
+
+        option.Events = CreateJwtBearerEvents(isDevelopment);
+        // ============================================
+        // 🍪 COOKIE CONFIGURATION 
+        // ============================================
+        option.SaveToken = false;  // Don't save in Properties
+        option.RequireHttpsMetadata = !isDevelopment;  // HTTPS in production
+
+
+
+    }
+    private static JwtBearerEvents CreateJwtBearerEvents(bool isDevelopment)
+    {
+        return new JwtBearerEvents
         {
+            OnAuthenticationFailed = context =>
+            {
+                // Use .Append() to avoid ArgumentException if the key already exists
+                if (context.Exception is SecurityTokenExpiredException)
+                {
+                    context.Response.Headers["Token-Expired"] = "true";
+                    context.HttpContext.Items[Keys.Auth_Error_Metadata_Key] = new
+                    {
+                        ErrorCode = enErrorCode.TokenExpired,
+                        IsRecoverable = true // Frontend should attempt refresh
+                    };
+                    Console.WriteLine("🕐 JWT Token Expired - Recoverable");
+                }
+                else if (context.Exception is SecurityTokenInvalidSignatureException)
+                {
+                    context.Response.Headers["Token-Invalid-Signature"] = "true";
+
+
+                    context.HttpContext.Items[Keys.Auth_Error_Metadata_Key] = new
+                    {
+                        ErrorCode = enErrorCode.InvalidToken,
+                        IsRecoverable = false
+                    };
+                    Console.WriteLine("❌ JWT Invalid Signature - Not Recoverable");
+                }
+                else
+                {
+                    context.Response.Headers["Token-Invalid"] = "true";
+
+
+                    context.HttpContext.Items[Keys.Auth_Error_Metadata_Key] = new
+                    {
+                        ErrorCode = enErrorCode.InvalidToken,
+                        IsRecoverable = false
+                    };
+                    Console.WriteLine($"❌ JWT Error: {context.Exception.Message}");
+                }
+
+                return Task.CompletedTask;
+            },
+
+            OnChallenge = context =>
+            {
+                // Skip default 401 response to let CustomAuthorizationMiddlewareResultHandler handle it
+                context.HandleResponse();
+
+                if (!context.HttpContext.Items.ContainsKey(Keys.Auth_Error_Metadata_Key))
+                {
+                    context.HttpContext.Items[Keys.Auth_Error_Metadata_Key] = new
+                    {
+                        ErrorCode = enErrorCode.MissingToken,
+                        IsRecoverable = false
+                    };
+                }
+
+                return Task.CompletedTask;
+            },
+
+            OnForbidden = context =>
+            {
+                context.HttpContext.Items[Keys.Auth_Error_Metadata_Key] = new
+                {
+                    ErrorCode = enErrorCode.AccessDenied,
+                    IsRecoverable = false
+                };
+                Console.WriteLine("🔓 Access Denied - Insufficient Permissions");
+                return Task.CompletedTask;
+            },
+
             OnMessageReceived = context =>
             {
-                // أولاً: حاول قراءة من Authorization Header (للتوافق مع Swagger)
+                // 1. Try reading from Authorization Header (Standard/Swagger)
                 var token = context.Request.Headers["Authorization"]
                     .FirstOrDefault()?
                     .Replace("Bearer ", "", StringComparison.OrdinalIgnoreCase);
 
-                // ثانياً: إذا لم يوجد، اقرأ من Cookie
+                // 2. If not found, try reading from Cookie
                 if (string.IsNullOrEmpty(token))
                 {
                     token = context.Request.Cookies[Keys.Access_Token_Key];
                 }
 
-                // ضع الـ token في الـ context
                 if (!string.IsNullOrEmpty(token))
                 {
                     context.Token = token;
@@ -118,8 +200,9 @@ public static class DependencyInjection
             }
         };
 
-        /* option.Events = new JwtBearerEvents
-         {
+        /*// OnTokenValidated Event
+        option.Events = new JwtBearerEvents
+        {
              OnTokenValidated = async context =>
              {
                  // الحصول على Repository من DI
@@ -177,7 +260,6 @@ public static class DependencyInjection
                  // التوكن صالح، يمكن المتابعة
              }
          }*/
-        ;
     }
 
     private static void _authenticationInfo(AuthenticationOptions option)

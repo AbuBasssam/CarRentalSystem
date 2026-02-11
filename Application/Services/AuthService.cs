@@ -108,7 +108,7 @@ public class AuthService : IAuthService
                 _Localizer[SharedResourcesKeys.InvalidToken]));
 
         //double-check
-        if (!refreshTokenEntity.IsExpired())
+        if (refreshTokenEntity.IsExpired())
         {
             refreshTokenEntity.Revoke();
             return (null, new SecurityTokenArgumentException(

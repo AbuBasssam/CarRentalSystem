@@ -50,7 +50,7 @@ public class ResponseHandler : ITransientService
     #endregion
 
     #region Error Responses
-    public Response<T> Unauthorized<T>(string? message = null)
+    public Response<T> Unauthorized<T>(string? message = null, object? meta = null)
     {
         var errorMessages = _ParseErrorMessages(message);
         var defaultMessage = _stringLocalizer[SharedResourcesKeys.Unauthorized];
@@ -60,6 +60,7 @@ public class ResponseHandler : ITransientService
             .WithSuccess(false)
             .WithMessage(errorMessages.Any() ? string.Join(", ", errorMessages) : defaultMessage)
             .WithErrors(errorMessages.Any() ? errorMessages : new List<string> { defaultMessage })
+            .WithMeta(meta)
             .Build();
     }
 
@@ -77,7 +78,7 @@ public class ResponseHandler : ITransientService
             .Build();
     }
 
-    /*public Response<T> Forbidden<T>(string? message = null)
+    public Response<T> Forbidden<T>(string? message = null)
     {
         var errorMessages = _ParseErrorMessages(message);
         var defaultMessage = _stringLocalizer[SharedResourcesKeys.Forbidden];
@@ -89,7 +90,7 @@ public class ResponseHandler : ITransientService
             .WithErrors(errorMessages.Any() ? errorMessages : new List<string> { defaultMessage })
             .Build();
     }
-    */
+
     public Response<T> NotFound<T>(string? message = null)
     {
         var errorMessages = _ParseErrorMessages(message);

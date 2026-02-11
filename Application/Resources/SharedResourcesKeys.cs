@@ -7,6 +7,8 @@
         public const string Created = "Created";
         public const string Deleted = "Deleted";
         public const string Failed = "Failed";
+        public const string Forbidden = "Forbidden";
+
         #endregion
 
         #region HTTP Status Keys
@@ -114,6 +116,7 @@
         public const string ResetSessionExpired = "ResetSessionExpired";
         public const string AccessDenied = "AccessDenied";
         public const string MaxAttemptsExceeded = "MaxAttemptsExceeded";
+        public const string MissingToken = "MissingToken";
         #endregion
     }
 }
