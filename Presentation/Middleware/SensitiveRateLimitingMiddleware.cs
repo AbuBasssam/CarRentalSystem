@@ -79,23 +79,23 @@ public class SensitiveRateLimitingMiddleware
             // Check if limit exceeded
             if (entry.Count > rateLimit.Limit)
             {
-                var retryAfterSeconds = (int)Math.Max(0, (entry.ResetTime - now).TotalSeconds);
+                //var retryAfterSeconds = (int)Math.Max(0, (entry.ResetTime - now).TotalSeconds);
 
                 // Create ApiResponse directly without ResponseHandler
                 var responseModel = new Response<string>
                 {
                     StatusCode = HttpStatusCode.TooManyRequests,
                     Succeeded = false,
-                    Message = "Too many attempts. A penalty has been applied to your wait time.",
+                    Message = "Too many attempts.Please try again later",
                     Errors = new List<string>
                     {
-                        "Too many attempts. A penalty has been applied to your wait time."
+                        "Too many attempts.Please try again later."
                     },
-                    Meta = new { retryAfterSeconds }
+
                 };
 
                 context.Response.StatusCode = (int)HttpStatusCode.TooManyRequests;
-                context.Response.Headers["Retry-After"] = retryAfterSeconds.ToString();
+                //context.Response.Headers["Retry-After"] = retryAfterSeconds.ToString();
                 context.Response.ContentType = "application/json";
 
                 // Serialize with camelCase

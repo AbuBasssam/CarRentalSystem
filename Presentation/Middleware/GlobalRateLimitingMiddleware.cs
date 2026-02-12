@@ -52,7 +52,7 @@ public class GlobalRateLimitingMiddleware
 
         if (rateLimitEntry.Count > _maxRequestsPerPeriod)
         {
-            var retryAfterSeconds = (int)(rateLimitEntry.ExpiresAt - DateTime.UtcNow).TotalSeconds;
+            //var retryAfterSeconds = (int)(rateLimitEntry.ExpiresAt - DateTime.UtcNow).TotalSeconds;
 
             // Create ApiResponse directly without ResponseHandler
             var responseModel = new Response<string>
@@ -61,11 +61,10 @@ public class GlobalRateLimitingMiddleware
                 Succeeded = false,
                 Message = "Too many requests. Please try again later.",
                 Errors = new List<string> { "Too many requests. Please try again later." },
-                Meta = new { retryAfterSeconds }
             };
 
             context.Response.StatusCode = (int)HttpStatusCode.TooManyRequests;
-            context.Response.Headers["Retry-After"] = retryAfterSeconds.ToString();
+            //context.Response.Headers["Retry-After"] = retryAfterSeconds.ToString();
             context.Response.ContentType = "application/json";
 
             // Serialize with camelCase
