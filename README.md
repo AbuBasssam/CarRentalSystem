@@ -78,7 +78,7 @@ This project follows **Clean Architecture** with clear separation between layers
 - Sensitive data rate limiting
 - Token rotation on refresh
 - Automatic session cleanup
-
+  
 ## 🛠️ Technologies
 
 ### Backend
@@ -108,228 +108,64 @@ This project follows **Clean Architecture** with clear separation between layers
 - **Resource Files** - Shared resources management
 
 ## 📁 Project Structure
-
-```
+```text
 CarRentalSystem/
-├── API/                          # Web API Entry Point
-│   ├── Connected Services/
-│   ├── Dependencies/
-│   ├── Properties/
+├── CarRentalSystem.sln
+├── Directory.Build.props
+├── Directory.Packages.props
+├── .env.example
+├── API/                              # Host project (Web API startup)
+│   ├── Program.cs
 │   ├── API.http
 │   ├── appsettings.json
-│   └── Program.cs
-│
-├── Application/                  # Application Layer (Business Logic)
-│   ├── Dependencies/
+│   ├── appsettings.json.example
+│   └── Properties/launchSettings.json
+├── Application/                      # Use-cases, CQRS handlers, services, validations
 │   ├── Abstracts/
-│   │   └── LocalizePaginationQuery.cs
 │   ├── Behaviors/
-│   │   └── ValidationBehaviors.cs
 │   ├── Features/
 │   │   ├── Auth/
-│   │   │   ├── Commands/
-│   │   │   │   ├── ConfirmEmail/
-│   │   │   │   │   ├── ConfirmEmailCommand.cs
-│   │   │   │   │   ├── ConfirmEmailHandler.cs
-│   │   │   │   │   └── ConfirmEmailValidator.cs
-│   │   │   │   ├── Logout/
-│   │   │   │   │   ├── LogoutCommand.cs
-│   │   │   │   │   └── LogoutHandler.cs
-│   │   │   │   ├── RefreshToken/
-│   │   │   │   │   ├── RefreshTokenCommand.cs
-│   │   │   │   │   └── RefreshTokenHandler.cs
-│   │   │   │   ├── ResendResetCode/
-│   │   │   │   │   ├── ResendResetCodeCommand.cs
-│   │   │   │   │   ├── ResendResetCodeHandler.cs
-│   │   │   │   │   └── ResendResetCodeValidator.cs
-│   │   │   │   ├── ResendVerification/
-│   │   │   │   │   ├── ResendVerificationCodeCommand.cs
-│   │   │   │   │   ├── ResendVerificationCodeHandler.cs
-│   │   │   │   │   └── ResendVerificationCodeValidator.cs
-│   │   │   │   ├── ResetPassword/
-│   │   │   │   │   ├── ResetPasswordCommand.cs
-│   │   │   │   │   ├── ResetPasswordHandler.cs
-│   │   │   │   │   └── ResetPasswordValidator.cs
-│   │   │   │   ├── SendResetCode/
-│   │   │   │   │   ├── SendResetCodeCommand.cs
-│   │   │   │   │   ├── SendResetCodeHandler.cs
-│   │   │   │   │   └── SendResetCodeValidator.cs
-│   │   │   │   ├── SignIn/
-│   │   │   │   │   ├── SignInCommand.cs
-│   │   │   │   │   ├── SignInCommandHandler.cs
-│   │   │   │   │   └── SignInCommandValidator.cs
-│   │   │   │   ├── SignUp/
-│   │   │   │   │   ├── SignUpCommand.cs
-│   │   │   │   │   ├── SignUpCommandHandler.cs
-│   │   │   │   │   └── SignUpCommandValidator.cs
-│   │   │   │   └── VerifyResetCode/
-│   │   │   │       ├── VerifyResetCodeCommand.cs
-│   │   │   │       ├── VerifyResetCodeHandler.cs
-│   │   │   │       └── VerifyResetCodeValidator.cs
-│   │   │   └── DTOs/
-│   │   │       ├── ResendCodeDTO.cs
-│   │   │       └── VerificationDTO.cs
 │   │   └── Home/
-│   │       ├── Dtos/
-│   │       └── Queries/
-│   ├── Response/
-│   │   └── VerificationFlowResponse.cs
-│   ├── Validations/
-│   │   ├── LocalizePaginationValidator.cs
-│   │   ├── ValidationOtpResuult.cs
-│   │   └── ValidationRuleExtension.cs
-│   ├── Resources/
-│   │   ├── SharedResources.cs
-│   │   ├── SharedResources.AR.resx
-│   │   └── SharedResources.EN.resx
-│   ├── Models/
-│   │   ├── Response.cs
-│   │   ├── ResponseBuilder.cs
-│   │   ├── ResponseHandler.cs
-│   │   └── Result.cs
-│   ├── Services/
-│   │   ├── AuthService.cs
-│   │   ├── EmailService.cs
-│   │   ├── OtpService.cs
-│   │   ├── TokenValidationService.cs
-│   │   └── UserServices.cs
-│   ├── AssemblyReference.cs
-│   ├── DbUpdateExceptionHelper.cs
-│   ├── DependencyInjection.cs
-│   └── Helpers.cs
-│
-├── Domain/                       # Domain Layer (Core Business Entities)
-│   ├── AppMetaData/
-│   │   ├── Permissions.cs
-│   │   ├── Roles.cs
-│   │   └── Routers.cs
-│   ├── Entities/
-│   │   ├── Identity/
-│   │   │   ├── Role.cs
-│   │   │   ├── User.cs
-│   │   │   ├── UserRole.cs
-│   │   │   └── UserToken.cs
-│   │   └── Otp.cs
-│   ├── Enums/
-│   │   ├── enOtpType.cs
-│   │   └── enTokenType.cs
-│   ├── Exceptions/
-│   │   ├── BadRequestException.cs
-│   │   └── DomainException.cs
-│   ├── HelperClasses/
-│   │   ├── EmailSettings.cs
-│   │   ├── JwtAuthResult.cs
-│   │   ├── JwtSettings.cs
-│   │   └── RateLimitEntry.cs
 │   ├── Interfaces/
-│   │   └── IEntity.cs
-│   └── Security/
-│       ├── Claims/
-│       │   └── SessionTokenClaims.cs
-│       └── Models/
-│           └── UserClaimModel.cs
-│
-├── Infrastructure/               # Infrastructure Layer (Data Access & External Services)
-│   ├── Dependencies/
-│   ├── Context/
-│   │   └── AppDbContext.cs
-│   ├── EntitiesConfigurations/
-│   │   ├── Identity/
-│   │   │   ├── RoleConfig.cs
-│   │   │   ├── UserConfig.cs
-│   │   │   ├── UserRoleConfig.cs
-│   │   │   └── UserTokenConfig.cs
-│   │   └── OtpConfig.cs
-│   ├── Implementations/
-│   │   └── Repositories/
-│   │       ├── GenericRepository.cs
-│   │       ├── OtpRepository.cs
-│   │       ├── RefreshTokenRepository.cs
-│   │       ├── UnitOfWork.cs
-│   │       └── UserRepository.cs
-│   ├── Migrations/
-│   │   └── 20251230114856_Initial.cs
-│   ├── Seeder/
-│   │   ├── Role.cs
-│   │   └── User.cs
-│   ├── AssemblyReference.cs
-│   └── DependencyInjection.cs
-│
-├── Interfaces/                   # Shared Interfaces
-│   ├── Repositories/
-│   │   ├── IGenericRepository.cs
-│   │   ├── IOtpRepository.cs
-│   │   ├── IRefreshTokenRepository.cs
-│   │   ├── IUnitOfWork.cs
-│   │   └── IUserRepository.cs
-│   ├── Services/
-│   │   ├── IAuthService.cs
-│   │   ├── IEmailService.cs
-│   │   ├── IOtpService.cs
-│   │   ├── ITokenValidationService.cs
-│   │   └── IUserService.cs
 │   ├── Models/
-│   │   ├── Response.cs
-│   │   ├── ResponseBuilder.cs
-│   │   ├── ResponseHandler.cs
-│   │   └── Result.cs
 │   ├── Resources/
-│   │   ├── SharedResources.cs
-│   │   └── SharedResourcesKeys.cs
-│   ├── IRequestContext.cs
-│   └── IServiceLifetime.cs
-│
-├── Presentation/                 # Presentation Layer (API Controllers & Middleware)
-│   ├── Dependencies/
-│   ├── Authorization/
-│   │   ├── Handlers/
-│   │   │   ├── LogoutHandler.cs
-│   │   │   ├── PermissionAuthorizationHandler.cs
-│   │   │   ├── ResetPasswordHandler.cs
-│   │   │   └── ValidTokenHandler.cs
-│   │   ├── Providers/
-│   │   │   └── PermissionPolicyProvider.cs
-│   │   └── Requirements/
-│   │       ├── LogoutRequirement.cs
-│   │       ├── PermissionRequirement.cs
-│   │       ├── ResetPasswordRequirement.cs
-│   │       └── ValidTokenRequirement.cs
-│   ├── Constants/
-│   │   └── Policies.cs
-│   ├── Controller/
-│   │   ├── ApiController.cs
-│   │   └── AuthController.cs
-│   ├── Extensions/
-│   │   └── CommandExecutor.cs
-│   ├── Helpers/
-│   │   └── QueryExecutor.cs
-│   ├── Middleware/
-│   │   ├── ErrorHandlerMiddleware.cs
-│   │   ├── GlobalRateLimitingMiddleware.cs
-│   │   └── SensitiveRateLimitingMiddleware.cs
 │   ├── Services/
-│   │   └── HttpRequestContext.cs
-│   └── AssemblyReference.cs
-│
-└── Worker/                       # Background Services Layer
-    ├── Connected Services/
-    ├── Dependencies/
-    ├── Properties/
+│   ├── Validations/
+│   ├── DependencyInjection.cs
+│   └── Application.csproj
+├── Domain/                           # Core domain models and business constants
+│   ├── AppMetaData/
+│   ├── Entities/
+│   ├── Enums/
+│   ├── Exceptions/
+│   ├── HelperClasses/
+│   ├── Interfaces/
+│   ├── Security/
+│   └── Domain.csproj
+├── Infrastructure/                   # EF Core context, repositories, migrations, seeders
+│   ├── Context/
+│   ├── EntitiesConfigurations/
+│   ├── Implementations/
+│   ├── Migrations/
+│   ├── Seeder/
+│   ├── DependencyInjection.cs
+│   └── Infrastructure.csproj
+├── Presentation/                     # API surface: controllers, middleware, authorization
+│   ├── Authorization/
+│   ├── Controller/
+│   ├── Filters/
+│   ├── Helpers/
+│   ├── Middleware/
+│   ├── Services/
+│   ├── DependencyInjection.cs
+│   └── Presentation.csproj
+└── Worker/                           # Background worker host for cleanup jobs
     ├── BackgroundServices/
-    │   ├── AuthTokenCleanupService.cs
-    │   ├── OtpCleanupService.cs
-    │   ├── PasswordResetTokenCleanupService.cs
-    │   └── UnverifiedUserCleanupService.cs
     ├── Configuration/
-    │   ├── AuthTokenCleanupOptions.cs
-    │   ├── OtpCleanupOptions.cs
-    │   ├── PasswordResetTokenCleanupOptions.cs
-    │   └── UnverifiedUserCleanupOptions.cs
-    ├── appsettings.json
-    ├── CarRentalWorker.cs
+    ├── Program.cs
     ├── DependencyInjection.cs
-    ├── Helpers.cs
-    └── Program.cs
+    ├── appsettings.json
+    └── Worker.csproj
 ```
 
 ## 🚀 Getting Started
@@ -365,7 +201,7 @@ cd CarRentalSystem
     "Issuer": "CarRentalSystem",
     "Audience": "CarRentalUsers",
     "AccessTokenExpirationMinutes": 30,
-    "RefreshTokenExpirationDays": 7
+    "RefreshTokenExpirationDays": 5
   }
 }
 ```
