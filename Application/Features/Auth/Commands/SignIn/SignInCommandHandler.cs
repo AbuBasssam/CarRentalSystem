@@ -39,13 +39,15 @@ public class SignInCommandHandler : IRequestHandler<SignInCommand, Response<JwtA
         // Always fetch user (even if email doesn't exist)
         var user = await _userService.GetUserByEmailAsync(request.Email).FirstOrDefaultAsync();
 
-        var userNotExists = _UserNotExists(user);
+        var userNotExists = user is null;
 
+        // Create dummy user if not found
+        var userToCheck = user ?? _CreateDummyUser(request.Email);
         // Use a dummy Password hash for non-existent users to force constant-time comparison
         var passwordToCheck = userNotExists ? "dummy_password" : request.Password;
 
         // Always call CheckPasswordAsync (critical for timing attack protection)
-        var confirmedUser = await _IsConfirmedPassword(user!, passwordToCheck);
+        var confirmedUser = await _IsConfirmedPassword(userToCheck, passwordToCheck);
         var isValid = !userNotExists && confirmedUser.Succeeded;
 
         return isValid ?
@@ -57,7 +59,6 @@ public class SignInCommandHandler : IRequestHandler<SignInCommand, Response<JwtA
     #endregion
 
     #region Helpers Methods
-    private bool _UserNotExists(User? user) => user == null;
 
     private async Task<SignInResult> _IsConfirmedPassword(User user, string password) => await _userService.CheckPasswordAsync(user, password);
 
@@ -129,6 +130,17 @@ public class SignInCommandHandler : IRequestHandler<SignInCommand, Response<JwtA
         var jwtAuthResult = await _authService.GetJwtAuthForuser(user);
         return _responseHandler.Success(jwtAuthResult);
     }
+    private User _CreateDummyUser(string email)
+    {
+        return new User
+        {
+            FirstName = "Dummy",
+            LastName = "User",
+            UserName = email,
+            Email = email,
+        };
+    }
+
 
     #endregion
 
