@@ -58,5 +58,47 @@ public static class Router
     }
 
     #endregion
+    #region Admin Routes
+
+    public class BranchRouter
+    {
+        public const string BASE = _rule + "/branches";
+        public const string GetAll = BASE;
+        public const string GetById = BASE + _ById;
+        public const string Create = BASE;
+        public const string Update = BASE + _ById;
+        public const string Delete = BASE + _ById;
+        public const string Toggle = BASE + _ById + "/toggle-status";
+        public const string Query = BASE + _Query;
+
+    }
+
+    public class CategoryRouter
+    {
+        public const string BASE = _rule + "/categories";
+        public const string GetAll = BASE;
+        public const string GetById = BASE + _ById;
+        public const string Create = BASE;
+        public const string Update = BASE + _ById;
+        public const string Delete = BASE + _ById;
+        public const string Query = BASE + _Query;
+
+    }
+
+    public class CarRouter
+    {
+        public const string BASE = _rule + "/cars";
+        public const string GetAll = BASE;
+        public const string GetById = BASE + _ById;
+        public const string Create = BASE;
+        public const string Update = BASE + _ById;
+        public const string UpdateStatus = BASE + _ById + "/status";
+        public const string Transfer = BASE + _ById + "/transfer";
+        public const string Query = BASE + _Query;
+
+    }
+
+    #endregion
+
 
 }
