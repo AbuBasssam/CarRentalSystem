@@ -18,6 +18,13 @@ namespace Infrastructure
         {
         }
 
+        public DbSet<Branch> Branches { get; set; }
+        public DbSet<CarCategory> CarCategories { get; set; }
+        public DbSet<Car> Cars { get; set; }
+        public DbSet<CarImage> CarImages { get; set; }
+        public DbSet<CarBranchHistory> CarBranchHistories { get; set; }
+        public DbSet<RentalPolicy> RentalPolicies { get; set; }
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);

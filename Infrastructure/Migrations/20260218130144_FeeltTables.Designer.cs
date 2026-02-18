@@ -4,6 +4,7 @@ using Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260218130144_FeeltTables")]
+    partial class FeeltTables
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -139,8 +142,8 @@ namespace Infrastructure.Migrations
                     b.Property<int?>("PolicyOverrideId")
                         .HasColumnType("int");
 
-                    b.Property<byte>("TransmissionType")
-                        .HasColumnType("tinyint");
+                    b.Property<int>("TransmissionType")
+                        .HasColumnType("int");
 
                     b.Property<string>("VIN")
                         .IsRequired()
@@ -179,8 +182,6 @@ namespace Infrastructure.Migrations
 
                     b.ToTable("Cars", null, t =>
                         {
-                            t.HasCheckConstraint("CK_Cars_FleetConditionStatus", "FleetConditionStatus>0 AND FleetConditionStatus<=3 ");
-
                             t.HasCheckConstraint("CK_Cars_FuelType", "FuelType>0 AND FuelType<=4 ");
 
                             t.HasCheckConstraint("CK_Cars_Mileage", "KmMileage >= 0");
@@ -188,8 +189,6 @@ namespace Infrastructure.Migrations
                             t.HasCheckConstraint("CK_Cars_PlateNumberAR", "PlateNumberAR LIKE N'[ء-ي] [ء-ي] [ء-ي] [0-9][0-9][0-9][0-9]'");
 
                             t.HasCheckConstraint("CK_Cars_PlateNumberEN", "PlateNumberEN LIKE '[A-Z][A-Z][A-Z] [0-9][0-9][0-9][0-9]'");
-
-                            t.HasCheckConstraint("CK_Cars_TransmissionType", "TransmissionType>0 AND TransmissionType<=2 ");
 
                             t.HasCheckConstraint("CK_Cars_VIN", "LEN(VIN) = 17 AND VIN NOT LIKE N'%[^A-HJ-NPR-Z0-9]%'");
                         });
