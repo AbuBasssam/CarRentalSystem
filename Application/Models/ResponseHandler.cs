@@ -47,6 +47,17 @@ public class ResponseHandler : ITransientService
             .WithMessage(message ?? _stringLocalizer[SharedResourcesKeys.Deleted])
             .Build();
 
+    /// <summary>
+    /// Returns a paginated success response.
+    /// Wraps PaginatedResult inside the standard Response envelope.
+    /// </summary>
+    public Response<PaginatedResult<T>> Paginated<T>(PaginatedResult<T> result) where T : class
+        => new ResponseBuilder<PaginatedResult<T>>()
+            .WithStatusCode(HttpStatusCode.OK)
+            .WithSuccess(true)
+            .WithMessage(_stringLocalizer[SharedResourcesKeys.Success])
+            .WithData(result)
+            .Build();
     #endregion
 
     #region Error Responses
