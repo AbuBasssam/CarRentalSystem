@@ -26,6 +26,7 @@ public class Car : IEntity<int>
     public int CurrentBranchId { get; set; }
     public int CategoryId { get; set; }
     public int? PolicyOverrideId { get; set; }
+    public DateTime CreatedAt { get; set; }
 
 
     // Navigation Properties

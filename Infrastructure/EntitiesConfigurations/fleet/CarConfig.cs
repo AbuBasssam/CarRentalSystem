@@ -69,6 +69,8 @@ public class CarConfig : IEntityTypeConfiguration<Car>
 
         builder.Property(x => x.EngineCapacity).IsRequired();
 
+        builder.Property(x => x.CreatedAt).IsRequired();
+
         // Unique Constraints
         builder.HasIndex(x => x.VIN).IsUnique();
         builder.HasIndex(x => x.PlateNumberEN).IsUnique();

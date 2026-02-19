@@ -7,6 +7,7 @@ public class CarCategory : IEntity<int>
     public int Id { get; set; }
     public string NameEN { get; set; } = null!;
     public string NameAR { get; set; } = null!;
+    public string? Description { get; set; } = null!;
 
     //Specifies whether the booking requires a specific car (Luxury) or any car within the category.
     public bool IsModelSpecific { get; set; }
@@ -21,7 +22,8 @@ public class CarCategory : IEntity<int>
 
     // Foreign Key
     public int PolicyId { get; set; }
-
+    public bool IsActive { get; set; }
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
     // Navigation Properties
     public virtual RentalPolicy Policy { get; set; } = null!;
