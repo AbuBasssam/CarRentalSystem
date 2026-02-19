@@ -143,6 +143,7 @@ using (var scope = app.Services.CreateScope())
     var DbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     await RoleSeeder.SeedAsync(roleManager);
     await UserSeeder.SeedAsync(userManager);
+    await FleetSeeder.SeedAsync(DbContext);
 
 
 
