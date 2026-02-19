@@ -131,8 +131,9 @@ public class GenericRepository<T, TKey> : IGenericRepository<T, TKey> where T : 
     /// Results are ordered by the entity ID and retrieved without change tracking.
     /// </summary>
     /// <param name="PageNumber">The page index to retrieve (defaults to 1).</param>
-    /// <returns>An IQueryable representing the requested page with a fixed size of 10 records.</returns>
-    public virtual IQueryable<T> GetPage(int PageNumber = 1)
+    /// <param name="pageSize">The page size to retrieve (defaults to 10).</param>
+    /// <returns>An IQueryable representing the requested page.</returns>
+    public virtual IQueryable<T> GetPage(int PageNumber = 1, int pageSize = 10)
     {
         return _dbSet.AsNoTracking()
             .OrderBy(x => x.Id)

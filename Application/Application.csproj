@@ -21,6 +21,7 @@
     <ProjectReference Include="..\Domain\Domain.csproj" />
   </ItemGroup>
   <ItemGroup>
+    <Folder Include="Features\Branches\Commands\" />
     <Folder Include="Features\Home\Dtos\" />
     <Folder Include="Features\Home\Queries\" />
   </ItemGroup>

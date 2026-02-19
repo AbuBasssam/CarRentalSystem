@@ -5,7 +5,7 @@ public interface IGenericRepository<T, TKey> : IScopedService where T : class, I
     IQueryable<T> GetByIdAsync(TKey id);
     IQueryable<T> GetTableNoTracking();
     IQueryable<T> GetTableAsTracking();
-    IQueryable<T> GetPage(int PageNumber = 1);
+    IQueryable<T> GetPage(int PageNumber = 1, int pageSize = 10);
 
     Task<bool> IsExistsByIdAsync(TKey id);
     Task<TKey> AddAsync(T entity);
