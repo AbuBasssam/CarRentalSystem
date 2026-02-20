@@ -83,6 +83,7 @@ public class BranchesController : ApiController
     /// <response code="400">Branch has cars — cannot delete</response>
     /// <response code="404">Branch not found</response>
     /// <response code="500">Internal Server error</response>
+
     [HttpDelete(Router.BranchRouter.Delete)]
     [ProducesResponseType(typeof(Response<bool>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(Response<bool>), StatusCodes.Status400BadRequest)]
@@ -92,4 +93,18 @@ public class BranchesController : ApiController
     public async Task<IActionResult> Delete([FromRoute] int Id)
         => await CommandExecutor.Execute(new DeleteBranchCommand(Id), Sender, (Response<bool> r) => NewResult(r));
 
+    /// <summary>
+    /// Toggles branch active status (Active ↔ Inactive)
+    /// </summary>
+    /// <response code="200">Returns new status (true = Active)</response>
+    /// <response code="404">Branch not found</response>
+    /// <response code="500">Internal Server error</response>
+
+    [HttpPatch(Router.BranchRouter.Toggle)]
+    [ProducesResponseType(typeof(Response<bool>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(Response<bool>), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(Response<bool>), StatusCodes.Status500InternalServerError)]
+
+    public async Task<IActionResult> Toggle([FromRoute] int Id)
+      => await CommandExecutor.Execute(new ToggleBranchStatusCommand(Id), Sender, (Response<bool> r) => NewResult(r));
 }
