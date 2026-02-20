@@ -15,6 +15,7 @@ public class BranchesController : ApiController
     /// Returns paginated list of all branches
     /// </summary>
     /// <response code="200">Paginated branch list</response>
+
     [HttpGet(Router.BranchRouter.BASE)]
     [ProducesResponseType(typeof(Response<PaginatedResult<BranchSummaryDTO>>), StatusCodes.Status200OK)]
     public async Task<IActionResult> Get([FromQuery] GetBranchesQuery query)
@@ -25,6 +26,7 @@ public class BranchesController : ApiController
     /// </summary>
     /// <response code="200">Branch details</response>
     /// <response code="404">Branch not found</response>
+
     [HttpGet(Router.BranchRouter.GetById)]
     [ProducesResponseType(typeof(Response<BranchDetailsDTO>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(Response<BranchDetailsDTO>), StatusCodes.Status404NotFound)]
@@ -41,6 +43,7 @@ public class BranchesController : ApiController
     /// <response code="201">Branch created — returns new branch ID</response>
     /// <response code="422">Validation error</response>
     /// <response code="500">Internal Server error</response>
+
     [HttpPost(Router.BranchRouter.Create)]
     [ProducesResponseType(typeof(Response<int>), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(Response<int>), StatusCodes.Status422UnprocessableEntity)]
@@ -51,5 +54,27 @@ public class BranchesController : ApiController
             Sender,
             (Response<int> r) => NewResult(r)
         );
+
+    /// <summary>
+    /// Updates an existing branch
+    /// </summary>
+    /// <response code="200">Branch updated</response>
+    /// <response code="404">Branch not found</response>
+    /// <response code="422">Validation error</response>
+    /// <response code="500">Internal Server error</response>
+
+    [HttpPut(Router.BranchRouter.Update)]
+    [ProducesResponseType(typeof(Response<bool>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(Response<bool>), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(Response<bool>), StatusCodes.Status422UnprocessableEntity)]
+    [ProducesResponseType(typeof(Response<bool>), StatusCodes.Status500InternalServerError)]
+
+    public async Task<IActionResult> Put([FromRoute] int Id, [FromBody] UpdateBranchDTO dto)
+        => await CommandExecutor.Execute(
+            new UpdateBranchCommand(Id, dto),
+            Sender,
+            (Response<bool> r) => NewResult(r)
+        );
+
 
 }
