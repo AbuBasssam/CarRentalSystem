@@ -3,9 +3,9 @@ using FluentValidation;
 
 namespace Application.Validations;
 
-public abstract class LocalizePaginationValidator<T> : AbstractValidator<T> where T : LocalizePaginationQuery
+public abstract class PaginationValidator<T> : AbstractValidator<T> where T : PaginationQuery
 {
-    protected LocalizePaginationValidator()
+    protected PaginationValidator()
     {
 
 

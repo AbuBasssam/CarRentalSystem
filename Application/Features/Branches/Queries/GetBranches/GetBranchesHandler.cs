@@ -1,7 +1,7 @@
-﻿using Application.Models;
+﻿using Application.Extensions;
+using Application.Models;
 using Interfaces;
 using MediatR;
-using Microsoft.EntityFrameworkCore;
 
 namespace Application.Features.Branches;
 
@@ -32,29 +32,23 @@ public class GetBranchesHandler
     {
         bool isAr = _requestContext.Language == "ar";
 
-
-        var totalCount = await _branchRepository
+        var (data, totalCount) = await _branchRepository
             .GetTableNoTracking()
-            .OrderBy(b => b.Id)
-            .CountAsync(cancellationToken);
-
-        var data = await _branchRepository
-            .GetPage(request.PageNumber, request.PageSize)
-            .Select(b => new BranchSummaryDTO
-            {
-                Id = b.Id,
-                Name = isAr ? b.NameAR : b.NameEN,
-                City = isAr ? b.CityAR : b.CityEN,
-                IsActive = b.IsActive
-            })
-            .ToListAsync(cancellationToken);
+            .ApplyFilterAndSort(request)
+            .ToPaginatedAsync(
+                request.PageNumber,
+                request.PageSize,
+                b => new BranchSummaryDTO
+                {
+                    Id = b.Id,
+                    Name = isAr ? b.NameAR : b.NameEN,
+                    City = isAr ? b.CityAR : b.CityEN,
+                    IsActive = b.IsActive
+                },
+                cancellationToken);
 
         var result = PaginatedResult<BranchSummaryDTO>.Success(
-            data,
-            totalCount,
-            request.PageNumber,
-            request.PageSize
-        );
+            data, totalCount, request.PageNumber, request.PageSize);
 
         return _responseHandler.Paginated(result);
     }

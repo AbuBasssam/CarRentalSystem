@@ -1,4 +1,4 @@
-﻿using Application.Validations;
+﻿using Application.Extensions;
 using ApplicationLayer.Resources;
 using FluentValidation;
 using Microsoft.Extensions.Localization;

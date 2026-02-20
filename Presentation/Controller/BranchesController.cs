@@ -15,9 +15,9 @@ public class BranchesController : ApiController
     /// Returns paginated list of all branches
     /// </summary>
     /// <response code="200">Paginated branch list</response>
-    [HttpGet(Router.BranchRouter.GetAll)]
+    [HttpGet(Router.BranchRouter.BASE)]
     [ProducesResponseType(typeof(Response<PaginatedResult<BranchSummaryDTO>>), StatusCodes.Status200OK)]
-    public async Task<IActionResult> GetAll([FromQuery] GetBranchesQuery query)
+    public async Task<IActionResult> Get([FromQuery] GetBranchesQuery query)
         => await CommandExecutor.Execute(query, Sender, (Response<PaginatedResult<BranchSummaryDTO>> r) => NewResult(r));
 
     /// <summary>
@@ -34,6 +34,7 @@ public class BranchesController : ApiController
             Sender,
             (Response<BranchDetailsDTO> r) => NewResult(r)
         );
+
 
 
 }

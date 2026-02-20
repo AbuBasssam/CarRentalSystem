@@ -1,5 +1,5 @@
+using Application.Extensions;
 using Application.Features.AuthFeature;
-using Application.Validations;
 using ApplicationLayer.Resources;
 using FluentValidation;
 using Microsoft.Extensions.Localization;

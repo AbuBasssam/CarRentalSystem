@@ -2,7 +2,7 @@
 using FluentValidation;
 using Microsoft.Extensions.Localization;
 
-namespace Application.Validations;
+namespace Application.Extensions;
 
 public static class ValidationRuleExtension
 {
