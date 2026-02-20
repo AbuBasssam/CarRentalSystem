@@ -118,5 +118,11 @@
         public const string MaxAttemptsExceeded = "MaxAttemptsExceeded";
         public const string MissingToken = "MissingToken";
         #endregion
+        #region Fleet Management
+        // Branch
+        public const string InvalidLatitude = "InvalidLatitude";
+        public const string InvalidLongitude = "InvalidLongitude";
+        public const string InvalidId = "InvalidId";
+        #endregion
     }
 }

@@ -35,6 +35,21 @@ public class BranchesController : ApiController
             (Response<BranchDetailsDTO> r) => NewResult(r)
         );
 
-
+    /// <summary>
+    /// Creates a new branch
+    /// </summary>
+    /// <response code="201">Branch created — returns new branch ID</response>
+    /// <response code="422">Validation error</response>
+    /// <response code="500">Internal Server error</response>
+    [HttpPost(Router.BranchRouter.Create)]
+    [ProducesResponseType(typeof(Response<int>), StatusCodes.Status201Created)]
+    [ProducesResponseType(typeof(Response<int>), StatusCodes.Status422UnprocessableEntity)]
+    [ProducesResponseType(typeof(Response<int>), StatusCodes.Status500InternalServerError)]
+    public async Task<IActionResult> Post([FromBody] CreateBranchDTO dto)
+        => await CommandExecutor.Execute(
+            new CreateBranchCommand(dto),
+            Sender,
+            (Response<int> r) => NewResult(r)
+        );
 
 }

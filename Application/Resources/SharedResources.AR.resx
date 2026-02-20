@@ -309,4 +309,13 @@
   <data name="MissingToken" xml:space="preserve">
     <value>لم يتم توفير رمز المصادقة</value>
   </data>
+  <data name="InvalidLatitude" xml:space="preserve">
+    <value>إحداثي أفقي غير صالح</value>
+  </data>
+  <data name="InvalidLongitude" xml:space="preserve">
+    <value>إحداثي رأسي غير صالح</value>
+  </data>
+  <data name="InvalidId" xml:space="preserve">
+    <value>معرف غير صالح</value>
+  </data>
 </root>
