@@ -105,6 +105,6 @@ public class BranchesController : ApiController
     [ProducesResponseType(typeof(Response<bool>), StatusCodes.Status404NotFound)]
     [ProducesResponseType(typeof(Response<bool>), StatusCodes.Status500InternalServerError)]
 
-    public async Task<IActionResult> Toggle([FromRoute] int Id, [FromBody] bool activeStatus)
-      => await CommandExecutor.Execute(new ToggleBranchStatusCommand(Id, activeStatus), Sender, (Response<bool> r) => NewResult(r));
+    public async Task<IActionResult> Toggle([FromRoute] int Id, [FromBody] ToggleStatusRequest activeStatus)
+      => await CommandExecutor.Execute(new ToggleBranchStatusCommand(Id, activeStatus.ActiveStatus), Sender, (Response<bool> r) => NewResult(r));
 }
