@@ -94,7 +94,7 @@ public class BranchesController : ApiController
         => await CommandExecutor.Execute(new DeleteBranchCommand(Id), Sender, (Response<bool> r) => NewResult(r));
 
     /// <summary>
-    /// Toggles branch active status (Active ↔ Inactive)
+    /// Change branch active status (Active ↔ Inactive)
     /// </summary>
     /// <response code="200">Returns new status (true = Active)</response>
     /// <response code="404">Branch not found</response>
@@ -105,6 +105,6 @@ public class BranchesController : ApiController
     [ProducesResponseType(typeof(Response<bool>), StatusCodes.Status404NotFound)]
     [ProducesResponseType(typeof(Response<bool>), StatusCodes.Status500InternalServerError)]
 
-    public async Task<IActionResult> Toggle([FromRoute] int Id)
-      => await CommandExecutor.Execute(new ToggleBranchStatusCommand(Id), Sender, (Response<bool> r) => NewResult(r));
+    public async Task<IActionResult> Toggle([FromRoute] int Id, [FromBody] bool activeStatus)
+      => await CommandExecutor.Execute(new ToggleBranchStatusCommand(Id, activeStatus), Sender, (Response<bool> r) => NewResult(r));
 }

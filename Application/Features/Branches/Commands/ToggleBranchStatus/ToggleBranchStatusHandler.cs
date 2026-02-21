@@ -43,9 +43,8 @@ public class ToggleBranchStatusHandler : IRequestHandler<ToggleBranchStatusComma
                 Log.Error(messageTemplate: "Trying to change non-existent branch status with Id:{Id} by {userAgent}.", request.Id, _requestContext.UserAgent);
                 return _responseHandler.NotFound<bool>();
             }
-            branch.IsActive = !branch.IsActive;
+            branch.IsActive = request.ActiveStatus;
 
-            _branchRepository.Update(branch);
             await _unitOfWork.SaveChangesAsync(cancellationToken);
 
             return _responseHandler.Success(branch.IsActive);
