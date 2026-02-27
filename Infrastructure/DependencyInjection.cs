@@ -1,5 +1,6 @@
 ﻿using Domain.Entities;
 using Implementations;
+using Infrastructure.Interceptors;
 using Infrastructure.Repositories;
 using Interfaces;
 using Microsoft.EntityFrameworkCore;
@@ -30,12 +31,13 @@ public static class DependencyInjection
     }
     private static void DbContextRegisteration(IServiceCollection services, IConfiguration configuration)
     {
+        services.AddScoped<AuditInterceptor>();
 
-        services.AddDbContext<AppDbContext>(options =>
+        services.AddDbContext<AppDbContext>((serviceProvider, options) =>
         options
         .UseLazyLoadingProxies()
         .UseSqlServer(configuration.GetConnectionString("DefaultConnection"))
-        );
+        .AddInterceptors(serviceProvider.GetRequiredService<AuditInterceptor>()));
     }
     private static void IdentityRegisteration(IServiceCollection services)
     {
