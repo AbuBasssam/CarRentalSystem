@@ -43,10 +43,10 @@ public class GetBranchesQuery : FilterQuery,
         // Unknown / missing keys fall back to Id so the result is always deterministic.
         return SortBy?.ToLower() switch
         {
-            "name" => query.OrderByDirection(b => b.NameEN, IsDescending),
-            "city" => query.OrderByDirection(b => b.CityEN, IsDescending),
-            "active" => query.OrderByDirection(b => b.IsActive, IsDescending),
-            _ => query.OrderByDirection(b => b.Id, IsDescending)
+            "name" => query.OrderByDirection(b => b.NameEN, IsDescending()),
+            "city" => query.OrderByDirection(b => b.CityEN, IsDescending()),
+            "active" => query.OrderByDirection(b => b.IsActive, IsDescending()),
+            _ => query.OrderByDirection(b => b.Id, IsDescending())
         };
     }
 }
