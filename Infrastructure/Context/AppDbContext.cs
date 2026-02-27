@@ -24,6 +24,8 @@ namespace Infrastructure
         public DbSet<CarImage> CarImages { get; set; }
         public DbSet<CarBranchHistory> CarBranchHistories { get; set; }
         public DbSet<RentalPolicy> RentalPolicies { get; set; }
+        public DbSet<AuditLog> AuditLogs { get; set; }
+
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
