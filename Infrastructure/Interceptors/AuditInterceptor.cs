@@ -61,7 +61,7 @@ public class AuditInterceptor : SaveChangesInterceptor
             if (excludedProperties.Contains(propertyName))
                 continue;
 
-            // لا نريد Navigation Properties
+            // Except  Navigation Properties
             if (property.Metadata.IsPrimaryKey())
                 continue;
 
