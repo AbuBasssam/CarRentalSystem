@@ -13,6 +13,8 @@ public class UpdateBranchHandler : IRequestHandler<UpdateBranchCommand, Response
     private readonly IBranchRepository _branchRepository;
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;
+    private readonly IRequestContext _requestContext;
+
     private readonly ResponseHandler _responseHandler;
     #endregion
 
@@ -21,12 +23,16 @@ public class UpdateBranchHandler : IRequestHandler<UpdateBranchCommand, Response
         IBranchRepository branchRepository,
         IUnitOfWork unitOfWork,
         IMapper mapper,
+        IRequestContext requestContext,
         ResponseHandler responseHandler)
+
+
     {
         _branchRepository = branchRepository;
         _unitOfWork = unitOfWork;
         _mapper = mapper;
         _responseHandler = responseHandler;
+        _requestContext = requestContext;
     }
     #endregion
 
@@ -42,8 +48,10 @@ public class UpdateBranchHandler : IRequestHandler<UpdateBranchCommand, Response
             if (branch is null)
                 return _responseHandler.NotFound<bool>();
 
+            Log.Information("User {UserId} attempted to update Branch {Id}", _requestContext.UserId, request.Id);
+
             _mapper.Map(request.Dto, branch);
-            _branchRepository.Update(branch);
+
             await _unitOfWork.SaveChangesAsync(cancellationToken);
 
             return _responseHandler.Success(true);
