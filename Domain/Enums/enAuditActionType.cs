@@ -2,8 +2,8 @@
 
 public enum enAuditActionType
 {
-    Creation,
+    Creation = 1,
     Modified,
     Deleted,
-    
+
 }
