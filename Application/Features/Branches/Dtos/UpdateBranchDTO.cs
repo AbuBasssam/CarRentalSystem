@@ -18,10 +18,26 @@ public class UpdateBranchDTO
     #region Mapper
     private class Mapping : Profile
     {
-        public Mapping() => CreateMap<UpdateBranchDTO, Branch>().ForAllMembers(opt =>
+        public Mapping()
+        {
+
+            CreateMap<UpdateBranchDTO, Branch>()
+                .ForMember(dest => dest.NameEN,
+                opt => opt.MapFrom(src => src.NameEN.Trim()))
+
+            .ForMember(dest => dest.NameAR,
+                opt => opt.MapFrom(src => src.NameAR.Trim()))
+
+            .ForMember(dest => dest.CityEN,
+                opt => opt.MapFrom(src => src.CityEN.Trim()))
+
+            .ForMember(dest => dest.CityAR,
+                opt => opt.MapFrom(src => src.CityAR.Trim()))
+            .ForAllMembers(opt =>
         opt.Condition((src, dest, srcValue, destValue) => !Equals(srcValue, destValue))
 
         );
+        }
     }
     #endregion
 
