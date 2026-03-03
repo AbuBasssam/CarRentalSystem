@@ -17,9 +17,6 @@ public class CarCategory : IEntity<int>
     public decimal BaseWeeklyRate { get; set; }
     public decimal BaseMonthlyRate { get; set; }
 
-    // If true, allows customers to pick up the car at one location and drop it off at another.
-    public bool AllowDifferentDropOff { get; set; }
-
     // Foreign Key
     public int PolicyId { get; set; }
     public bool IsActive { get; set; }

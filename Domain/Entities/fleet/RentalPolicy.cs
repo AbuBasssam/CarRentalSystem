@@ -7,6 +7,9 @@ public class RentalPolicy : IEntity<int>
     public int Id { get; set; }
     public string Name { get; set; } = null!;
     public int BufferHours { get; set; }
+
+    public bool AllowDifferentDropOff { get; set; }
+
     public int MinCancellationLeadTimeHours { get; set; }
     public decimal CancellationPenaltyPercent { get; set; }
     public int NoShowPenaltyDays { get; set; }

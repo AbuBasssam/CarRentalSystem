@@ -16,6 +16,7 @@
     <PackageReference Include="Microsoft.Extensions.Http" />
     <PackageReference Include="Microsoft.AspNetCore.Authorization" />
     <PackageReference Include="DotNetEnv" />
+    <PackageReference Include="SixLabors.ImageSharp" />
 
   </ItemGroup>
 
