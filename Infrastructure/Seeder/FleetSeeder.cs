@@ -46,6 +46,7 @@ public static class FleetSeeder
             {
                 Name                         = "Standard",
                 BufferHours                  = 8,
+                AllowDifferentDropOff        = true,// Economy / 
                 MinCancellationLeadTimeHours = 6,
                 CancellationPenaltyPercent   = 25,
                 NoShowPenaltyDays            = 1,
@@ -60,6 +61,7 @@ public static class FleetSeeder
             {
                 Name                         = "Luxury",
                 BufferHours                  = 16,
+                AllowDifferentDropOff = false,// Luxury / Luxury SUV
                 MinCancellationLeadTimeHours = 48,
                 CancellationPenaltyPercent   = 50,
                 NoShowPenaltyDays            = 3,
@@ -74,6 +76,7 @@ public static class FleetSeeder
             {
                 Name                         = "Supercar",
                 BufferHours                  = 24,
+                AllowDifferentDropOff        = false,  // Supercar
                 MinCancellationLeadTimeHours = 72,
                 CancellationPenaltyPercent   = 75,
                 NoShowPenaltyDays            = 5,
@@ -93,43 +96,25 @@ public static class FleetSeeder
 
     // ─────────────────────────────────────────────────────────────────────────
     //  2. Branches
-    //  Key: 1=Riyadh | 2=Jeddah | 3=Dammam
     // ─────────────────────────────────────────────────────────────────────────
 
     private static async Task<Dictionary<int, int>> _SeedBranchesAsync(AppDbContext context)
     {
         var branches = new List<Branch>
         {
-            new Branch
-            {
-                NameEN    = "Riyadh Main Branch",
-                NameAR    = "فرع الرياض الرئيسي",
-                CityEN    = "Riyadh",
-                CityAR    = "الرياض",
-                Latitude  = 24.7136,
-                Longitude = 46.6753,
-                IsActive  = true
-            },
-            new Branch
-            {
-                NameEN    = "Jeddah Branch",
-                NameAR    = "فرع جدة",
-                CityEN    = "Jeddah",
-                CityAR    = "جدة",
-                Latitude  = 21.4858,
-                Longitude = 39.1925,
-                IsActive  = true
-            },
-            new Branch
-            {
-                NameEN    = "Dammam Branch",
-                NameAR    = "فرع الدمام",
-                CityEN    = "Dammam",
-                CityAR    = "الدمام",
-                Latitude  = 26.4207,
-                Longitude = 50.0888,
-                IsActive  = true
-            }
+
+            new Branch { NameEN = "Riyadh Main Branch", NameAR = "فرع الرياض الرئيسي", CityEN = "Riyadh", CityAR = "الرياض", Latitude = 24.7136, Longitude = 46.6753, IsActive = true },
+            new Branch { NameEN = "Jeddah Branch", NameAR = "فرع جدة", CityEN = "Jeddah", CityAR = "جدة", Latitude = 21.4858, Longitude = 39.1925, IsActive = true },
+            new Branch { NameEN = "Dammam Branch", NameAR = "فرع الدمام", CityEN = "Dammam", CityAR = "الدمام", Latitude = 26.4207, Longitude = 50.0888, IsActive = true },
+            new Branch { NameEN = "Makkah Branch", NameAR = "فرع مكة المكرمة", CityEN = "Makkah", CityAR = "مكة المكرمة", Latitude = 21.3891, Longitude = 39.8579, IsActive = true },
+            new Branch { NameEN = "Madinah Branch", NameAR = "فرع المدينة المنورة", CityEN = "Madinah", CityAR = "المدينة المنورة", Latitude = 24.5247, Longitude = 39.5692, IsActive = true },
+            new Branch { NameEN = "Abha Branch", NameAR = "فرع أبها", CityEN = "Abha", CityAR = "أبها", Latitude = 18.2164, Longitude = 42.5053, IsActive = false },
+            new Branch { NameEN = "Tabuk Branch", NameAR = "فرع تبوك", CityEN = "Tabuk", CityAR = "تبوك", Latitude = 28.3838, Longitude = 36.5656, IsActive = true },
+            new Branch { NameEN = "Taif Branch", NameAR = "فرع الطائف", CityEN = "Taif", CityAR = "الطائف", Latitude = 21.2703, Longitude = 40.4158, IsActive = true },
+            new Branch { NameEN = "Buraydah Branch", NameAR = "فرع بريدة", CityEN = "Buraydah", CityAR = "بريدة", Latitude = 26.326, Longitude = 43.975, IsActive = false },
+            new Branch { NameEN = "Hail Branch", NameAR = "فرع حائل", CityEN = "Hail", CityAR = "حائل", Latitude = 27.5236, Longitude = 41.6934, IsActive = true },
+            new Branch { NameEN = "Najran Branch", NameAR = "فرع نجران", CityEN = "Najran", CityAR = "نجران", Latitude = 17.4928, Longitude = 44.1321, IsActive = true },
+            new Branch { NameEN = "Jazan Branch", NameAR = "فرع جيزان", CityEN = "Jazan", CityAR = "جيزان", Latitude = 16.8892, Longitude = 42.5511, IsActive = false }
         };
 
         await context.Branches.AddRangeAsync(branches);
@@ -166,7 +151,6 @@ public static class FleetSeeder
                 BaseWeeklyRate       = 700,
                 BaseMonthlyRate      = 2500,
                 IsModelSpecific      = false,
-                AllowDifferentDropOff = true,
                 PolicyId             = std,
                 IsActive             = true,
                 CreatedAt            = DateTime.UtcNow
@@ -182,7 +166,6 @@ public static class FleetSeeder
                 BaseWeeklyRate       = 1200,
                 BaseMonthlyRate      = 4000,
                 IsModelSpecific      = false,
-                AllowDifferentDropOff = true,
                 PolicyId             = std,
                 IsActive             = true,
                 CreatedAt            = DateTime.UtcNow
@@ -198,7 +181,6 @@ public static class FleetSeeder
                 BaseWeeklyRate       = 1700,
                 BaseMonthlyRate      = 5800,
                 IsModelSpecific      = false,
-                AllowDifferentDropOff = true,
                 PolicyId             = std,
                 IsActive             = true,
                 CreatedAt            = DateTime.UtcNow
@@ -214,7 +196,6 @@ public static class FleetSeeder
                 BaseWeeklyRate       = 1950,
                 BaseMonthlyRate      = 6500,
                 IsModelSpecific      = false,
-                AllowDifferentDropOff = true,
                 PolicyId             = std,
                 IsActive             = true,
                 CreatedAt            = DateTime.UtcNow
@@ -230,7 +211,6 @@ public static class FleetSeeder
                 BaseWeeklyRate       = 1500,
                 BaseMonthlyRate      = 5000,
                 IsModelSpecific      = false,
-                AllowDifferentDropOff = true,
                 PolicyId             = std,
                 IsActive             = true,
                 CreatedAt            = DateTime.UtcNow
@@ -246,7 +226,6 @@ public static class FleetSeeder
                 BaseWeeklyRate       = 4200,
                 BaseMonthlyRate      = 14000,
                 IsModelSpecific      = true,
-                AllowDifferentDropOff = false,
                 PolicyId             = lux,
                 IsActive             = true,
                 CreatedAt            = DateTime.UtcNow
@@ -262,7 +241,6 @@ public static class FleetSeeder
                 BaseWeeklyRate       = 5400,
                 BaseMonthlyRate      = 18000,
                 IsModelSpecific      = true,
-                AllowDifferentDropOff = false,
                 PolicyId             = lux,
                 IsActive             = true,
                 CreatedAt            = DateTime.UtcNow
@@ -278,7 +256,6 @@ public static class FleetSeeder
                 BaseWeeklyRate       = 15000,
                 BaseMonthlyRate      = 50000,
                 IsModelSpecific      = true,
-                AllowDifferentDropOff = false,
                 PolicyId             = sc,
                 IsActive             = true,
                 CreatedAt            = DateTime.UtcNow

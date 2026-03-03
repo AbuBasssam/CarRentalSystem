@@ -40,11 +40,6 @@ public class CarCategoryConfig : IEntityTypeConfiguration<CarCategory>
             .IsRequired()
             .HasColumnType("decimal(8,2)");
 
-        builder.Property(x => x.AllowDifferentDropOff)
-            .IsRequired()
-            .HasDefaultValue(true);
-
-
         builder.Property(x => x.IsActive)
             .IsRequired()
             .HasDefaultValue(true);
