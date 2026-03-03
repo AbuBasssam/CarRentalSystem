@@ -10,7 +10,7 @@ public class CarImage : IEntity<int>
     public bool IsPrimary { get; set; }
     public bool IsDeleted { get; set; }
     public DateTime? DeletedAt { get; set; }
-    public DateTime CreatedAt { get; set; }
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
     // Navigation Property
     public virtual Car Car { get; set; } = null!;

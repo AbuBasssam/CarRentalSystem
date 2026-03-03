@@ -29,7 +29,8 @@ public class CarImageConfig : IEntityTypeConfiguration<CarImage>
             .IsRequired(false);
 
         builder.Property(x => x.CreatedAt)
-            .IsRequired();
+            .IsRequired()
+            .HasDefaultValueSql("GETUTCDATE()");
 
         // For primary-image lookup
         builder.HasIndex(x => new { x.CarId, x.IsPrimary });
