@@ -1,4 +1,5 @@
 ﻿using Application.Abstracts;
+using Application.Models;
 using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
 
@@ -60,5 +61,49 @@ public static class QueryableExtensions
         return descending
                 ? query.OrderByDescending(keySelector)
                 : query.OrderBy(keySelector);
+    }
+
+    /// <summary>
+    /// Projects and paginates a query using cursor-based logic.
+    /// Fetches PageSize + 1 items to determine if a next page exists without a separate COUNT query.
+    /// </summary>
+    /// <typeparam name="TEntity">The database entity type.</typeparam>
+    /// <typeparam name="TDto">The result DTO type.</typeparam>
+    /// <param name="query">The IQueryable to paginate.</param>
+    /// <param name="pageSize">Number of items per page.</param>
+    /// <param name="cursorSelector">Expression to get the DTO values.</param>
+    /// <param name="idSelector">Expression to get the ID/Cursor value from the DTO.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>A CursorPaginatedResult containing items and the next cursor.</returns>
+    public static async Task<CursorPaginatedResult<TDto>> ToCursorPaginatedAsync<TEntity, TDto>(
+        this IQueryable<TEntity> query,
+        int pageSize,
+        Expression<Func<TEntity, TDto>> cursorSelector,
+        Func<TDto, int?> idSelector,
+        CancellationToken cancellationToken = default) where TDto : class
+    {
+        // Fetch PageSize + 1 to check for the existence of the next page
+        var items = await query
+            .Take(pageSize + 1)
+            .Select(cursorSelector)
+            .ToListAsync(cancellationToken);
+
+        int? nextCursor = null;
+
+        if (items.Count > pageSize)
+        {
+            // The cursor for the next request is the ID of the last item in the CURRENT page
+            // We use the cursorSelector to get the Id from the TDto
+            nextCursor = idSelector(items[pageSize - 1]);
+
+            // Remove the extra (N+1) item from the final list
+            items.RemoveAt(items.Count - 1);
+        }
+
+        return new CursorPaginatedResult<TDto>
+        {
+            Items = items,
+            NextCursor = nextCursor
+        };
     }
 }
