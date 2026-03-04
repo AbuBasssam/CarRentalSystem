@@ -58,6 +58,18 @@ public class ResponseHandler : ITransientService
             .WithMessage(_stringLocalizer[SharedResourcesKeys.Success])
             .WithData(result)
             .Build();
+
+    /// <summary>
+    /// Returns a cursor-paginated success response.
+    /// Wraps CursorPaginatedResult inside the standard Response envelope.
+    /// </summary>
+    public Response<CursorPaginatedResult<T>> CursorPaginated<T>(CursorPaginatedResult<T> result) where T : class
+        => new ResponseBuilder<CursorPaginatedResult<T>>()
+            .WithStatusCode(HttpStatusCode.OK)
+            .WithSuccess(true)
+            .WithMessage(_stringLocalizer[SharedResourcesKeys.Success])
+            .WithData(result)
+            .Build();
     #endregion
 
     #region Error Responses
