@@ -2,7 +2,6 @@
 
 public class CursorPaginatedResult<T> where T : class
 {
-    public List<T> Items { get; set; } = new();
 
     /// <summary>
     /// Pass this as ?cursor= in the next request.
@@ -12,4 +11,6 @@ public class CursorPaginatedResult<T> where T : class
 
     public bool HasNextPage => NextCursor.HasValue;
     public int Count => Items.Count;
+    public List<T> Items { get; set; } = new();
+
 }

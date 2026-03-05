@@ -23,9 +23,20 @@ public sealed class FuelType
 
     public static FuelType? FromId(int id) => All.Single(x => x.Id == id);
     public static int MaxId => All.Max(x => x.Id);
+    public static FuelType? Parse(string? input)
+    {
+        if (string.IsNullOrWhiteSpace(input)) return null;
 
+        if (int.TryParse(input, out var id))
+            return All.FirstOrDefault(x => x.Id == id);
+
+        return All.FirstOrDefault(x =>
+            x.NameEN.Equals(input, StringComparison.OrdinalIgnoreCase) ||
+            x.NameAR.Equals(input, StringComparison.OrdinalIgnoreCase));
+    }
     // to prevent wrong comparisons
     public override string ToString() => NameEN;
     public override bool Equals(object? obj) => obj is FuelType other && Id == other.Id;
     public override int GetHashCode() => Id.GetHashCode();
+
 }

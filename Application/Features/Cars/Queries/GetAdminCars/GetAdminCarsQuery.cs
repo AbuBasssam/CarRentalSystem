@@ -24,10 +24,10 @@ public class GetAdminCarsQuery : CursorPaginationQuery, IRequest<Response<Cursor
             query = query.Where(c => c.CurrentBranchId == Filters.BranchId.Value);
 
         if (Filters.TransmissionType.HasValue)
-            query = query.Where(c => (int)c.TransmissionType == Filters.TransmissionType.Value);
+            query = query.Where(c => c.TransmissionType == Filters.TransmissionType.Value);
 
-        if (Filters.FuelType.HasValue)
-            query = query.Where(c => c.FuelType == (byte)Filters.FuelType.Value);
+        if (Filters.FuelType != null)
+            query = query.Where(c => c.FuelType == (byte)Filters.FuelType.Id);
 
         if (Filters.MinDailyRate.HasValue)
             query = query.Where(c => c.Category.BaseDailyRate >= (decimal)Filters.MinDailyRate.Value);
@@ -39,7 +39,7 @@ public class GetAdminCarsQuery : CursorPaginationQuery, IRequest<Response<Cursor
             query = query.Where(c => c.IsActive == Filters.IsActive.Value);
 
         if (Filters.FleetConditionStatus.HasValue)
-            query = query.Where(c => (int)c.FleetConditionStatus == Filters.FleetConditionStatus.Value);
+            query = query.Where(c => c.FleetConditionStatus == Filters.FleetConditionStatus.Value);
 
         return query;
 

@@ -65,8 +65,11 @@ builder.Services.AddAntiforgery(options =>
 #endregion
 
 // Add services to the container.
-builder.Services.AddControllers();
-builder.Services.AddEndpointsApiExplorer();
+builder.Services
+    .AddControllers(options =>
+    {
+        options.ModelBinderProviders.Insert(0, new FuelTypeModelBinderProvider());
+    });
 builder.Services.AddSwaggerGen();
 
 

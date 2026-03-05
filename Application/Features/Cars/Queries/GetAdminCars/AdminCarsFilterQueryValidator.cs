@@ -29,18 +29,5 @@ public class AdminCarsFilterQueryValidator : CursorPaginationValidator<GetAdminC
             .WithMessage("Maximum daily rate must be greater than or equal to minimum daily rate.")
             .When(x => x.Filters.MaxDailyRate.HasValue);
 
-        // 3. Enum Validation
-
-        RuleFor(x => x.Filters.TransmissionType)
-            .InclusiveBetween(1, 2)
-            .When(x => x.Filters.TransmissionType.HasValue);
-
-        RuleFor(x => x.Filters.FuelType)
-            .InclusiveBetween(1, 4)
-            .When(x => x.Filters.FuelType.HasValue);
-
-        RuleFor(x => x.Filters.FleetConditionStatus)
-            .InclusiveBetween(1, 3)
-            .When(x => x.Filters.FleetConditionStatus.HasValue);
     }
 }

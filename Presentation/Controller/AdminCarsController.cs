@@ -18,9 +18,9 @@ public class AdminCarsController : ApiController
     /// <response code="500">Internal server error</response>
     [HttpGet(Router.CarRouter.BASE)]
     [ProducesResponseType(typeof(Response<CursorPaginatedResult<AdminCarSummaryDto>>), StatusCodes.Status200OK)]
-    public async Task<IActionResult> Get([FromQuery] AdminCarFilters filters)
+    public async Task<IActionResult> Get([FromQuery] AdminCarFilters filters, int? cursor, int pageSize = 10)
     {
-        var query = new GetAdminCarsQuery { Filters = filters };
+        var query = new GetAdminCarsQuery { Filters = filters, Cursor = cursor, PageSize = pageSize };
         return await CommandExecutor.Execute(
                 query, Sender,
                 (Response<CursorPaginatedResult<AdminCarSummaryDto>> r) => NewResult(r));
