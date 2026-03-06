@@ -16,6 +16,7 @@ public class CarCategory : IEntity<int>
     public decimal BaseDailyRate { get; set; }
     public decimal BaseWeeklyRate { get; set; }
     public decimal BaseMonthlyRate { get; set; }
+    public int DailyKmLimit { get; set; }
 
     // Foreign Key
     public int PolicyId { get; set; }

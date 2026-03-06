@@ -13,6 +13,9 @@ public class Car : IEntity<int>
     public string VIN { get; set; } = null!;
     public string Brand { get; set; } = null!;
     public string Model { get; set; } = null!;
+    public decimal? CustomDailyRate { get; set; }
+    public decimal? CustomWeeklyRate { get; set; }
+    public decimal? CustomMonthlyRate { get; set; }
     public byte NumberOfSeats { get; set; }
     public byte NumberOfBags { get; set; }
     public short EngineCapacity { get; set; }

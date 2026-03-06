@@ -63,6 +63,18 @@ public class CarConfig : IEntityTypeConfiguration<Car>
             .IsRequired()
             .HasDefaultValue(0);
 
+        builder.Property(x => x.CustomDailyRate)
+            .IsRequired(false)
+            .HasColumnType("decimal(8,2)");
+
+        builder.Property(x => x.CustomWeeklyRate)
+            .IsRequired(false)
+            .HasColumnType("decimal(8,2)");
+
+        builder.Property(x => x.CustomMonthlyRate)
+            .IsRequired(false)
+            .HasColumnType("decimal(8,2)");
+
         builder.Property(x => x.NumberOfSeats).IsRequired();
 
         builder.Property(x => x.NumberOfBags).IsRequired();
