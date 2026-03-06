@@ -30,10 +30,18 @@ public class GetAdminCarsQuery : CursorPaginationQuery, IRequest<Response<Cursor
             query = query.Where(c => c.FuelType == (byte)Filters.FuelType.Id);
 
         if (Filters.MinDailyRate.HasValue)
-            query = query.Where(c => c.Category.BaseDailyRate >= (decimal)Filters.MinDailyRate.Value);
+            query = query.Where(
+                c => c.CustomDailyRate.HasValue ?
+                c.CustomDailyRate >= (decimal)Filters.MinDailyRate.Value :
+                c.Category.BaseDailyRate >= (decimal)Filters.MinDailyRate.Value
+            );
 
         if (Filters.MaxDailyRate.HasValue)
-            query = query.Where(c => c.Category.BaseDailyRate <= (decimal)Filters.MaxDailyRate.Value);
+            query = query.Where(
+                c => c.CustomDailyRate.HasValue ?
+                c.CustomDailyRate <= (decimal)Filters.MaxDailyRate.Value :
+                c.Category.BaseDailyRate <= (decimal)Filters.MaxDailyRate.Value
+            );
 
         if (Filters.IsActive.HasValue)
             query = query.Where(c => c.IsActive == Filters.IsActive.Value);
