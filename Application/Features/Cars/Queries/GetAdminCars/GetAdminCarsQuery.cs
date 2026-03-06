@@ -2,6 +2,7 @@
 using Application.Models;
 using Domain.Entities;
 using MediatR;
+using System.Linq.Expressions;
 
 namespace Application.Features.Cars;
 public class GetAdminCarsQuery : CursorPaginationQuery, IRequest<Response<CursorPaginatedResult<AdminCarSummaryDto>>>, IFilterable<Car>
@@ -30,18 +31,14 @@ public class GetAdminCarsQuery : CursorPaginationQuery, IRequest<Response<Cursor
             query = query.Where(c => c.FuelType == (byte)Filters.FuelType.Id);
 
         if (Filters.MinDailyRate.HasValue)
-            query = query.Where(
-                c => c.CustomDailyRate.HasValue ?
-                c.CustomDailyRate >= (decimal)Filters.MinDailyRate.Value :
-                c.Category.BaseDailyRate >= (decimal)Filters.MinDailyRate.Value
-            );
+        {
+            query = query.Where(_minDailyRateFilterHandler((decimal)Filters.MinDailyRate.Value));
+        }
 
         if (Filters.MaxDailyRate.HasValue)
-            query = query.Where(
-                c => c.CustomDailyRate.HasValue ?
-                c.CustomDailyRate <= (decimal)Filters.MaxDailyRate.Value :
-                c.Category.BaseDailyRate <= (decimal)Filters.MaxDailyRate.Value
-            );
+        {
+            query = query.Where(_maxDailyRateFilterHandler((decimal)Filters.MaxDailyRate.Value));
+        }
 
         if (Filters.IsActive.HasValue)
             query = query.Where(c => c.IsActive == Filters.IsActive.Value);
@@ -54,4 +51,24 @@ public class GetAdminCarsQuery : CursorPaginationQuery, IRequest<Response<Cursor
     }
 
     public IQueryable<Car> ApplySort(IQueryable<Car> query) => query.OrderBy(b => b.Id);
+
+    #region Helpers
+
+    private Expression<Func<Car, bool>> _minDailyRateFilterHandler(decimal min)
+    {
+        return
+                        c => c.CustomDailyRate.HasValue ?
+                        c.CustomDailyRate >= min || c.Category.BaseDailyRate >= min :
+                        c.Category.BaseDailyRate >= min;
+    }
+
+    private Expression<Func<Car, bool>> _maxDailyRateFilterHandler(decimal max)
+    {
+        return
+                        c => c.CustomDailyRate.HasValue ?
+                        c.CustomDailyRate <= max || c.Category.BaseDailyRate <= max :
+                        c.Category.BaseDailyRate <= max;
+    }
+
+    #endregion
 }
