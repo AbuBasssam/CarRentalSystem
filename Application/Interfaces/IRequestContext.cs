@@ -16,7 +16,7 @@ public interface IRequestContext : IScopedService
     string? UserAgent { get; }
 
     /// <summary>Gets the preferred language from the request.</summary>
-    string? Language { get; }
+    string Language { get; }
 
     /// <summary>Gets the authenticated User ID if available.</summary>
     int? UserId { get; }

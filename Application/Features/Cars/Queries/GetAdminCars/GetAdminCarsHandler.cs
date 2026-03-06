@@ -1,7 +1,6 @@
 ﻿using Application.Extensions;
 using Application.Models;
 using Domain.Entities;
-using Domain.Enums;
 using Interfaces;
 using MediatR;
 using Serilog;
@@ -35,7 +34,6 @@ public class GetAdminCarsHandler : IRequestHandler<GetAdminCarsQuery, Response<C
 
     public async Task<Response<CursorPaginatedResult<AdminCarSummaryDto>>> Handle(GetAdminCarsQuery request, CancellationToken cancellationToken)
     {
-        bool isAr = _requestContext.Language == "ar";
 
         try
         {
@@ -48,7 +46,7 @@ public class GetAdminCarsHandler : IRequestHandler<GetAdminCarsQuery, Response<C
                             .ApplyFilterAndSort(request)
                             .ToCursorPaginatedAsync(
                                 request.PageSize,
-                                AdminCarSummaryDtoBuilder(isAr),
+                                AdminCarSummaryDtoBuilder(),
                                 dto => dto.Id,
                                 cancellationToken
                             );
@@ -69,7 +67,7 @@ public class GetAdminCarsHandler : IRequestHandler<GetAdminCarsQuery, Response<C
 
     #endregion
     #region Helpers
-    private static Expression<Func<Car, AdminCarSummaryDto>> AdminCarSummaryDtoBuilder(bool isAr)
+    private static Expression<Func<Car, AdminCarSummaryDto>> AdminCarSummaryDtoBuilder()
     {
         return c => new AdminCarSummaryDto
         {
@@ -79,20 +77,13 @@ public class GetAdminCarsHandler : IRequestHandler<GetAdminCarsQuery, Response<C
             Brand = c.Brand,
             Model = c.Model,
             Year = c.Year,
-            CategoryName = isAr ? c.Category.NameAR : c.Category.NameEN,
-            CurrentBranchName = isAr ? c.CurrentBranch.NameAR : c.CurrentBranch.NameEN,
+            CategoryName = c.Category.NameEN,
+            CurrentBranchName = c.CurrentBranch.NameEN,
             IsActive = c.IsActive,
-            FleetConditionStatus = _GetFleetStatus(c.FleetConditionStatus)
+            FleetConditionStatus = c.FleetConditionStatus.ToDisplayName()
         };
     }
-    private static string _GetFleetStatus(enFleetConditionStatus status)
-    {
-        return status == enFleetConditionStatus.Ready
-                                ? enFleetConditionStatus.Ready.ToString()
-                                : status == enFleetConditionStatus.InMaintenance
-                                    ? enFleetConditionStatus.InMaintenance.ToString()
-                                    : enFleetConditionStatus.Damaged.ToString();
-    }
+
 
     #endregion
 

@@ -12,8 +12,8 @@ public record AdminCarDetailsDto
     public int Year { get; init; }
     public string FuelType { get; init; } = null!;
     public string TransmissionType { get; init; } = null!;
-    public AdminCarDetailsDto.CategoryRef Category { get; init; } = null!;
-    public AdminCarDetailsDto.BranchRef CurrentBranch { get; init; } = null!;
+    public CategoryRef Category { get; init; } = null!;
+    public BranchRef CurrentBranch { get; init; } = null!;
     public bool IsActive { get; init; }
     public string FleetConditionStatus { get; init; } = null!;
     public decimal DailyRate { get; init; }

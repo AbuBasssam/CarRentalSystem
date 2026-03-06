@@ -22,6 +22,7 @@ public sealed class FuelType
 
 
     public static FuelType? FromId(int id) => All.Single(x => x.Id == id);
+    public string GetLocalizedName(string language) => language.ToLower() == "ar" ? NameAR : NameEN;
     public static int MaxId => All.Max(x => x.Id);
     public static FuelType? Parse(string? input)
     {
