@@ -60,7 +60,7 @@ public class GetAdminCarByIdHandler : IRequestHandler<GetAdminCarByIdQuery, Resp
                     CreatedAt = c.CreatedAt,
                     // Admin image URLs use admin serving endpoint (bypasses public gate)
                     Images = c.Images
-                        .Where(i => !i.IsDeleted && i.IsPrimary)
+                        .Where(i => !i.IsDeleted)
                         .Select(i => $"{Router.CarRouter.BASE}/{c.Id}/images/{i.Id}")
                         .ToList()
                 })

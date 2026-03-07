@@ -1,4 +1,5 @@
 ﻿using Application.Features.Cars;
+using Application.Features.Cars.Queries;
 using Application.Models;
 using Domain.AppMetaData;
 using Microsoft.AspNetCore.Http;
@@ -25,4 +26,16 @@ public class AdminCarsController : ApiController
                 query, Sender,
                 (Response<CursorPaginatedResult<AdminCarSummaryDto>> r) => NewResult(r));
     }
+
+    /// <summary>Returns admin car details by ID.</summary>
+    /// <response code="200">Car details</response>
+    /// <response code="404">Car not found</response>
+    [HttpGet(Router.CarRouter.GetById)]
+    [ProducesResponseType(typeof(Response<AdminCarDetailsDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(Response<AdminCarDetailsDto>), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetById([FromRoute] int Id)
+        => await CommandExecutor.Execute(
+            new GetAdminCarByIdQuery(Id), Sender,
+            (Response<AdminCarDetailsDto> r) => NewResult(r));
+
 }
