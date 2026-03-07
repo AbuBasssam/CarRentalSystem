@@ -22,6 +22,15 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		Directory.Packages.props = Directory.Packages.props
 	EndProjectSection
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docs", "docs", "{56CA5E42-276E-4D3F-92AC-A164F1D73B91}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ApiTesting", "ApiTesting", "{146DBE26-087F-4D09-8871-C3702F6297A0}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "AdminCars", "AdminCars", "{E5109F3A-F757-4839-8ED1-74485B33E075}"
+	ProjectSection(SolutionItems) = preProject
+		GetAdminCarById.md = GetAdminCarById.md
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -107,6 +116,10 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{146DBE26-087F-4D09-8871-C3702F6297A0} = {56CA5E42-276E-4D3F-92AC-A164F1D73B91}
+		{E5109F3A-F757-4839-8ED1-74485B33E075} = {146DBE26-087F-4D09-8871-C3702F6297A0}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {6F7F854A-002B-4960-8DB5-94FF6CB89081}
