@@ -16,15 +16,17 @@ public class GetAdminCarByIdHandler : IRequestHandler<GetAdminCarByIdQuery, Resp
     private readonly ICarRepository _carRepository;
 
     private readonly ResponseHandler _responseHandler;
+    private readonly IRequestContext _requestContext;
 
     #endregion
 
     #region Constructor(s)
 
-    public GetAdminCarByIdHandler(ICarRepository carRepository, ResponseHandler responseHandler)
+    public GetAdminCarByIdHandler(ICarRepository carRepository, ResponseHandler responseHandler, IRequestContext requestContext)
     {
         _carRepository = carRepository;
         _responseHandler = responseHandler;
+        _requestContext = requestContext;
     }
 
     #endregion
@@ -67,13 +69,25 @@ public class GetAdminCarByIdHandler : IRequestHandler<GetAdminCarByIdQuery, Resp
                 .FirstOrDefaultAsync(cancellationToken);
 
             if (dto is null)
+            {
+                Log.Warning(
+                   "GetAdminCarById: Car not found. CarId={CarId}, AdminUserId={AdminUserId}",
+                   request.Id,
+                   _requestContext.UserId
+                );
                 return _responseHandler.NotFound<AdminCarDetailsDto>("Car not found.");
+            }
+            Log.Information(
+               "GetAdminCarById: fetching admin car with Id:{CarId} Success for AdminId= {AdminUserId}",
+               dto.Id,
 
+               _requestContext.UserId
+           );
             return _responseHandler.Success(dto);
         }
         catch (Exception ex)
         {
-            Log.Error(ex, "Error fetching admin car {CarId}", request.Id);
+            Log.Error(ex, "GetAdminCarById: fetching admin car with Id:{CarId} failed for AdminId= {AdminUserId}", request.Id, _requestContext.UserId);
             return _responseHandler.InternalServerError<AdminCarDetailsDto>();
         }
     }
