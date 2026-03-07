@@ -99,6 +99,21 @@ public static class Router
     }
 
     #endregion
+    #region Customer Routers
+    public class PublicCarRouter
+    {
+        public const string BASE = _rule + "/public/cars";
+
+        // Listings & detail
+        public const string GetAll = BASE;
+        public const string GetById = BASE + _ById;
+
+        // Image serving (full validation gate)
+        public const string GetPrimaryImage = BASE + _ById + "/primary-image";
+        public const string GetImages = BASE + _ById + "/images";
+        public const string GetImage = BASE + _ById + "/images/{ImageId}";
+    }
+    #endregion
 
 
 }
