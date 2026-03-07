@@ -27,7 +27,9 @@ public static class FleetSeeder
         var policyIds = await _SeedPoliciesAsync(context);
         var branchIds = await _SeedBranchesAsync(context);
         var categoryIds = await _SeedCategoriesAsync(context, policyIds);
-        await _SeedCarsAsync(context, branchIds, categoryIds, policyIds);
+        var cars = await _SeedCarsAsync(context, branchIds, categoryIds, policyIds);
+        await _SeedCarImagesAsync(context, cars);
+
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -283,7 +285,7 @@ public static class FleetSeeder
     //    ✅ Null & non-null PolicyOverrideId
     // ─────────────────────────────────────────────────────────────────────────
 
-    private static async Task _SeedCarsAsync(
+    private static async Task<List<Car>> _SeedCarsAsync(
         AppDbContext context,
         Dictionary<int, int> branchIds,
         Dictionary<int, int> categoryIds,
@@ -445,6 +447,185 @@ public static class FleetSeeder
 
         await context.Cars.AddRangeAsync(cars);
         await context.SaveChangesAsync();
+        return cars;
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    //  5. Car Images  (1 primary image per car — 110 total)
+    //
+    //  Naming convention : car_{CarId}_{OriginalBaseName}.webp
+    //  Storage path      : /storage/cars/{CarId}/
+    //  Source images     : C:\CarRental-Cars Photo\ (matched from Car_Models.xlsx)
+    //
+    //  All images seeded as IsPrimary = true (one image per car in seed data).
+    //
+    //  ⚠ Physical .webp files must be converted from the original PNGs and
+    //    copied into the storage folder. This method only seeds the DB records.
+    // ─────────────────────────────────────────────────────────────────────────
+
+    private static async Task _SeedCarImagesAsync(AppDbContext context, List<Car> cars)
+    {
+        var images = new List<CarImage>();
+
+        for (int i = 0; i < cars.Count; i++)
+        {
+            var car = cars[i];
+            var carOrder = i + 1;  // 1-based insertion order → matches switch below
+            var fileName = _GetSeedImageFileName(carOrder, car.Id);
+
+            if (fileName == null) continue;
+
+            images.Add(new CarImage
+            {
+                CarId = car.Id,
+                FileName = fileName,
+                IsPrimary = true,
+                IsDeleted = false,
+                CreatedAt = DateTime.UtcNow
+            });
+        }
+
+        await context.CarImages.AddRangeAsync(images);
+        await context.SaveChangesAsync();
+    }
+
+    /// <summary>
+    /// Returns the seeded WebP filename for a car by its insertion order (1-based).
+    /// Pattern: car_{dbId}_{OriginalBaseName}.webp
+    /// Base names are derived from Car_Models.xlsx — best year match per model.
+    /// </summary>
+    private static string? _GetSeedImageFileName(int carOrder, int dbId)
+    {
+        return carOrder switch
+        {
+            // ── Category 1: Economy ──────────────────────────────────────────
+            1 => $"car_{dbId}_ford-fiesta-2022.webp",           // Ford Fiesta (2023)
+            2 => $"car_{dbId}_Nissan Versa 2018.webp",          // Nissan Versa (2024)
+            3 => $"car_{dbId}_Yaris 2020.webp",                 // Toyota Yaris (2025)
+            4 => $"car_{dbId}_Fit 2023.webp",                   // Honda Fit (2026)
+            5 => $"car_{dbId}_Accent 2018.webp",                // Hyundai Accent (2023)
+            6 => $"car_{dbId}_Rio 2023.webp",                   // Kia Rio (2024)
+            7 => $"car_{dbId}_Polo 2021.webp",                  // Volkswagen Polo (2025)
+            8 => $"car_{dbId}_Mazda3 2024.webp",                // Mazda 3 (2026)
+            9 => $"car_{dbId}_Impreza 2020.webp",               // Subaru Impreza (2023)
+            10 => $"car_{dbId}_Chevrolet Spark 2023.webp",       // Chevrolet Spark (2024)
+            11 => $"car_{dbId}_Forte 2023.webp",                 // Kia Forte (2025)
+            12 => $"car_{dbId}_Focus 2019.webp",                 // Ford Focus (2026)
+            13 => $"car_{dbId}_Golf 2022.webp",                  // Volkswagen Golf (2023)
+            14 => $"car_{dbId}_Kicks 2022.webp",                 // Nissan Kicks (2024)
+            15 => $"car_{dbId}_Venue 2020.webp",                 // Hyundai Venue (2025)
+
+            // ── Category 2: Standard / Sedan ─────────────────────────────────
+            16 => $"car_{dbId}_Camry 2022.webp",                 // Toyota Camry (2023)
+            17 => $"car_{dbId}_Accord 2021.webp",                // Honda Accord (2024)
+            18 => $"car_{dbId}_Sonata 2023.webp",                // Hyundai Sonata (2025)
+            19 => $"car_{dbId}_Altima 2022.webp",                // Nissan Altima (2026)
+            20 => $"car_{dbId}_Corolla 2020.webp",               // Toyota Corolla (2023)
+            21 => $"car_{dbId}_Optima 2022.webp",                // Kia Optima (2024)
+            22 => $"car_{dbId}_Mazda6 2022.webp",                // Mazda 6 (2025)
+            23 => $"car_{dbId}_Legacy 2021.webp",                // Subaru Legacy (2026)
+            24 => $"car_{dbId}_Malibu 2022.webp",                // Chevrolet Malibu (2023)
+            25 => $"car_{dbId}_Fusion 2022.webp",                // Ford Fusion (2024)
+            26 => $"car_{dbId}_Passat 2022.webp",                // Volkswagen Passat (2025)
+            27 => $"car_{dbId}_Elantra 2022.webp",               // Hyundai Elantra (2026)
+            28 => $"car_{dbId}_Civic 2023.webp",                 // Honda Civic (2023)
+            29 => $"car_{dbId}_Maxima 2022.webp",                // Nissan Maxima (2024)
+            30 => $"car_{dbId}_Avalon 2022.webp",                // Toyota Avalon (2025)
+
+            // ── Category 3: SUV ───────────────────────────────────────────────
+            31 => $"car_{dbId}_RAV4 2021.webp",                  // Toyota RAV4 (2023)
+            32 => $"car_{dbId}_CR-V 2021.webp",                  // Honda CR-V (2024)
+            33 => $"car_{dbId}_Explorer 2023.webp",              // Ford Explorer (2025)
+            34 => $"car_{dbId}_Rogue 2019.webp",                 // Nissan Rogue (2026)
+            35 => $"car_{dbId}_Equinox 2022.webp",               // Chevrolet Equinox (2023)
+            36 => $"car_{dbId}_CX-5 2022.webp",                  // Mazda CX-5 (2024)
+            37 => $"car_{dbId}_Santa Fe 2019.webp",              // Hyundai Santa Fe (2025)
+            38 => $"car_{dbId}_Sorento 2022.webp",               // Kia Sorento (2026)
+            39 => $"car_{dbId}_Tiguan 2021.webp",                // Volkswagen Tiguan (2023)
+            40 => $"car_{dbId}_Highlander 2018.webp",            // Toyota Highlander (2024)
+            41 => $"car_{dbId}_Forester 2023.webp",              // Subaru Forester (2025)
+            42 => $"car_{dbId}_Palisade 2018.webp",              // Hyundai Palisade (2026)
+            43 => $"car_{dbId}_Telluride 2020.webp",             // Kia Telluride (2023)
+            44 => $"car_{dbId}_Escape 2020.webp",                // Ford Escape (2024)
+            45 => $"car_{dbId}_Acadia 2017.webp",                // GMC Acadia (2025)
+
+            // ── Category 4: Minivan ───────────────────────────────────────────
+            46 => $"car_{dbId}_Sienna 2022.webp",                // Toyota Sienna (2023)
+            47 => $"car_{dbId}_Odyssey 2023.webp",               // Honda Odyssey (2024)
+            48 => $"car_{dbId}_Carnival 2023.webp",              // Kia Carnival (2025)
+            49 => $"car_{dbId}_Pacifica 2019.webp",              // Chrysler Pacifica (2026)
+            50 => $"car_{dbId}_Multivan 2020.webp",              // Volkswagen Multivan (2023)
+            51 => $"car_{dbId}_V-Class 2019.webp",               // Mercedes-Benz V-Class (2024)
+            52 => $"car_{dbId}_Alphard 2021.webp",               // Toyota Alphard (2025)
+            53 => $"car_{dbId}_Staria 2022.webp",                // Hyundai Staria (2026)
+            54 => $"car_{dbId}_Caravelle 2020.webp",             // Volkswagen Caravelle (2023)
+            55 => $"car_{dbId}_Grand Caravan 2023.webp",         // Chrysler Grand Caravan (2024)
+            56 => $"car_{dbId}_Galaxy 2023.webp",                // Ford Galaxy (2025)
+            57 => $"car_{dbId}_Sedona 2018.webp",                // Kia Sedona (2026)
+
+            // ── Category 5: Electric & Hybrid ────────────────────────────────
+            58 => $"car_{dbId}_Model 3 2020.webp",               // Tesla Model 3 (2023)
+            59 => $"car_{dbId}_Leaf 2020.webp",                  // Nissan Leaf (2024)
+            60 => $"car_{dbId}_Kona Electric 2021.webp",         // Hyundai Kona Electric (2025)
+            61 => $"car_{dbId}_Bolt EV 2021.webp",               // Chevrolet Bolt EV (2026)
+            62 => $"car_{dbId}_ID.4 2020.webp",                  // Volkswagen ID.4 (2023)
+            63 => $"car_{dbId}_Prius 2022.webp",                 // Toyota Prius (2024)
+            64 => $"car_{dbId}_i3-2020 (2).webp",                // BMW i3 (2025)
+            65 => $"car_{dbId}_Insight 2020.webp",               // Honda Insight (2026)
+            66 => $"car_{dbId}_Ioniq Hybrid 2018.webp",          // Hyundai Ioniq Hybrid (2023)
+            67 => $"car_{dbId}_Niro 2023.webp",                  // Kia Niro (2024)
+            68 => $"car_{dbId}_Model S 2023.webp",               // Tesla Model S (2025)
+            69 => $"car_{dbId}_A3 Sportback e-tron 2022.webp",   // Audi A3 Sportback e-tron (2026)
+            70 => $"car_{dbId}_Pacifica Hybrid 2022.webp",       // Chrysler Pacifica Hybrid (2023)
+
+            // ── Category 6: Luxury ────────────────────────────────────────────
+            71 => $"car_{dbId}_5Series 2021.webp",               // BMW 5 Series (2018)
+            72 => $"car_{dbId}_E-Class 2020.webp",               // Mercedes-Benz E-Class (2019)
+            73 => $"car_{dbId}_A6 2023.webp",                    // Audi A6 (2020)
+            74 => $"car_{dbId}_XF 2022.webp",                    // Jaguar XF (2021)
+            75 => $"car_{dbId}_S90 2021.webp",                   // Volvo S90 (2022)
+            76 => $"car_{dbId}_CT6 2021.webp",                   // Cadillac CT6 (2023)
+            77 => $"car_{dbId}_Q70 2020.webp",                   // Infiniti Q70 (2024)
+            78 => $"car_{dbId}_Panamera 2022.webp",              // Porsche Panamera (2018)
+            79 => $"car_{dbId}_LS 2019.webp",                    // Lexus LS (2019)
+            80 => $"car_{dbId}_S-Class 2023.webp",               // Mercedes-Benz S-Class (2020)
+            81 => $"car_{dbId}_7 Series 2022.webp",              // BMW 7 Series (2021)
+            82 => $"car_{dbId}_A8 2020.webp",                    // Audi A8 (2022)
+            83 => $"car_{dbId}_Quattroporte 2019.webp",          // Maserati Quattroporte (2023)
+            84 => $"car_{dbId}_LC 500 2023.webp",                // Lexus LC 500 (2024)
+
+            // ── Category 7: Luxury SUV ────────────────────────────────────────
+            85 => $"car_{dbId}_X5 2022.webp",                    // BMW X5 (2018)
+            86 => $"car_{dbId}_Q5 2023.webp",                    // Audi Q5 (2019)
+            87 => $"car_{dbId}_Yukon 2023.webp",                 // GMC Yukon (2020)
+            88 => $"car_{dbId}_Model X 2024.webp",               // Tesla Model X (2021)
+            89 => $"car_{dbId}_RS Q8 2020.webp",                 // Audi RS Q8 (2022)
+            90 => $"car_{dbId}_Grand Cherokee 2022.webp",        // Jeep Grand Cherokee (2023)
+            91 => $"car_{dbId}_Tahoe 2022.webp",                 // Chevrolet Tahoe (2024)
+            92 => $"car_{dbId}_Ascent 2020.webp",                // Subaru Ascent (2018)
+            93 => $"car_{dbId}_MKZ 2020.webp",                   // Lincoln MKZ (2019)
+            94 => $"car_{dbId}_CT5 2021.webp",                   // Cadillac CT5 (2020)
+            95 => $"car_{dbId}_Q50 2022.webp",                   // Infiniti Q50 (2021)
+            96 => $"car_{dbId}_TLX 2020.webp",                   // Acura TLX (2022)
+
+            // ── Category 8: Supercar ──────────────────────────────────────────
+            97 => $"car_{dbId}_Phantom 2018.webp",               // Rolls-Royce Phantom (2018)
+            98 => $"car_{dbId}_Continental GT 2023.webp",        // Bentley Continental GT (2019)
+            99 => $"car_{dbId}_GTC4Lusso 2020.webp",             // Ferrari GTC4Lusso (2020)
+            100 => $"car_{dbId}_Aventador 2022.webp",             // Lamborghini Aventador (2021)
+            101 => $"car_{dbId}_720S 2020.webp",                  // McLaren 720S (2022)
+            102 => $"car_{dbId}_DB11 2024.webp",                  // Aston Martin DB11 (2023)
+            103 => $"car_{dbId}_911 GT3 2022.webp",               // Porsche 911 GT3 (2024)
+            104 => $"car_{dbId}_S650 2024.webp",                  // Mercedes-Maybach S650 (2018)
+            105 => $"car_{dbId}_M8 Competition 2021.webp",        // BMW M8 Competition (2019)
+            106 => $"car_{dbId}_AMG GT R 2020.webp",              // Mercedes-Benz AMG GT R (2020)
+            107 => $"car_{dbId}_488 Pista 2023.webp",             // Ferrari 488 Pista (2021)
+            108 => $"car_{dbId}_Huracan Performante 2021.webp",   // Lamborghini Huracan Performante (2022)
+            109 => $"car_{dbId}_Dawn 2018.webp",                  // Rolls-Royce Dawn (2023)
+            110 => $"car_{dbId}_Mulsanne 2021.webp",              // Bentley Mulsanne (2024)
+
+            _ => null
+        };
     }
 
     // ─────────────────────────────────────────────────────────────────────────
