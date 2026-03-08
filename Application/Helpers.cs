@@ -39,6 +39,11 @@ internal static class Helpers
         string code = RandomNumberGenerator.GetInt32(100000, 999999).ToString();
         return code;
     }
+    public static string FormatEnumComment<T>() where T : Enum =>
+    string.Join(", ",
+        Enum.GetValues(typeof(T))
+            .Cast<T>()
+            .Select(e => $"{e}={(int)(object)e}"));
 
 
 

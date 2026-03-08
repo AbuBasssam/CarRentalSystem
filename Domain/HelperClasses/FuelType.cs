@@ -39,5 +39,9 @@ public sealed class FuelType
     public override string ToString() => NameEN;
     public override bool Equals(object? obj) => obj is FuelType other && Id == other.Id;
     public override int GetHashCode() => Id.GetHashCode();
+    public static string FormatFuelTypeComments()
+    {
+        return string.Join(", ", All.Select(fuel => $"{fuel.NameEN} = {fuel.Id}"));
+    }
 
 }
