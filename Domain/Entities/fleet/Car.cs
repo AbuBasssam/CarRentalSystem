@@ -47,4 +47,31 @@ public class Car : IEntity<int>
             ?? throw new InvalidOperationException($"Invalid FuelType Id: {FuelType}");
         set => FuelType = (byte)value.Id;
     }
+
+    public (bool IsSuccess, string? reason) RemoveImage(int imageId)
+    {
+        var image = Images.FirstOrDefault(i => i.Id == imageId && !i.IsDeleted);
+        if (image == null)
+            return (false, "Image not found.");
+
+        if (image.IsPrimary)
+        {
+            var nextImage = Images
+                .Where(i => i.Id != image.Id && !i.IsDeleted)
+                .OrderBy(i => i.Id)
+                .FirstOrDefault();
+
+            if (nextImage == null)
+                return (false, "Cannot delete the primary image when it is the only image.");
+
+            nextImage.IsPrimary = true;
+        }
+
+        image.IsDeleted = true;
+        image.IsPrimary = false;
+        image.DeletedAt = DateTime.UtcNow;
+
+        return (true, null);
+
+    }
 }
