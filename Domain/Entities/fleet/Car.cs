@@ -48,6 +48,32 @@ public class Car : IEntity<int>
         set => FuelType = (byte)value.Id;
     }
 
+    public (bool IsSuccess, string? reason) AddImages(List<CarImage> imagesToAdd)
+    {
+        if (imagesToAdd == null || imagesToAdd.Count == 0)
+            return (false, "No images to add.");
+
+        var hasPrimary = Images.Any(i => i.IsPrimary && !i.IsDeleted);
+
+        for (int i = 0; i < imagesToAdd.Count; i++)
+        {
+            var image = imagesToAdd[i];
+
+            //set primary image if not exists
+            if (!hasPrimary && i == 0)
+            {
+                image.IsPrimary = true;
+                hasPrimary = true;
+            }
+
+            image.CreatedAt = DateTime.UtcNow;
+            image.IsDeleted = false;
+
+            Images.Add(image);
+        }
+
+        return (true, null);
+    }
     public (bool IsSuccess, string? reason) RemoveImage(int imageId)
     {
         var image = Images.FirstOrDefault(i => i.Id == imageId && !i.IsDeleted);

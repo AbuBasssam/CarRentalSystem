@@ -2,6 +2,7 @@
 using Domain.Entities;
 using Interfaces;
 using MediatR;
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
 
@@ -44,43 +45,26 @@ public class UploadCarImagesHandler : IRequestHandler<UploadCarImagesCommand, Re
     {
         try
         {
-            var carExists = await _carRepository
-                .GetTableNoTracking()
-                .AnyAsync(c => c.Id == request.CarId, cancellationToken);
+            var car = await _carRepository
+                .GetTableAsTracking()
+                .FirstOrDefaultAsync(c => c.Id == request.CarId, cancellationToken);
 
-            if (!carExists)
+            if (car is null)
                 return _responseHandler.NotFound<List<int>>("Car not found.");
 
-            // Check if car already has a primary image
-            var hasPrimary = await _imageRepository
-                .GetTableNoTracking()
-                .AnyAsync(img => img.CarId == request.CarId && img.IsPrimary && !img.IsDeleted,
-                    cancellationToken);
+            var imagesToAdd = await PrepareCarImagesAsync(request.CarId, request.Files, cancellationToken);
 
-            var savedIds = new List<int>();
-            var isFirstUpload = !hasPrimary;
+            var addingResult = car.AddImages(imagesToAdd);
 
-            foreach (var (file, index) in request.Files.Select((f, i) => (f, i)))
-            {
-                using var stream = file.OpenReadStream();
-                var fileName = await _fileStorage.SaveCarImageAsync(request.CarId, stream, cancellationToken);
+            if (!addingResult.IsSuccess)
+                return _responseHandler.BadRequest<List<int>>(addingResult.reason);
 
-                var image = new CarImage
-                {
-                    CarId = request.CarId,
-                    FileName = fileName,
-                    IsPrimary = isFirstUpload && index == 0, // First uploaded image becomes primary if no primary exists
-                    IsDeleted = false,
-                    CreatedAt = DateTime.UtcNow
-                };
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-                await _imageRepository.AddAsync(image);
-                await _unitOfWork.SaveChangesAsync(cancellationToken);
-
-                savedIds.Add(image.Id);
-            }
+            var savedIds = imagesToAdd.Select(i => i.Id).ToList();
 
             return _responseHandler.Created(savedIds);
+
         }
         catch (Exception ex)
         {
@@ -90,4 +74,28 @@ public class UploadCarImagesHandler : IRequestHandler<UploadCarImagesCommand, Re
     }
 
     #endregion
+
+    #region Private Methods
+    private async Task<List<CarImage>> PrepareCarImagesAsync(int carId, IEnumerable<IFormFile> files, CancellationToken cancellationToken)
+    {
+        var images = new List<CarImage>();
+
+        foreach (var file in files)
+        {
+            using var stream = file.OpenReadStream();
+            var fileName = await _fileStorage.SaveCarImageAsync(carId, stream, cancellationToken);
+
+            var image = new CarImage
+            {
+                CarId = carId,
+                FileName = fileName
+            };
+
+            images.Add(image);
+        }
+
+        return images;
+    }
+    #endregion
+
 }
