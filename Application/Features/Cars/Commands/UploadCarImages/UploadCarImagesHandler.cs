@@ -13,7 +13,6 @@ public class UploadCarImagesHandler : IRequestHandler<UploadCarImagesCommand, Re
     #region Field(s)
 
     private readonly ICarRepository _carRepository;
-    private readonly ICarImageRepository _imageRepository;
     private readonly IFileStorageService _fileStorage;
     private readonly IUnitOfWork _unitOfWork;
     private readonly ResponseHandler _responseHandler;
@@ -24,13 +23,11 @@ public class UploadCarImagesHandler : IRequestHandler<UploadCarImagesCommand, Re
 
     public UploadCarImagesHandler(
         ICarRepository carRepository,
-        ICarImageRepository imageRepository,
         IFileStorageService fileStorage,
         IUnitOfWork unitOfWork,
         ResponseHandler responseHandler)
     {
         _carRepository = carRepository;
-        _imageRepository = imageRepository;
         _fileStorage = fileStorage;
         _unitOfWork = unitOfWork;
         _responseHandler = responseHandler;
@@ -85,11 +82,7 @@ public class UploadCarImagesHandler : IRequestHandler<UploadCarImagesCommand, Re
             using var stream = file.OpenReadStream();
             var fileName = await _fileStorage.SaveCarImageAsync(carId, stream, cancellationToken);
 
-            var image = new CarImage
-            {
-                CarId = carId,
-                FileName = fileName
-            };
+            var image = new CarImage(carId, fileName);
 
             images.Add(image);
         }
