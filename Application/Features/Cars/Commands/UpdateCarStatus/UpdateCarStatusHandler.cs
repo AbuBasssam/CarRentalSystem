@@ -41,10 +41,15 @@ public class UpdateCarStatusHandler : IRequestHandler<UpdateCarStatusCommand, Re
                 return _responseHandler.NotFound<bool>("Car not found.");
 
             if (request.Dto.IsActive.HasValue)
-                car.IsActive = request.Dto.IsActive.Value;
+            {
+                if (request.Dto.IsActive.Value)
+                    car.Activate();
+                else
+                    car.Deactivate();
+            }
 
             if (request.Dto.FleetConditionStatus.HasValue)
-                car.FleetConditionStatus = request.Dto.FleetConditionStatus.Value;
+                car.UpdateConditionStatus(request.Dto.FleetConditionStatus.Value);
 
             await _unitOfWork.SaveChangesAsync(cancellationToken);
 

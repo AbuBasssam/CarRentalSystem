@@ -474,15 +474,11 @@ public static class FleetSeeder
             var fileName = _GetSeedImageFileName(carOrder, car.Id);
 
             if (fileName == null) continue;
+            var primaryImage = new CarImage(car.Id, fileName);
+            primaryImage.SetAsPrimary(null);
 
-            images.Add(new CarImage
-            {
-                CarId = car.Id,
-                FileName = fileName,
-                IsPrimary = true,
-                IsDeleted = false,
-                CreatedAt = DateTime.UtcNow
-            });
+            images.Add(new CarImage(car.Id, fileName));
+
         }
 
         await context.CarImages.AddRangeAsync(images);
@@ -645,30 +641,18 @@ public static class FleetSeeder
         byte seats, byte bags, short engineCc,
         int? policyOverrideId)
     {
-        var car = new Car
-        {
-            Brand = brand,
-            Model = model,
-            Year = year,
-            PlateNumberEN = plateEN,
-            PlateNumberAR = plateAR,
-            VIN = vin,
-            CurrentBranchId = branchId,
-            CategoryId = categoryId,
-            TransmissionType = transmission,
-            FleetConditionStatus = condition,
-            IsActive = isActive,
-            NumberOfSeats = seats,
-            NumberOfBags = bags,
-            EngineCapacity = engineCc,
-            PolicyOverrideId = policyOverrideId,
-            KmMileage = 0,
-            CreatedAt = DateTime.UtcNow
-        };
+        var car = new Car(plateEN, plateAR, vin,
+            brand, model, year,
+            fuelTypeId, transmission,
+            seats, bags, engineCc,
+            branchId, categoryId
 
-        // Uses the Object Pattern setter — converts Id → byte for DB storage
-        car.FuelTypeObject = Domain.HelperClasses.FuelType.FromId(fuelTypeId)
-            ?? throw new InvalidOperationException($"Invalid FuelType Id: {fuelTypeId}");
+        );
+
+        if (condition != enFleetConditionStatus.Ready)
+            car.UpdateConditionStatus(condition);
+        if (!isActive)
+            car.Deactivate();
 
         return car;
     }

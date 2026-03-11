@@ -72,7 +72,7 @@ public class TransferCarHandler : IRequestHandler<TransferCarCommand, Response<b
             await _historyRepository.AddAsync(history);
 
             // Update car
-            car.CurrentBranchId = request.Dto.ToBranchId;
+            car.TransferToBranch(request.Dto.ToBranchId);
 
             await _unitOfWork.SaveChangesAsync(cancellationToken);
 

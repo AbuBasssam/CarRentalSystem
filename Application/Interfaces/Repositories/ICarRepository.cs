@@ -30,4 +30,21 @@ public interface ICarRepository : IGenericRepository<Car, int>, IScopedService
     /// <param name="excludeId">Optional car ID to exclude from the check (useful during updates).</param>
     /// <returns>True if the VIN is unique; otherwise, false.</returns>
     Task<bool> IsVINUniqueAsync(string vin, int? excludeId = null);
+
+    /// <summary>
+    /// Retrieves a car along with its related images.
+    /// </summary>
+    /// <param name="carId">
+    /// The unique identifier of the car to retrieve.
+    /// </param>
+    /// <returns>
+    /// An <see cref="IQueryable{Car}"/> that includes the car entity with its associated
+    /// <see cref="CarImage"/> collection loaded.
+    /// </returns>
+    /// <remarks>
+    /// This method is intended for operations that require access to the car's images,
+    /// such as managing primary images or deleting images, while avoiding loading
+    /// unnecessary related entities.
+    /// </remarks>
+    IQueryable<Car> GetCarWithImages(int carId);
 }

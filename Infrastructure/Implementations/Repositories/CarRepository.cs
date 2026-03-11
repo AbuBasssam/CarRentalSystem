@@ -40,4 +40,7 @@ public class CarRepository : GenericRepository<Car, int>, ICarRepository
         if (excludeId.HasValue) query = query.Where(c => c.Id != excludeId.Value);
         return !await query.AnyAsync();
     }
+
+    /// <inheritdoc />
+    public IQueryable<Car> GetCarWithImages(int CarId) => GetByIdAsync(CarId).Include(c => c.Images);
 }
