@@ -49,10 +49,7 @@ public class SetPrimaryCarImageHandler : IRequestHandler<SetPrimaryCarImageComma
             if (targetImage is null)
                 return _responseHandler.NotFound<bool>("Image not found.");
 
-            if (targetImage.IsPrimary)
-                return _responseHandler.Success(true);
-
-            // Demote the current primary
+            // Load current primary (null if target is already primary — handled inside SetAsPrimary)
             var currentPrimary = await _imageRepository
                 .GetTableAsTracking()
                 .FirstOrDefaultAsync(img =>
@@ -61,10 +58,12 @@ public class SetPrimaryCarImageHandler : IRequestHandler<SetPrimaryCarImageComma
                     && !img.IsDeleted,
                     cancellationToken);
 
-            if (currentPrimary is not null)
-                currentPrimary.IsPrimary = false;
+            // Chanage primary image
 
-            targetImage.IsPrimary = true;
+            var result = targetImage.SetAsPrimary(currentPrimary);
+
+            if (!result.IsSuccess)
+                return _responseHandler.BadRequest<bool>(result.reason);
 
             await _unitOfWork.SaveChangesAsync(cancellationToken);
 
