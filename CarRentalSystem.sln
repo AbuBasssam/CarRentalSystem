@@ -29,6 +29,7 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "AdminCars", "AdminCars", "{E5109F3A-F757-4839-8ED1-74485B33E075}"
 	ProjectSection(SolutionItems) = preProject
 		GetAdminCarById.md = GetAdminCarById.md
+		CreateCar.md = CreateCar.md
 	EndProjectSection
 EndProject
 Global
