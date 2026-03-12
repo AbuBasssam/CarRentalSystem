@@ -96,6 +96,13 @@ public static class Router
         public const string Transfer = BASE + _ById + "/transfer";
         public const string Query = BASE + _Query;
 
+        // Image management (admin)
+        public const string UploadImages = BASE + _ById + "/images";
+        public const string DeleteImage = BASE + _ById + "/images/{ImageId}";
+        public const string SetPrimaryImage = BASE + _ById + "/images/{ImageId}/primary";
+
+        // Image serving (admin — bypasses public gate)
+        public const string GetAdminImage = BASE + _ById + "/images/{ImageId}";
     }
 
     #endregion
