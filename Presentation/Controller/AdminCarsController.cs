@@ -17,6 +17,7 @@ public class AdminCarsController : ApiController
     /// </summary>
     /// <response code="200">Paginated car list</response>
     /// <response code="500">Internal server error</response>
+
     [HttpGet(Router.CarRouter.BASE)]
     [ProducesResponseType(typeof(Response<CursorPaginatedResult<AdminCarSummaryDto>>), StatusCodes.Status200OK)]
     public async Task<IActionResult> Get([FromQuery] AdminCarFilters filters, int? cursor, int pageSize = 10)
@@ -27,9 +28,11 @@ public class AdminCarsController : ApiController
                 (Response<CursorPaginatedResult<AdminCarSummaryDto>> r) => NewResult(r));
     }
 
+
     /// <summary>Returns admin car details by ID.</summary>
     /// <response code="200">Car details</response>
     /// <response code="404">Car not found</response>
+
     [HttpGet(Router.CarRouter.GetById)]
     [ProducesResponseType(typeof(Response<AdminCarDetailsDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(Response<AdminCarDetailsDto>), StatusCodes.Status404NotFound)]
@@ -55,6 +58,37 @@ public class AdminCarsController : ApiController
             new CreateCarCommand(dto), Sender,
             (Response<int> r) => NewResult(r));
 
+
+    /// <summary>Updates IsActive and/or FleetConditionStatus.</summary>
+    /// <response code="200">Status updated</response>
+    /// <response code="404">Car not found</response>
+    /// <response code="422">Validation error</response>
+
+    [HttpPatch(Router.CarRouter.UpdateStatus)]
+    [ProducesResponseType(typeof(Response<bool>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(Response<bool>), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(Response<bool>), StatusCodes.Status422UnprocessableEntity)]
+    public async Task<IActionResult> UpdateStatus([FromRoute] int Id, [FromBody] UpdateCarStatusDto dto)
+        => await CommandExecutor.Execute(
+            new UpdateCarStatusCommand(Id, dto), Sender,
+            (Response<bool> r) => NewResult(r));
+
+
+    /// <summary>Transfers car to another branch + logs CarBranchHistory.</summary>
+    /// <response code="200">Transfer completed</response>
+    /// <response code="400">Target branch not found, inactive, or same as current</response>
+    /// <response code="404">Car not found</response>
+
+    [HttpPost(Router.CarRouter.Transfer)]
+    [ProducesResponseType(typeof(Response<bool>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(Response<bool>), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(Response<bool>), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> Transfer([FromRoute] int Id, [FromBody] TransferCarDto dto)
+        => await CommandExecutor.Execute(
+            new TransferCarCommand(Id, dto), Sender,
+            (Response<bool> r) => NewResult(r));
+
+
     // ── Image Management ──────────────────────────────────────────────────────
 
     /// <summary>
@@ -74,5 +108,25 @@ public class AdminCarsController : ApiController
         => await CommandExecutor.Execute(
             new UploadCarImagesCommand(Id, files.ToList()), Sender,
             (Response<List<int>> r) => NewResult(r));
+
+
+    /// <summary>
+    /// Soft-deletes an image.
+    /// If target is primary and other images exist, promotes next image to primary.
+    /// Physical file is preserved for the 7-day recovery window (Windows Service cleanup).
+    /// </summary>
+    /// <response code="200">Image soft-deleted</response>
+    /// <response code="400">Cannot delete the only image</response>
+    /// <response code="404">Image not found</response>
+
+    [HttpDelete(Router.CarRouter.DeleteImage)]
+    [ProducesResponseType(typeof(Response<bool>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(Response<bool>), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(Response<bool>), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> DeleteImage([FromRoute] int Id, [FromRoute] int ImageId)
+        => await CommandExecutor.Execute(
+            new DeleteCarImageCommand(Id, ImageId), Sender,
+            (Response<bool> r) => NewResult(r));
+
 
 }

@@ -278,7 +278,7 @@ public static class FleetSeeder
     //  Test coverage:
     //    ✅ 15 cars per major category  → pagination (pageSize=10 → 2 pages)
     //    ✅ 3 branches, balanced distribution
-    //    ✅ Edge cases: InMaintenance, Damaged, Inactive
+    //    ✅ Edge cases: InMaintenance, OutOfService, Inactive
     //    ✅ All FuelType values
     //    ✅ Automatic & Manual transmission
     //    ✅ PolicyOverride on selected Supercars
@@ -308,7 +308,7 @@ public static class FleetSeeder
             _Car("Chevrolet",  "Spark",     2024, "MRS 1407", "ر ح غ 1407", "KL8CB6SA7EC401856", branchIds[1], categoryIds[1], 1, enTransmissionType.Manual,      enFleetConditionStatus.Ready,         true,  5, 2, 1200, null),
             // Edge cases ────────────────────────────────────────────────────
             _Car("Kia",        "Forte",     2025, "PGH 1444", "ز ن و 1444", "KNAFZ4A82F5391047", branchIds[2], categoryIds[1], 1, enTransmissionType.Automatic,  enFleetConditionStatus.InMaintenance, true,  5, 2, 1600, null),
-            _Car("Ford",       "Focus",     2026, "TVM 1481", "س ه ي 1481", "1FADP3F25EL214753", branchIds[3], categoryIds[1], 2, enTransmissionType.Manual,      enFleetConditionStatus.Damaged,       false, 5, 3, 1400, null),
+            _Car("Ford",       "Focus",     2026, "TVM 1481", "س ه ي 1481", "1FADP3F25EL214753", branchIds[3], categoryIds[1], 2, enTransmissionType.Manual,      enFleetConditionStatus.OutOfService,       false, 5, 3, 1400, null),
             _Car("Volkswagen", "Golf",      2023, "XKB 1518", "ش خ أ 1518", "WVWZZZ1JZXW123456", branchIds[1], categoryIds[1], 1, enTransmissionType.Automatic,  enFleetConditionStatus.Ready,         false, 5, 2, 1200, null),
             _Car("Nissan",     "Kicks",     2024, "AYR 1555", "ص ر ب 1555", "3N1CP5CU6JL524876", branchIds[2], categoryIds[1], 2, enTransmissionType.Automatic,  enFleetConditionStatus.InMaintenance, true,  5, 3, 1400, null),
             _Car("Hyundai",    "Venue",     2025, "ENF 1592", "ط ز ت 1592", "KMHRC8A36MU095431", branchIds[3], categoryIds[1], 1, enTransmissionType.Automatic,  enFleetConditionStatus.Ready,         true,  5, 2, 1600, null),
@@ -328,7 +328,7 @@ public static class FleetSeeder
             _Car("Ford",       "Fusion",   2024, "NFH 1962", "ص ي ظ 1962", "3FA6P0H72JR180432", branchIds[1], categoryIds[2], 1, enTransmissionType.Automatic,  enFleetConditionStatus.Ready,         true,  5, 3, 2000, null),
             // Edge cases ────────────────────────────────────────────────────
             _Car("Volkswagen", "Passat",   2025, "RUW 1999", "ط أ ع 1999", "WVWZZZ3CZ9E123456", branchIds[2], categoryIds[2], 2, enTransmissionType.Manual,      enFleetConditionStatus.InMaintenance, true,  5, 3, 2500, null),
-            _Car("Hyundai",    "Elantra",  2026, "VJM 2036", "ث ر غ 2036", "5NPD84LF8JH267513", branchIds[3], categoryIds[2], 1, enTransmissionType.Automatic,  enFleetConditionStatus.Damaged,       false, 5, 3, 2000, null),
+            _Car("Hyundai",    "Elantra",  2026, "VJM 2036", "ث ر غ 2036", "5NPD84LF8JH267513", branchIds[3], categoryIds[2], 1, enTransmissionType.Automatic,  enFleetConditionStatus.OutOfService,       false, 5, 3, 2000, null),
             _Car("Honda",      "Civic",    2023, "YYB 2073", "ح ز ف 2073", "2HGFC2F73NH576234", branchIds[1], categoryIds[2], 1, enTransmissionType.Manual,      enFleetConditionStatus.Ready,         false, 5, 2, 1500, null),
             _Car("Nissan",     "Maxima",   2024, "BNR 2110", "خ س ص 2110", "1N4AA6AP5JC394521", branchIds[2], categoryIds[2], 1, enTransmissionType.Automatic,  enFleetConditionStatus.InMaintenance, true,  5, 3, 3500, null),
             _Car("Toyota",     "Avalon",   2025, "FBF 2147", "د ش ط 2147", "4T1BZ1FB6KU028573", branchIds[3], categoryIds[2], 1, enTransmissionType.Automatic,  enFleetConditionStatus.Ready,         true,  5, 3, 3500, null),
@@ -348,7 +348,7 @@ public static class FleetSeeder
             _Car("Toyota",     "Highlander",     2024, "PEE 2517", "ر ف ذ 2517", "5TDBZRFH4KS981052", branchIds[1], categoryIds[3], 1, enTransmissionType.Automatic, enFleetConditionStatus.Ready,         true,  7, 4, 3500, null),
             // Edge cases ────────────────────────────────────────────────────
             _Car("Subaru",     "Forester",       2025, "STU 2554", "ز ص ر 2554", "JF2SJAEC5JH547863", branchIds[2], categoryIds[3], 2, enTransmissionType.Automatic, enFleetConditionStatus.InMaintenance, true,  5, 3, 2500, null),
-            _Car("Hyundai",    "Palisade",       2026, "VJL 2591", "س ط ز 2591", "KM8R44HE1LU075432", branchIds[3], categoryIds[3], 1, enTransmissionType.Automatic, enFleetConditionStatus.Damaged,       false, 7, 4, 3500, null),
+            _Car("Hyundai",    "Palisade",       2026, "VJL 2591", "س ط ز 2591", "KM8R44HE1LU075432", branchIds[3], categoryIds[3], 1, enTransmissionType.Automatic, enFleetConditionStatus.OutOfService,       false, 7, 4, 3500, null),
             _Car("Kia",        "Telluride",      2023, "YYB 2628", "ش ظ س 2628", "5XYP64HC8KG072381", branchIds[1], categoryIds[3], 1, enTransmissionType.Automatic, enFleetConditionStatus.Ready,         false, 7, 4, 3500, null),
             _Car("Ford",       "Escape",         2024, "BPN 2665", "ح ع ش 2665", "1FMCU9GD9KUC08732", branchIds[2], categoryIds[3], 2, enTransmissionType.Automatic, enFleetConditionStatus.InMaintenance, true,  5, 3, 2000, null),
             _Car("GMC",        "Acadia",         2025, "FEE 2702", "خ غ ص 2702", "1GKKRRKD0GJ250872", branchIds[3], categoryIds[3], 1, enTransmissionType.Automatic, enFleetConditionStatus.Ready,         true,  7, 4, 3600, null),
@@ -366,7 +366,7 @@ public static class FleetSeeder
             _Car("Hyundai",      "Staria",         2026, "HYZ 2998", "خ ص ظ 2998", "KMHH851XNPU045678", branchIds[2], categoryIds[4], 1, enTransmissionType.Automatic, enFleetConditionStatus.Ready,         true,  9, 5, 3500, null),
             // Edge cases ────────────────────────────────────────────────────
             _Car("Volkswagen",   "Caravelle",      2023, "LPP 3035", "د ط ع 3035", "WV2ZZZ7HZLH091234", branchIds[3], categoryIds[4], 2, enTransmissionType.Automatic, enFleetConditionStatus.InMaintenance, true,  9, 5, 2000, null),
-            _Car("Chrysler",     "Grand Caravan",  2024, "PEE 3072", "ذ ظ غ 3072", "2C4RDGBG8KR706321", branchIds[1], categoryIds[4], 1, enTransmissionType.Automatic, enFleetConditionStatus.Damaged,       false, 7, 4, 3600, null),
+            _Car("Chrysler",     "Grand Caravan",  2024, "PEE 3072", "ذ ظ غ 3072", "2C4RDGBG8KR706321", branchIds[1], categoryIds[4], 1, enTransmissionType.Automatic, enFleetConditionStatus.OutOfService,       false, 7, 4, 3600, null),
             _Car("Ford",         "Galaxy",         2025, "STU 3109", "ر ع ف 3109", "WF0RXXGBWRLL98765", branchIds[2], categoryIds[4], 1, enTransmissionType.Automatic, enFleetConditionStatus.Ready,         false, 7, 5, 2000, null),
             _Car("Kia",          "Sedona",         2026, "VJL 3146", "ز غ ص 3146", "KNDMB4H35H6321456", branchIds[3], categoryIds[4], 1, enTransmissionType.Automatic, enFleetConditionStatus.InMaintenance, true,  8, 5, 3500, null),
 
@@ -385,7 +385,7 @@ public static class FleetSeeder
             _Car("Kia",        "Niro",                2024, "EJK 3516", "ش ظ غ 3516", "KNDCE3LC1K5204539", branchIds[1], categoryIds[5], 3, enTransmissionType.Automatic, enFleetConditionStatus.Ready,         true,  5, 2, 1600, null),
             // Edge cases ────────────────────────────────────────────────────
             _Car("Tesla",      "Model S",             2025, "HYZ 3553", "ح ع ف 3553", "5YJSA1E26MF426034", branchIds[2], categoryIds[5], 4, enTransmissionType.Automatic, enFleetConditionStatus.InMaintenance, true,  5, 2, 0, null),
-            _Car("Audi",       "A3 Sportback e-tron", 2026, "LPP 3590", "خ غ ص 3590", "WAUZZZ8V5HA052341", branchIds[3], categoryIds[5], 4, enTransmissionType.Automatic, enFleetConditionStatus.Damaged,       false, 5, 2, 0, null),
+            _Car("Audi",       "A3 Sportback e-tron", 2026, "LPP 3590", "خ غ ص 3590", "WAUZZZ8V5HA052341", branchIds[3], categoryIds[5], 4, enTransmissionType.Automatic, enFleetConditionStatus.OutOfService,       false, 5, 2, 0, null),
             _Car("Chrysler",   "Pacifica Hybrid",     2023, "PEE 3627", "د ف ط 3627", "2C4RC1N70LR234567", branchIds[1], categoryIds[5], 3, enTransmissionType.Automatic, enFleetConditionStatus.InMaintenance, true,  7, 4, 3600, null),
 
             // ══════════════════════════════════════════════════════════════
@@ -403,7 +403,7 @@ public static class FleetSeeder
             _Car("Mercedes-Benz","S-Class",       2020, "XEE 3997", "ر ع ف 3997", "WDD2220561A234567", branchIds[1], categoryIds[6], 1, enTransmissionType.Automatic, enFleetConditionStatus.Ready,         true,  5, 3, 3000, null),
             // Edge cases ────────────────────────────────────────────────────
             _Car("BMW",          "7 Series",      2021, "ATV 4034", "ز غ ص 4034", "WBA7E2C56JG123456", branchIds[2], categoryIds[6], 2, enTransmissionType.Automatic, enFleetConditionStatus.InMaintenance, true,  5, 3, 3000, null),
-            _Car("Audi",         "A8",            2022, "EJK 4071", "س ف ط 4071", "WAUZZZ4H5HN012345", branchIds[3], categoryIds[6], 1, enTransmissionType.Automatic, enFleetConditionStatus.Damaged,       false, 5, 3, 4000, null),
+            _Car("Audi",         "A8",            2022, "EJK 4071", "س ف ط 4071", "WAUZZZ4H5HN012345", branchIds[3], categoryIds[6], 1, enTransmissionType.Automatic, enFleetConditionStatus.OutOfService,       false, 5, 3, 4000, null),
             _Car("Maserati",     "Quattroporte",  2023, "HYZ 4108", "ش ص ظ 4108", "ZAM56RRA5H1234567", branchIds[1], categoryIds[6], 1, enTransmissionType.Automatic, enFleetConditionStatus.Ready,         false, 5, 3, 3800, null),
             _Car("Lexus",        "LC 500",        2024, "LPP 4145", "ح ط ع 4145", "JTHHP5BC1K5000234", branchIds[2], categoryIds[6], 1, enTransmissionType.Automatic, enFleetConditionStatus.InMaintenance, true,  4, 2, 5000, null),
 
@@ -420,7 +420,7 @@ public static class FleetSeeder
             _Car("Subaru",     "Ascent",          2018, "LJK 4441", "ح ع ف 4441", "4S4WMALD1J3456789", branchIds[2], categoryIds[7], 1, enTransmissionType.Automatic, enFleetConditionStatus.Ready,         true,  7, 4, 2500, null),
             // Edge cases ────────────────────────────────────────────────────
             _Car("Lincoln",    "MKZ",             2019, "PYZ 4478", "خ غ ص 4478", "3LN6L5MU0KR234567", branchIds[3], categoryIds[7], 3, enTransmissionType.Automatic, enFleetConditionStatus.InMaintenance, true,  5, 3, 2000, null),
-            _Car("Cadillac",   "CT5",             2020, "TPN 4515", "د ف ط 4515", "1G6DA5RK0L0123456", branchIds[1], categoryIds[7], 1, enTransmissionType.Automatic, enFleetConditionStatus.Damaged,       false, 5, 3, 3000, null),
+            _Car("Cadillac",   "CT5",             2020, "TPN 4515", "د ف ط 4515", "1G6DA5RK0L0123456", branchIds[1], categoryIds[7], 1, enTransmissionType.Automatic, enFleetConditionStatus.OutOfService,       false, 5, 3, 3000, null),
             _Car("Infiniti",   "Q50",             2021, "XEE 4552", "ذ ص ظ 4552", "JN1EV7AR5LM234567", branchIds[2], categoryIds[7], 1, enTransmissionType.Automatic, enFleetConditionStatus.Ready,         false, 5, 3, 3000, null),
             _Car("Acura",      "TLX",             2022, "ATV 4589", "ر ط ع 4589", "19UUB2F54NA012345", branchIds[3], categoryIds[7], 1, enTransmissionType.Automatic, enFleetConditionStatus.InMaintenance, true,  5, 3, 2000, null),
 
@@ -440,7 +440,7 @@ public static class FleetSeeder
             _Car("Mercedes-Benz", "AMG GT R",            2020, "HTV 4959", "س ف ط 4959", "WDD1901781A012345", branchIds[1], categoryIds[8], 1, enTransmissionType.Automatic, enFleetConditionStatus.Ready, true,  2, 1, 4000, policyIds["Supercar"]),
             // Edge cases ────────────────────────────────────────────────────
             _Car("Ferrari",       "488 Pista",           2021, "LJK 4996", "ش ص ظ 4996", "ZFF90HLA0L0234567", branchIds[2], categoryIds[8], 1, enTransmissionType.Automatic, enFleetConditionStatus.InMaintenance, true,  2, 1, 3900, policyIds["Supercar"]),
-            _Car("Lamborghini",   "Huracan Performante", 2022, "PYZ 5033", "ح ط ع 5033", "ZHWUC4ZF8JLA23456", branchIds[3], categoryIds[8], 1, enTransmissionType.Automatic, enFleetConditionStatus.Damaged,       false, 2, 1, 5200, policyIds["Supercar"]),
+            _Car("Lamborghini",   "Huracan Performante", 2022, "PYZ 5033", "ح ط ع 5033", "ZHWUC4ZF8JLA23456", branchIds[3], categoryIds[8], 1, enTransmissionType.Automatic, enFleetConditionStatus.OutOfService,       false, 2, 1, 5200, policyIds["Supercar"]),
             _Car("Rolls-Royce",   "Dawn",                2023, "TPN 5070", "خ ظ غ 5070", "SCA666D5XJU012345", branchIds[1], categoryIds[8], 1, enTransmissionType.Automatic, enFleetConditionStatus.Ready,         false, 4, 2, 6750, policyIds["Supercar"]),
             _Car("Bentley",       "Mulsanne",            2024, "XEE 5107", "د ع ف 5107", "SCBBR53W49C056789", branchIds[2], categoryIds[8], 1, enTransmissionType.Automatic, enFleetConditionStatus.Ready,         true,  5, 3, 6750, null),  // Uses category policy (no override)
         };
