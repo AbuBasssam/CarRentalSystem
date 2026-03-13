@@ -17,7 +17,7 @@ public class TransferCarDto
             RuleFor(x => x.Reason)
                 .MaximumLength(250)
                 .When(x => !string.IsNullOrEmpty(x.Reason))
-                .WithMessage("Reason cannot exceed 500 characters.");
+                .WithMessage("Reason cannot exceed 250 characters.");
         }
     }
 }

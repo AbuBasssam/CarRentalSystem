@@ -118,7 +118,7 @@ public class CarConfig : IEntityTypeConfiguration<Car>
 
         builder.ToTable(t => t.HasCheckConstraint(
            "CK_Cars_FleetConditionStatus",
-           $"FleetConditionStatus>0 AND FleetConditionStatus<=3 ")
+           $"FleetConditionStatus>0 AND FleetConditionStatus<=4 ")
         );
 
         // Composite Indexes for searching and filtering

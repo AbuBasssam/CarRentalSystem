@@ -19,4 +19,8 @@
     <ProjectReference Include="..\Presentation\Presentation.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="storage\cars\" />
+  </ItemGroup>
+
 </Project>

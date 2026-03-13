@@ -101,8 +101,6 @@ public static class Router
         public const string DeleteImage = BASE + _ById + "/images/{ImageId}";
         public const string SetPrimaryImage = BASE + _ById + "/images/{ImageId}/primary";
 
-        // Image serving (admin — bypasses public gate)
-        public const string GetAdminImage = BASE + _ById + "/images/{ImageId}";
     }
 
     #endregion
