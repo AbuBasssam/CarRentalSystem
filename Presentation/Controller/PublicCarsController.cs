@@ -15,6 +15,7 @@ public class PublicCarsController : ApiController
     /// Only returns active cars on active branches.
     /// </summary>
     /// <response code="200">Paginated car list</response>
+
     [HttpGet(Router.PublicCarRouter.BASE)]
     [ProducesResponseType(typeof(Response<CursorPaginatedResult<CustomerCarSummaryDto>>), StatusCodes.Status200OK)]
     public async Task<IActionResult> Get([FromQuery] GetPublicCarsQuery query)
@@ -22,9 +23,11 @@ public class PublicCarsController : ApiController
             query, Sender,
             (Response<CursorPaginatedResult<CustomerCarSummaryDto>> r) => NewResult(r));
 
+
     /// <summary>Returns customer-facing car details (no VIN, no PlateNumber).</summary>
     /// <response code="200">Car details</response>
     /// <response code="404">Car not found, inactive, or on inactive branch</response>
+
     [HttpGet(Router.PublicCarRouter.GetById)]
     [ProducesResponseType(typeof(Response<CustomerCarDetailsDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(Response<CustomerCarDetailsDto>), StatusCodes.Status404NotFound)]
@@ -32,4 +35,27 @@ public class PublicCarsController : ApiController
         => await CommandExecutor.Execute(
             new GetPublicCarByIdQuery(Id), Sender,
             (Response<CustomerCarDetailsDto> r) => NewResult(r));
+
+
+    /// <summary>
+    /// Serves the primary image as a binary stream.
+    /// Validation gate: car active, branch active, image not deleted.
+    /// </summary>
+    /// <response code="200">Image binary stream (image/webp)</response>
+    /// <response code="404">Validation gate failed</response>
+
+    [HttpGet(Router.PublicCarRouter.GetPrimaryImage)]
+    [ProducesResponseType(typeof(FileContentResult), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetPrimaryImage([FromRoute] int Id)
+    {
+        var result = await Sender.Send(new GetCarPrimaryImageQuery(Id));
+
+        if (!result.Succeeded)
+            return NewResult(result);
+
+        return File(result.Data.Content, result.Data.ContentType);
+    }
+
+
 }

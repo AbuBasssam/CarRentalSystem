@@ -32,14 +32,18 @@ public class GetCarPrimaryImageHandler : IRequestHandler<GetCarPrimaryImageQuery
 
     #region Handler
 
-    public async Task<Response<CarImageFileDto>> Handle(
-        GetCarPrimaryImageQuery request, CancellationToken cancellationToken)
+    public async Task<Response<CarImageFileDto>> Handle(GetCarPrimaryImageQuery request, CancellationToken cancellationToken)
     {
         try
         {
             var fileName = await _imageRepository
                 .GetTableNoTracking()
-                .Where(img =>img.CarId == request.CarId && img.IsPrimary && !img.IsDeleted)
+                .Where(img =>
+                    img.CarId == request.CarId
+                    && img.IsPrimary
+                    && !img.IsDeleted
+                    && img.Car.IsActive
+                    && img.Car.CurrentBranch.IsActive)
                 .Select(img => img.FileName)
                 .FirstOrDefaultAsync(cancellationToken);
 
