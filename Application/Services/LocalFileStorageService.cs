@@ -100,6 +100,7 @@ public class LocalFileStorageService : IFileStorageService
     #endregion
 
     #region Helpers
+
     /// <summary>
     /// Constructs the physical path from the given filename.
     /// The expected format is: car_{carId}_{guid}.webp.
@@ -107,7 +108,6 @@ public class LocalFileStorageService : IFileStorageService
     /// <param name="fileName">The file name to construct the path from.</param>
     /// <returns>The full physical path of the file.</returns>
     /// <exception cref="ArgumentException">Thrown if the filename format is invalid.</exception>
-
     private string _BuildPath(string fileName)
     {
         // Extract carId from: car_5_abc123.webp → parts[1] = "5"
@@ -118,6 +118,7 @@ public class LocalFileStorageService : IFileStorageService
         var carId = parts[1];
         return Path.Combine(_basePath, carId, fileName);
     }
+
     #endregion
 
 }

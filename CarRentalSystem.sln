@@ -38,6 +38,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "AdminCars", "AdminCars", "{
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "PublicCar", "PublicCar", "{D1BE5037-64D1-4438-88BA-7A91C9B2D477}"
 	ProjectSection(SolutionItems) = preProject
+		Getimages.md = Getimages.md
 		GetPrimaryImage.md = GetPrimaryImage.md
 	EndProjectSection
 EndProject

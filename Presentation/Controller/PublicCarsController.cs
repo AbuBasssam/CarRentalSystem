@@ -58,4 +58,38 @@ public class PublicCarsController : ApiController
     }
 
 
+    /// <summary>
+    /// Returns image metadata (IDs + serving URLs) for a car.
+    /// Gate: car must be active and branch must be active → else 404.
+    /// </summary>
+    /// <response code="200">List of image metadata</response>
+    /// <response code="404">Car not found or inactive</response>
+
+    [HttpGet(Router.PublicCarRouter.GetImages)]
+    [ProducesResponseType(typeof(Response<List<CarImageMetadataDto>>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(Response<List<CarImageMetadataDto>>), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetImages([FromRoute] int Id)
+        => await CommandExecutor.Execute(
+            new GetCarImagesQuery(Id), Sender,
+            (Response<List<CarImageMetadataDto>> r) => NewResult(r));
+
+
+    /// <summary>
+    /// Serves a specific image as binary stream.
+    /// Validation gate: car active, branch active, image not deleted → else 404.
+    /// </summary>
+    /// <response code="200">Image binary stream (image/webp)</response>
+    /// <response code="404">Validation gate failed</response>
+
+    [ProducesResponseType(typeof(FileContentResult), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetImage([FromRoute] int Id, [FromRoute] int ImageId)
+    {
+        var result = await Sender.Send(new GetCarImageQuery(Id, ImageId, IsAdminRequest: false));
+
+        if (!result.Succeeded)
+            return NewResult(result);
+
+        return File(result.Data.Content, result.Data.ContentType);
+    }
 }

@@ -63,7 +63,7 @@ public class GetAdminCarByIdHandler : IRequestHandler<GetAdminCarByIdQuery, Resp
                     // Admin image URLs use admin serving endpoint (bypasses public gate)
                     Images = c.Images
                         .Where(i => !i.IsDeleted)
-                        .Select(i => $"{Router.CarRouter.BASE}/{c.Id}/images/{i.Id}")
+                        .Select(i => $"{Router.PublicCarRouter.BASE}/{c.Id}/images/{i.Id}")
                         .ToList()
                 })
                 .FirstOrDefaultAsync(cancellationToken);
